@@ -1,0 +1,64 @@
+{
+  "name": "appfinder",
+  "productName": "AppFinder",
+  "version": "0.9.0",
+  "description": "App store for the Homebrew package manager",
+  "author": "yanbab",
+  "license": "MIT",
+  "main": "src/main/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yanbab/appfinder.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yanbab/appfinder/issues"
+  },
+  "homepage": "https://github.com/yanbab/appfinder#readme",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder build --mac",
+    "fetch": "cd src/scripts && bash fetch-casks.sh",
+    "clean": "rm -rf ./cache ./dist $HOME/.config/appfinder \"$HOME/Library/Application Support/AppFinder\""
+  },
+  "keywords": [
+    "casks",
+    "homebrew",
+    "electron",
+    "appstore",
+    "applications"
+  ],
+  "devDependencies": {
+    "@electron/rebuild": "^4.2.0",
+    "electron": "^44.2.0",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "alpinejs": "^3.16.3",
+    "node-pty": "^1.1.0",
+    "xterm": "^5.3.0"
+  },
+  "build": {
+    "appId": "org.yanbab.appfinder",
+    "mac": {
+      "icon": "data/icon.svg",
+      "category": "public.app-category.utilities",
+      "target": {
+        "target": "default",
+        "arch": [
+          "x64",
+          "arm64"
+        ]
+      },
+      "minimumSystemVersion": "13.0.0"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "data/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ]
+  }
+}

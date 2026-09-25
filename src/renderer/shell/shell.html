@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppFinder</title>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="shell.css">
+  <link rel="stylesheet" href="components/discover.css">
+  <link rel="stylesheet" href="components/info.css">
+  <link rel="stylesheet" href="../../../node_modules/xterm/css/xterm.css">
+  <script src="utils.js" defer></script>
+  <script src="shell.js" defer></script>
+  <script src="components/task-prompt.js" defer></script>
+  <script src="components/menu-context.js" defer></script>
+  <script src="components/discover.js" defer></script>
+  <script src="components/terminal.js" defer></script>
+  <script src="components/info.js" defer></script>
+  <script src="components/navigation.js" defer></script>
+  <script defer src="../../../node_modules/alpinejs/dist/cdn.min.js"></script>
+</head>
+
+<body>
+
+  <!-- Reusable SVG Icon Symbols -->
+  <svg style="display: none;">
+    <symbol id="icon-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+      stroke-linecap="round">
+      <line x1="12" y1="2" x2="12" y2="6"></line>
+      <line x1="12" y1="18" x2="12" y2="22"></line>
+      <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+      <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+      <line x1="2" y1="12" x2="6" y2="12"></line>
+      <line x1="18" y1="12" x2="22" y2="12"></line>
+      <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+      <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+    </symbol>
+    <symbol id="icon-upgrade" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 4v6h-6"></path>
+      <path d="M3 20v-6h6"></path>
+      <path d="M20.49 9A9 9 0 0 0 5.64 5.64L3 8m18 8-2.64 2.36A9 9 0 0 1 3.51 15"></path>
+    </symbol>
+    <symbol id="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="4"></rect>
+      <path d="m11 13 8-8m0 0v5m0-5h-5"></path>
+    </symbol>
+    <symbol id="icon-install" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M12 7v9m-3.5-3.5 3.5 3.5 3.5-3.5"></path>
+    </symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 6h18m-3 0v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6m4 0V4a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 16 4v2">
+      </path>
+      <line x1="10" y1="11" x2="10" y2="17"></line>
+      <line x1="14" y1="11" x2="14" y2="17"></line>
+    </symbol>
+  </svg>
+
+  <!-- Main container -->
+  <div class="app-container" x-data="shell" x-cloak>
+
+    <!-- Sidebar Backdrop (Drawer mode on small screens) -->
+    <div class="sidebar-backdrop" :class="{ 'open': showSidebar }" @click="showSidebar = false"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="app-sidebar" :class="{ 'collapsed': !showSidebar }">
+      <div class="sidebar-header"></div>
+
+      <!-- Search input -->
+      <div class="search-container">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+        </svg>
+        <input id="search-input" class="shared-input" type="text" :placeholder="__('Search')" autocomplete="off"
+          x-model="search" x-ref="search">
+        <button tabindex="-1" id="clear-search" class="clear-search-btn" x-show="search" @mousedown.prevent
+          @click="search=''">&times;</button>
+      </div>
+
+      <nav class="sidebar-menu" tabindex="-1">
+
+        <div class="menu-group">
+          <!-- Discover tab -->
+          <div class="menu-item" :class="{ 'active': currentTab === 'discover' }" id="menu-discover" tabindex="-1"
+            @mousedown.prevent="selectTab('discover')">
+            <svg class="menu-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <span data-i18n="Explore" x-text="__('Explore')">Explore</span>
+          </div>
+        </div>
+
+        <div class="menu-group">
+          <!-- All apps tab -->
+          <div class="menu-item" :class="{ 'active': currentTab === 'all-apps' }" id="menu-all-apps" tabindex="-1"
+            @mousedown.prevent="selectTab('all-apps')">
+            <svg class="menu-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+            </svg>
+            <span data-i18n="All Apps">All Apps</span>
+            <span class="cat-badge" id="all-apps-badge" x-show="currentTab === 'all-apps' && !_pendingTabChange"
+              x-text="currentTab === 'all-apps' && search ? filteredCount : allAppsCount">0</span>
+          </div>
+          <!-- Installed tab -->
+          <div class="menu-item" :class="{ 'active': currentTab === 'installed' }" id="menu-installed" tabindex="-1"
+            @mousedown.prevent="selectTab('installed')">
+            <svg class="menu-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="m8.5 12.5 2.5 2.5 5-5"></path>
+            </svg>
+            <span data-i18n="Installed">Installed</span>
+            <span class="cat-badge" id="installed-badge" x-show="currentTab === 'installed' && !_pendingTabChange"
+              x-text="currentTab === 'installed' && search ? filteredCount : installed.length">0</span>
+          </div>
+          <!-- Updates tab -->
+          <div class="menu-item" :class="{ 'active': currentTab === 'updates' }" id="menu-updates" tabindex="-1"
+            @mousedown.prevent="selectTab('updates')">
+            <svg class="menu-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 4v6h-6"></path>
+              <path d="M3 20v-6h6"></path>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L3 8m18 8-2.64 2.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            <span data-i18n="Updates">Updates</span>
+            <span class="updates-badge" id="updates-badge-count"
+              :class="{ 'badge-round': (currentTab === 'updates' && search ? filteredCount : updates) < 10 }"
+              x-show="(currentTab === 'updates' && search ? filteredCount : updates) > 0"
+              x-text="currentTab === 'updates' && search ? filteredCount : updates">0</span>
+          </div>
+        </div>
+
+        <div class="sidebar-section-header">
+          <!-- Categories Title -->
+          <div class="sidebar-section-title" data-i18n="Categories">Categories</div>
+        </div>
+        <div class="menu-group" id="categories-list">
+
+          <!-- Categories List -->
+          <template x-for="category in categories" :key="category.name">
+            <div class="menu-item"
+              :class="{ 'active': currentTab === category.name, 'menu-item-font': category.name === 'font' }"
+              :id="'menu-' + category.name" tabindex="-1" @mousedown.prevent="selectTab(category.name)">
+              <span class="display-contents" x-html="category.icon"></span>
+              <span class="menu-item-text" x-text="__(category.displayName)"></span>
+              <span class="cat-badge" :id="category.name + '-badge'"
+                x-show="currentTab === category.name && !_pendingTabChange" x-text="filteredCount"></span>
+            </div>
+          </template>
+
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="app-content">
+
+      <!-- Header -->
+      <header class="content-header">
+        <div class="header-left">
+
+          <!-- Toggle Sidebar Button -->
+          <button id="sidebar-toggle" class="header-icon-btn" tabindex="-1" @click="showSidebar = !showSidebar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+              <line x1="9" y1="4" x2="9" y2="20"></line>
+            </svg>
+          </button>
+
+          <!-- Page Title -->
+          <h2 id="page-title" x-text="getPageTitle()"></h2>
+
+        </div>
+        <div class="header-right">
+
+          <!-- Refresh Button -->
+          <button id="refresh-updates-btn" class="header-icon-btn" x-show="currentTab === 'updates'"
+            :class="{ 'btn-refresh-spinning': !!runningTasks['refresh'] || isRefreshing }"
+            :disabled="!!runningTasks['refresh'] || isRefreshing" @click="startAction('refresh', 'refresh')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 4v6h-6"></path>
+              <path d="M20.49 9A9 9 0 1 0 21 12.5"></path>
+            </svg>
+          </button>
+
+          <!-- Upgrade All Button -->
+          <button id="update-all-btn" class="btn btn-primary" data-i18n="Update All"
+            x-show="currentTab === 'updates' && filteredCount >= 2" @click="startAction('upgrade-all')"
+            x-text="__('Update All')">Update All</button>
+
+          <!-- Sort select -->
+          <div class="sort-selector-container" id="sort-container"
+            x-show="currentTab !== 'discover' && currentTab !== 'updates'">
+            <select id="sort-select" class="sort-select" tabindex="-1" x-model="order">
+              <option value="popularity" data-i18n="Popular">Popular</option>
+              <option value="date" data-i18n="Recent">Recent</option>
+              <option value="name" data-i18n="A-Z">A-Z</option>
+            </select>
+          </div>
+        </div>
+      </header>
+
+      <!-- Apps List Container -->
+      <section class="apps-viewport" id="apps-container" @scroll.passive="handleScroll($event)">
+
+        <!-- Discover tab -->
+        <div x-show="currentTab === 'discover'" class="discover-viewport">
+
+          <!-- Slideshow -->
+          <div class="featured-slider" @mouseenter="pauseSlideTimer()" @mouseleave="startSlideTimer()">
+            <!-- Loading Skeleton -->
+            <div class="featured-slide-skeleton" x-show="showLoading">
+              <div class="featured-slide-content">
+                <div class="featured-slide-icon-container">
+                  <div class="featured-slide-icon-skeleton"></div>
+                </div>
+              </div>
+            </div>
+
+            <template x-for="(item, index) in featuredItems" :key="item.token">
+              <div class="featured-slide-card" :class="{ 'active': !showLoading && currentSlideIndex === index }"
+                :data-token="item.token" @click="openAppInfo(item)" :style="getSlideGradient(item)">
+
+                <div class="featured-slide-content">
+                  <!-- App Icon -->
+                  <div class="featured-slide-icon-container">
+                    <template x-if="item.icon && !showInitialsMap[item.token]">
+                      <img class="featured-slide-icon" :src="item.iconUrl" :alt="item.name"
+                        @error="showInitialsMap[item.token] = true">
+                    </template>
+                    <template x-if="!item.icon || showInitialsMap[item.token]">
+                      <div class="featured-slide-icon initials-icon loaded"
+                        :style="name2color(item.name) ? `background: linear-gradient(315deg, ${name2color(item.name)}ee, ${name2color(item.name)}88);` : ''"
+                        x-text="name2initials(item.name)">
+                      </div>
+                    </template>
+                  </div>
+
+                  <!-- Details -->
+                  <div class="featured-slide-details">
+                    <h2 class="featured-slide-title" x-text="getAppName(item)"></h2>
+                    <p class="featured-slide-desc" x-text="item.desc || 'No description available for this package.'">
+                    </p>
+
+                    <!-- Action Button -->
+                    <div class="featured-slide-actions" x-show="installedLoaded && !showLoading" @click.stop
+                      @mousedown.stop>
+                      <button class="btn btn-secondary" disabled x-show="runningTasks[item.token]" @click.stop
+                        @mousedown.stop>
+                        <svg class="btn-spinner" width="16" height="16">
+                          <use href="#icon-spinner" />
+                        </svg>
+                        <span x-text="__('Working...')">Working...</span>
+                      </button>
+                      <button class="btn btn-secondary" x-show="!runningTasks[item.token] && outdatedMap[item.token]"
+                        @click.stop="startAction('upgrade', item.token)" @mousedown.stop>
+                        <svg width="16" height="16">
+                          <use href="#icon-upgrade" />
+                        </svg>
+                        <span x-text="__('Upgrade')">Upgrade</span>
+                      </button>
+                      <button class="btn btn-secondary"
+                        x-show="!runningTasks[item.token] && !outdatedMap[item.token] && installed.includes(item.token) && item.app"
+                        @click.stop="startAction('open', item.token, item.app)" @mousedown.stop>
+                        <svg width="16" height="16">
+                          <use href="#icon-open" />
+                        </svg>
+                        <span x-text="__('Open')">Open</span>
+                      </button>
+                      <button class="btn btn-secondary"
+                        x-show="!runningTasks[item.token] && !installed.includes(item.token)"
+                        @click.stop="startAction('install', item.token)" @mousedown.stop>
+                        <svg width="16" height="16">
+                          <use href="#icon-install" />
+                        </svg>
+                        <span x-text="__('Install')">Install</span>
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+            </template>
+          </div>
+
+          <!-- Quick Stats Bar -->
+          <div class="discover-stats-bar">
+            <!-- Available -->
+            <div class="discover-stat-card" @click="selectTab('all-apps')">
+              <div class="discover-stat-info" x-show="!showLoading">
+                <span class="discover-stat-value" x-text="items.length ? items.length.toLocaleString() : '0'"></span>
+                <span class="discover-stat-label" x-text="__('Available')"></span>
+              </div>
+            </div>
+
+            <!-- Installed -->
+            <div class="discover-stat-card" @click="selectTab('installed')">
+              <div class="discover-stat-info" x-show="!showLoading">
+                <span class="discover-stat-value" x-text="installed ? installed.length.toLocaleString() : '0'"></span>
+                <span class="discover-stat-label" x-text="__('Installed')"></span>
+              </div>
+            </div>
+
+            <!-- Updates -->
+            <div class="discover-stat-card" @click="selectTab('updates')">
+              <div class="discover-stat-info" x-show="!showLoading">
+                <span class="discover-stat-value" x-text="updates"></span>
+                <span class="discover-stat-label" x-text="updates === 1 ? __('Update') : __('Updates')"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Installed Section -->
+          <div class="discover-section" x-show="showLoading || (topInstalledItems && topInstalledItems.length > 0)">
+            <div class="discover-section-header">
+              <h3 class="discover-section-title" x-show="!showLoading" x-text="__('Popular')">Popular</h3>
+              <a href="#" class="discover-see-all-btn" :style="showLoading ? 'visibility: hidden;' : ''"
+                @click.prevent="order = 'popularity'; selectTab('all-apps')">
+                <span x-text="__('Show All')">Show All</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 6 6 6-6 6"></path>
+                </svg>
+              </a>
+            </div>
+
+            <!-- Loading State (No text skeleton, clean card boxes) -->
+            <div class="top-installed-grid" x-show="showLoading">
+              <template x-for="i in 6">
+                <div class="top-installed-card">
+                  <div class="top-installed-icon-container">
+                    <div class="top-installed-skeleton"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- Loaded State -->
+            <div class="top-installed-grid" x-show="!showLoading">
+              <template x-for="item in topInstalledItems" :key="item.token">
+                <div class="top-installed-card" :class="{ 'active': selectedApp && selectedApp.token === item.token }"
+                  :data-token="item.token" @click="openAppInfo(item)">
+                  <div class="top-installed-icon-container" x-data="{ loaded: false }"
+                    x-init="$nextTick(() => { const img = $el.querySelector('img.top-installed-icon'); if (img && img.complete && img.naturalWidth > 0) loaded = true; })">
+                    <div class="top-installed-skeleton" x-show="item.icon && !loaded && !showInitialsMap[item.token]">
+                    </div>
+                    <img class="top-installed-icon" x-show="item.icon && !showInitialsMap[item.token]" loading="lazy"
+                      decoding="async" :src="item.iconUrl" :alt="item.name" :class="{ 'loaded': loaded }"
+                      @load="loaded = true" @error="showInitialsMap[item.token] = true">
+                    <div class="top-installed-icon initials-icon" x-show="!item.icon || showInitialsMap[item.token]"
+                      :style="`background-color: ${name2color(item.name)};`" x-text="name2initials(item.name)">
+                    </div>
+                  </div>
+
+                  <div class="top-installed-details">
+                    <div class="top-installed-name" x-text="getAppName(item)">
+                    </div>
+                    <div class="top-installed-meta"
+                      x-text="item.category ? (categories.find(c => c.name === item.category) ? __(categories.find(c => c.name === item.category).displayName) : item.category) : item.desc">
+                    </div>
+                  </div>
+
+                  <div class="top-installed-actions" @click.stop @mousedown.stop>
+                    <button class="btn-icon" disabled x-show="runningTasks[item.token]" @click.stop @mousedown.stop>
+                      <svg class="btn-spinner" width="16" height="16">
+                        <use href="#icon-spinner" />
+                      </svg>
+                    </button>
+                    <button class="btn-icon btn-primary" x-show="!runningTasks[item.token] && outdatedMap[item.token]"
+                      @click.stop="startAction('upgrade', item.token)" @mousedown.stop>
+                      <svg width="16" height="16">
+                        <use href="#icon-upgrade" />
+                      </svg>
+                    </button>
+                    <button class="btn-icon"
+                      x-show="!runningTasks[item.token] && !outdatedMap[item.token] && installed.includes(item.token) && item.app"
+                      @click.stop="startAction('open', item.token, item.app)" @mousedown.stop>
+                      <svg width="16" height="16">
+                        <use href="#icon-open" />
+                      </svg>
+                    </button>
+                    <button class="btn-icon" x-show="!runningTasks[item.token] && !installed.includes(item.token)"
+                      @click.stop="startAction('install', item.token)" @mousedown.stop>
+                      <svg width="16" height="16">
+                        <use href="#icon-install" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Categories Section -->
+          <div class="discover-section">
+            <div class="discover-section-header">
+              <h3 class="discover-section-title" data-i18n="Categories" x-text="__('Categories')">Categories</h3>
+              <a href="#" class="discover-see-all-btn" x-show="categories && categories.length > 8"
+                :style="showLoading ? 'visibility: hidden;' : ''" @click.prevent="toggleCategories()">
+                <span x-text="showAllCategories ? __('Show Less') : __('Show All')">Show All</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path :d="showAllCategories ? 'm6 9 6 6 6-6' : 'm9 6 6 6-6 6'"></path>
+                </svg>
+              </a>
+            </div>
+
+            <div class="categories-grid">
+              <template x-for="cat in (showAllCategories ? categories : categories.slice(0, 8))" :key="cat.name">
+                <div class="category-tile" @click="selectTab(cat.name)">
+                  <span class="category-tile-icon" x-html="cat.icon"></span>
+                  <div class="category-tile-details">
+                    <div class="category-tile-name" x-text="__(cat.displayName)"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- App List -->
+        <div class="list-group" x-show="currentTab !== 'discover' && filteredCount > 0">
+
+          <!-- Standard app card template -->
+          <template x-for="item in displayedItems" :key="item.token">
+
+            <div class="app-card list-row" :class="{ 'active': selectedApp && selectedApp.token === item.token }"
+              :data-token="item.token" tabindex="0" @click="openAppInfo(item)"
+              @keydown.enter.prevent="openAppInfo(item)" @keydown.space.prevent="openAppInfo(item)">
+
+              <!-- App Icon -->
+              <div class="app-icon-container" x-data="{ loaded: false }"
+                x-init="$nextTick(() => { const img = $el.querySelector('img.app-icon'); if (img && img.complete && img.naturalWidth > 0) loaded = true; })">
+                <div class="app-icon-skeleton" x-show="item.icon && !loaded && !showInitialsMap[item.token]"></div>
+                <img class="app-icon" x-show="item.icon && !showInitialsMap[item.token]" loading="lazy" decoding="async"
+                  fetchpriority="low" :src="item.iconUrl" :alt="item.name" :class="{ 'loaded': loaded }"
+                  @load="loaded = true" @error="showInitialsMap[item.token] = true">
+                <div class="initials-icon" x-show="!item.icon || showInitialsMap[item.token]"
+                  :style="`background-color: ${name2color(item.name)};`" x-text="name2initials(item.name)">
+                </div>
+              </div>
+
+              <div class="card-title-container">
+                <h3 class="card-title" x-text="getAppName(item)"></h3>
+                <p class="card-desc"
+                  x-text="currentTab === 'updates' && outdatedMap[item.token] ? `${formatVersion(outdatedMap[item.token].installedVersion)} → ${formatVersion(outdatedMap[item.token].currentVersion)}` : item.desc">
+                </p>
+              </div>
+
+              <div class="card-actions" @click.stop @mousedown.stop>
+                <!-- Running state -->
+                <button class="btn btn-secondary" disabled x-show="runningTasks[item.token]" tabindex="-1" @click.stop
+                  @mousedown.stop>
+                  <svg class="btn-spinner" width="16" height="16">
+                    <use href="#icon-spinner" />
+                  </svg>
+                  <span
+                    x-text="runningTasks[item.token] === 'install' ? __('Installing...') : runningTasks[item.token] === 'uninstall' ? __('Deleting...') : __('Updating...')"></span>
+                </button>
+
+                <!-- Updates tab: Upgrade -->
+                <button class="btn btn-secondary action-btn"
+                  x-show="!runningTasks[item.token] && currentTab === 'updates'" tabindex="-1"
+                  @click.stop="startAction('upgrade', item.token)" @mousedown.stop
+                  x-text="__('Upgrade')">Upgrade</button>
+
+                <!-- Installed: Delete -->
+                <button class="btn btn-secondary action-btn btn-icon btn-delete"
+                  x-show="!runningTasks[item.token] && currentTab !== 'updates' && installed.includes(item.token)"
+                  tabindex="-1" @click.stop="startAction('uninstall', item.token)" @mousedown.stop>
+                  <svg width="16" height="16">
+                    <use href="#icon-trash" />
+                  </svg>
+                </button>
+
+                <!-- Installed: Open -->
+                <button class="btn btn-secondary action-btn"
+                  x-show="!runningTasks[item.token] && currentTab !== 'updates' && installed.includes(item.token) && item.app"
+                  tabindex="-1" @click.stop="startAction('open', item.token, item.app)" @mousedown.stop
+                  x-text="__('Open')">Open</button>
+
+                <!-- Not installed: Install -->
+                <button class="btn btn-secondary action-btn"
+                  x-show="!runningTasks[item.token] && currentTab !== 'updates' && !installed.includes(item.token)"
+                  tabindex="-1" @click.stop="startAction('install', item.token)" @mousedown.stop
+                  x-text="__('Install')">Install</button>
+              </div>
+            </div>
+
+          </template>
+        </div>
+
+
+        <!-- Empty State -->
+        <div class="loading-container" x-show="!showLoading && currentTab !== 'discover' && filteredCount === 0">
+          <template x-if="currentTab === 'updates' && updates === 0">
+            <div class="empty-state-content">
+              <svg class="empty-state-icon empty-state-check-icon" width="64" height="64" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="m8.5 12.5 2.5 2.5 5-5"></path>
+              </svg>
+              <div class="empty-state-title" x-text="__('Up to date')">Up to date</div>
+            </div>
+          </template>
+          <template x-if="currentTab !== 'updates' || updates > 0">
+            <div class="empty-state-content">
+              <svg class="empty-state-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+              </svg>
+              <span class="empty-state-text" data-i18n="No casks found">No casks found</span>
+            </div>
+          </template>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-container" x-show="showLoading && currentTab !== 'discover'">
+          <div class="loading-spinner"></div>
+        </div>
+      </section>
+
+
+
+      <!-- Drawer -->
+      <div id="action-drawer" class="drawer-container" x-data="terminal"
+        :class="{ 'open': showDrawer || alwaysShowStatusBar, 'collapsed': !showTerminal }">
+
+        <!-- Drawer Status -->
+        <div class="drawer-header">
+          <div class="drawer-status">
+            <div class="loading-spinner-small" id="drawer-spinner" x-show="activeTaskId || !!drawerTitle"></div>
+            <span id="drawer-title-text" x-text="drawerTitle || ''"></span>
+            <span class="badge badge-accent animate-pulse" x-show="isWaitingForInput"
+              style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; padding: 0; font-size: var(--font-size-small); font-weight: var(--font-weight-bold); flex-shrink: 0;">!</span>
+          </div>
+          <div class="drawer-actions">
+            <button id="drawer-cancel-btn" class="btn btn-secondary" x-show="activeTaskId" @click="cancel()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span x-text="__('Cancel')">Cancel</span>
+            </button>
+            <button id="drawer-toggle-btn" class="header-icon-btn" @click="showTerminal = !showTerminal">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="m18 15-6-6-6 6"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Drawer Terminal -->
+        <div class="drawer-body" id="terminal-container"></div>
+      </div>
+
+    </main>
+
+    <!-- Password Input Modal -->
+    <dialog class="password-modal-dialog" x-ref="passwordModalDialog" @cancel.prevent="cancelPassword()"
+      @keydown.escape.prevent="cancelPassword()" x-init="$watch('showPasswordModal', value => {
+        const d = $refs.passwordModalDialog;
+        if (d) {
+          if (value) {
+            if (!d.open) d.showModal();
+            setTimeout(() => $refs.passwordInput && $refs.passwordInput.focus(), 50);
+          } else {
+            if (d.open) d.close();
+          }
+        }
+      })">
+      <div class="password-modal-card">
+
+        <!-- App Icon Header -->
+        <div class="password-modal-icon-container">
+          <img class="password-modal-icon" :src="caskIcon || '../../../build/icon.svg'" :alt="caskName || 'App Finder'">
+        </div>
+
+        <h3 class="password-modal-title"
+          x-text="caskName ? (caskAction === 'uninstall' ? __('%s removal requires your password').replace('%s', caskName) : __('%s installation requires your password').replace('%s', caskName)) : __('Administrator password required')">
+          Administrator password required</h3>
+
+        <form @submit.prevent="submitPassword()">
+          <input type="password" class="shared-input" :placeholder="__('Password')" x-model="passwordValue"
+            x-ref="passwordInput">
+          <div class="password-modal-actions">
+            <button type="button" class="btn btn-secondary" @click="cancelPassword()" data-i18n="Cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary">OK</button>
+          </div>
+        </form>
+
+      </div>
+    </dialog>
+
+    <!-- App Info Panel Native Modal Dialog -->
+    <dialog class="info-panel" tabindex="-1" autofocus x-ref="infoPanelDialog" @cancel.prevent="closeAppInfo()"
+      @click="if ($event.target === $el) closeAppInfo()" x-init="$watch('showInfoPanel', value => {
+        const d = $refs.infoPanelDialog;
+        if (d) {
+          if (value) {
+            if (!d.open) d.showModal();
+            requestAnimationFrame(() => d.classList.add('open'));
+          } else {
+            d.classList.remove('open');
+            setTimeout(() => {
+              if (!showInfoPanel && d.open) d.close();
+            }, 250);
+          }
+        }
+      })">
+      <template x-if="selectedApp">
+        <div class="display-contents">
+          <div class="info-panel-header">
+            <button class="header-icon-btn" tabindex="-1" @click="closeAppInfo()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <h2 class="info-panel-header-title" x-text="__('Infos')">Infos</h2>
+          </div>
+
+          <div class="info-panel-body">
+            <!-- App Hero -->
+            <div class="info-app-hero">
+              <div class="info-app-icon-container">
+                <template x-if="selectedApp.icon && !showInitialsMap[selectedApp.token]">
+                  <img class="info-app-icon" :src="selectedApp.iconUrl" :alt="selectedApp.name"
+                    @error="showInitialsMap[selectedApp.token] = true">
+                </template>
+                <template x-if="!selectedApp.icon || showInitialsMap[selectedApp.token]">
+                  <div class="info-app-icon initials-icon loaded"
+                    :style="`background-color: ${name2color(selectedApp.name)};`"
+                    x-text="name2initials(selectedApp.name)">
+                  </div>
+                </template>
+              </div>
+              <div class="info-app-hero-details">
+                <h3 class="info-app-title" x-text="getAppName(selectedApp)"></h3>
+                <p class="info-app-desc" x-show="selectedApp.desc" x-text="selectedApp.desc"></p>
+                <span class="info-app-version" x-show="getInfoVersion()"
+                  x-text="`${__('Version')} ${formatVersion(getInfoVersion())}`"></span>
+              </div>
+            </div>
+
+            <!-- Primary Actions -->
+            <div class="info-app-actions">
+              <button class="btn btn-secondary" disabled x-show="runningTasks[selectedApp.token]" @click.stop>
+                <svg class="btn-spinner" width="16" height="16">
+                  <use href="#icon-spinner" />
+                </svg>
+                <span x-text="__('Working...')">Working...</span>
+              </button>
+
+              <div class="display-contents" x-show="!runningTasks[selectedApp.token]">
+                <button class="btn btn-secondary" x-show="outdatedMap[selectedApp.token]"
+                  @click.stop="startAction('upgrade', selectedApp.token)" x-text="__('Upgrade')">
+                  Upgrade
+                </button>
+                <button class="btn btn-secondary"
+                  x-show="!outdatedMap[selectedApp.token] && installed.includes(selectedApp.token) && selectedApp.app"
+                  @click.stop="startAction('open', selectedApp.token)" x-text="__('Open')">
+                  Open
+                </button>
+                <button class="btn btn-danger" x-show="installed.includes(selectedApp.token)"
+                  @click.stop="startAction('uninstall', selectedApp.token)" x-text="__('Delete')">
+                  Delete
+                </button>
+                <button class="btn btn-secondary" x-show="!installed.includes(selectedApp.token)"
+                  @click.stop="startAction('install', selectedApp.token)" x-text="__('Install')">
+                  Install
+                </button>
+              </div>
+            </div>
+
+            <!-- Metadata List -->
+            <div class="info-section">
+              <div class="info-meta-list">
+                <div class="info-meta-row">
+                  <span class="info-meta-label" data-i18n="Homepage" x-text="__('Homepage')">Homepage</span>
+                  <template x-if="selectedApp.homepage">
+                    <a class="info-meta-link info-meta-val" :href="selectedApp.homepage" tabindex="0" target="_blank"
+                      rel="noopener noreferrer" @click.prevent.stop="window.ipc.openExternal(selectedApp.homepage)"
+                      @keydown.enter.prevent.stop="window.ipc.openExternal(selectedApp.homepage)"
+                      @keydown.space.prevent.stop="window.ipc.openExternal(selectedApp.homepage)">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"></path>
+                        <path d="m14 4 6 0 0 6"></path>
+                        <path d="m11 13 9-9"></path>
+                      </svg>
+                      <span
+                        x-text="selectedApp.homepage ? selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : ''"></span>
+                    </a>
+                  </template>
+                  <template x-if="!selectedApp.homepage">
+                    <span class="info-meta-val">—</span>
+                  </template>
+                </div>
+                <div class="info-meta-row info-categories-row" x-show="getAppCategories(selectedApp).length > 0">
+                  <span class="info-meta-label"
+                    x-text="getAppCategories(selectedApp).length > 1 ? __('Categories') : __('Category')">Category</span>
+                  <div class="info-categories-badges">
+                    <template x-for="cat in getAppCategories(selectedApp)" :key="cat.displayName">
+                      <span class="info-category-badge">
+                        <span class="info-category-icon" x-html="cat.icon" x-show="cat.icon"></span>
+                        <span x-text="cat.displayName"></span>
+                      </span>
+                    </template>
+                  </div>
+                </div>
+                <div class="info-meta-row">
+                  <span class="info-meta-label" data-i18n="Requirements" x-text="__('Requirements')">Requirements</span>
+                  <span class="info-meta-val info-req-val">
+                    <svg class="req-icon req-met" x-show="!loadingAppDetails && isRequirementMet() === true" width="13"
+                      height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m5 12 5 5L20 7"></path>
+                    </svg>
+                    <svg class="req-icon req-unmet" x-show="!loadingAppDetails && isRequirementMet() === false"
+                      width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2 2 20h20L12 2z"></path>
+                      <line x1="12" y1="9" x2="12" y2="13"></line>
+                      <circle cx="12" cy="17" r="0.8" fill="currentColor"></circle>
+                    </svg>
+                    <span x-text="loadingAppDetails ? '...' : (getCaskRequirements() || 'macOS')"></span>
+                  </span>
+                </div>
+                <div class="info-meta-row" x-show="outdatedMap[selectedApp.token]">
+                  <span class="info-meta-label" data-i18n="Latest Version" x-text="__('Latest Version')">Latest
+                    Version</span>
+                  <span class="info-meta-val"
+                    x-text="(outdatedMap[selectedApp.token]?.currentVersion || outdatedMap[selectedApp.token]?.latestVersion || appDetails?.version) ? formatVersion(outdatedMap[selectedApp.token]?.currentVersion || outdatedMap[selectedApp.token]?.latestVersion || appDetails?.version) : (loadingAppDetails ? '...' : '—')"></span>
+                </div>
+                <div class="info-meta-row">
+                  <span class="info-meta-label" data-i18n="Auto-updates" x-text="__('Auto-updates')">Auto-updates</span>
+                  <span class="info-meta-val"
+                    x-text="loadingAppDetails ? '...' : (appDetails ? (appDetails.auto_updates ? __('Yes') : __('No')) : '—')"></span>
+                </div>
+                <div class="info-meta-row">
+                  <span class="info-meta-label" data-i18n="Monthly Installs" x-text="__('Monthly Installs')">Monthly
+                    Installs</span>
+                  <span class="info-meta-val"
+                    x-text="selectedApp.count > 0 ? formatCountK(selectedApp.count) : '0'"></span>
+                </div>
+                <div class="info-meta-row" x-show="selectedApp.added">
+                  <span class="info-meta-label" data-i18n="Added" x-text="__('Added')">Added</span>
+                  <span class="info-meta-val" x-text="formatDate(selectedApp.added)"></span>
+                </div>
+                <div class="info-meta-row" x-show="installed.includes(selectedApp.token)">
+                  <span class="info-meta-label" data-i18n="Installed" x-text="__('Installed')">Installed</span>
+                  <span class="info-meta-val"
+                    x-text="loadingAppDetails ? '...' : (appDetails?.installedDate ? formatDate(appDetails.installedDate) : '—')"></span>
+                </div>
+                <div class="info-meta-row" x-show="installed.includes(selectedApp.token)">
+                  <span class="info-meta-label" data-i18n="Last Opened" x-text="__('Last Opened')">Last Opened</span>
+                  <span class="info-meta-val"
+                    x-text="loadingAppDetails ? '...' : (appDetails?.lastOpenedDate ? formatDate(appDetails.lastOpenedDate) : '—')"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Caveats Notice (if any) -->
+            <div class="info-caveats" x-show="appDetails && appDetails.caveats">
+              <div class="info-caveats-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2 2 20h20L12 2z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <circle cx="12" cy="17" r="0.8" fill="currentColor"></circle>
+                </svg>
+                <span data-i18n="Caveats" x-text="__('Caveats')">Caveats</span>
+              </div>
+              <p class="info-caveats-text" x-text="appDetails ? appDetails.caveats : ''"></p>
+            </div>
+
+            <!-- Provides Section -->
+            <details class="info-section info-provides-details" x-show="getProvidesList().length > 0"
+              :open="isProvidesOpen" @toggle="toggleProvides($event.target.open)">
+              <summary class="info-section-title info-provides-summary" data-i18n="Provides" x-text="__('Provides')">
+                Provides</summary>
+              <div class="info-provides-list">
+                <template x-for="item in getProvidesList()" :key="item.type + ':' + item.name">
+                  <div class="info-provides-item"
+                    :class="{ 'not-installed': !installed.includes(selectedApp.token) && !appDetails?.appPath }">
+                    <button class="info-artifact-reveal-btn"
+                      :disabled="!installed.includes(selectedApp.token) && !appDetails?.appPath"
+                      :class="{ 'clickable': installed.includes(selectedApp.token) || !!appDetails?.appPath }"
+                      @click.stop="(installed.includes(selectedApp.token) || !!appDetails?.appPath) && window.ipc.revealInFinder(selectedApp.token, item.name)">
+                      <svg x-show="item.type === 'app'" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="4"></rect>
+                        <path d="m11 13 8-8m0 0v5m0-5h-5"></path>
+                      </svg>
+                      <svg x-show="item.type === 'binary'" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="4 17 10 11 4 5"></polyline>
+                        <line x1="12" y1="19" x2="20" y2="19"></line>
+                      </svg>
+                      <svg x-show="item.type === 'font'" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 7V4h12v3M10 4v16"></path>
+                        <path d="M15 13h5M17.5 13v7"></path>
+                      </svg>
+                    </button>
+                    <span class="info-provides-name" x-text="item.name"></span>
+                  </div>
+                </template>
+              </div>
+            </details>
+          </div>
+        </div>
+      </template>
+    </dialog>
+
+  </div>
+
+
+  <script src="../../../node_modules/xterm/lib/xterm.js"></script>
+
+
+</body>
+
+</html>

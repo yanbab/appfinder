@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings</title>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="settings.css">
+  <script src="settings.js" defer></script>
+  <script defer src="../../../node_modules/alpinejs/dist/cdn.min.js"></script>
+</head>
+
+<body class="settings-body no-transition" x-data="settings">
+  <div class="settings-container">
+    <div class="list-group">
+      <!-- Always Show Status Bar -->
+      <div class="list-row">
+        <div class="settings-label-container">
+          <span class="settings-label" x-text="__('Always Show Status Bar')">Always Show Status Bar</span>
+          <!-- <span class="settings-desc" x-text="__('Keep the status bar visible at the bottom of the window.')">Keep the status bar visible at the bottom of the window.</span> -->
+        </div>
+        <label class="switch">
+          <input type="checkbox" x-model="alwaysShowStatusBar">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Language -->
+      <div class="list-row">
+        <div class="settings-label-container">
+          <span class="settings-label" x-text="__('Language')">Language</span>
+        </div>
+        <select id="language-select" x-model="language">
+          <option value="system" x-text="getSystemDefaultLabel()">System</option>
+          <hr>
+          <template x-for="loc in locales" :key="loc.code">
+            <option :value="loc.code" x-text="loc.name"></option>
+          </template>
+        </select>
+      </div>
+
+      <!-- Clear Caches -->
+      <div class="list-row">
+        <div class="settings-label-container">
+          <span class="settings-label" x-text="__('Clear Caches')">Clear Caches</span>
+          <span class="settings-desc" x-text="__('Run brew cleanup to remove cached downloads and lock files.')">Run
+            brew cleanup to remove cached downloads and lock files.</span>
+        </div>
+        <button id="clear-caches-btn" class="btn btn-secondary"
+          :disabled="isCleaning" @click="clearCaches()">
+          <svg class="btn-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" x-show="isCleaning" style="margin-right: 6px;">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+          </svg>
+          <span x-text="isCleaning ? __('In Progress') : __('Clear')">Clear</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
