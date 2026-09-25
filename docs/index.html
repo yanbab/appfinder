@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AppFinder - Alternative App Store for macOS</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="landing-container">
+    <!-- Header: Icon & App Identity -->
+    <header class="app-header">
+      <div class="app-logo">
+        <img src="assets/icon.svg" alt="AppFinder Logo" />
+      </div>
+      <h1 class="app-title">AppFinder</h1>
+      <p class="app-tagline">Alternative App Store for macOS<br /> powered by Homebrew Cask</p>
+    </header>
+
+    <!-- Call to Actions -->
+    <div class="app-actions">
+      <a href="https://github.com/yanbab/appfinder/releases/download/v0.9.1/AppFinder-0.9.1-arm64.dmg"
+        class="btn btn-primary" id="download-arm-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Apple Silicon <small></small>
+      </a>
+      <a href="https://github.com/yanbab/appfinder/releases/download/v0.9.1/AppFinder-0.9.1.dmg"
+        class="btn btn-secondary" id="download-intel-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Intel <small>(x64)</small>
+      </a>
+      <a href="https://github.com/yanbab/appfinder" target="_blank" class="btn btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path
+            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+          </path>
+        </svg>
+        GitHub
+      </a>
+    </div>
+
+    <!-- Quick Git Clone Command -->
+    <!-- <div class="clone-command-container">
+      <code class="clone-command">git clone https://github.com/yanbab/appfinder.git</code>
+      <button class="copy-btn" aria-label="Copy clone command">
+        <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: none; color: #34c759;">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span class="copy-text">Copy</span>
+      </button>
+    </div> -->
+
+    <!-- Interactive Screenshot Switcher Container -->
+    <section class="screenshot-section">
+      <div class="theme-toggle-bar">
+        <button id="toggle-light" class="theme-btn active">Light Theme</button>
+        <button id="toggle-dark" class="theme-btn">Dark Theme</button>
+      </div>
+      <div class="screenshot-viewport">
+        <img id="app-screenshot" src="assets/shot-light.png" alt="AppFinder Light Mode Screenshot" class="app-image">
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+      <div class="features-header">
+        <h2 class="features-title">Everything you need in a Mac App Store</h2>
+        <p class="features-subtitle">Speed, privacy, and full control over your software library</p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path
+                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+              </path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+          </div>
+          <h3 class="feature-name">5,000+ Mac Apps</h3>
+          <p class="feature-desc">Discover, browse, and install GUI applications from Homebrew Cask’s vast,
+            community-curated catalog.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </div>
+          <h3 class="feature-name">One-Click Updates</h3>
+          <p class="feature-desc">Instantly see available software upgrades with fast background caching and perform
+            batch updates in one click.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </div>
+          <h3 class="feature-name">Zap Uninstaller</h3>
+          <p class="feature-desc">Cleanly uninstall apps along with their leftover preferences, caches, and system
+            support files.</p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <h3 class="feature-name">Privacy & Speed</h3>
+          <p class="feature-desc">No accounts, no tracking, and no proprietary lock-in. Instant search and offline
+            metadata caching.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+      <p>AppFinder is open-source software built for macOS. Powered by Homebrew Cask.</p>
+    </footer>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
