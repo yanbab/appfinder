@@ -27,9 +27,7 @@ jobs:
         run: npm ci
 
       - name: Build macOS binaries (x64 and arm64)
-        run: npm run build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build -- --publish never
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
