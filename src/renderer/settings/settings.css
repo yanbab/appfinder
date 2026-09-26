@@ -3,8 +3,9 @@
 body.settings-body {
   background: var(--bg-main);
   padding: 16px;
-  overflow: hidden;
-  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
 }

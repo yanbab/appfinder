@@ -10,6 +10,7 @@ const { setupApplicationMenu } = require('./menu-application');
 const { setupContextMenu } = require('./menu-context');
 const { createShellWindow } = require('./window-shell');
 const { checkCommand, checkCommandDialog } = require('./check');
+const { syncAutoCheckWithConfig } = require('./auto-updater');
 
 function init() {
   if (!checkCommand('brew')) { checkCommandDialog('brew'); app.quit(); return; }
@@ -20,6 +21,7 @@ function init() {
   setupApplicationMenu();
   setupContextMenu();
   createShellWindow();
+  syncAutoCheckWithConfig();
 }
 
 app.whenReady().then(init);

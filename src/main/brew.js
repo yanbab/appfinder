@@ -1,11 +1,13 @@
-const { exec, spawn } = require('child_process');
+const { exec, spawn, execFile } = require('child_process');
 const { promisify } = require('util');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const pty = require('node-pty');
+const { getCaskSizes } = require('./sizes');
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 const configDir = path.join(os.homedir(), '.config', 'appfinder');
 const updatesCachePath = path.join(configDir, 'updates.json');
 const dataDir = path.join(__dirname, '..', '..', 'data');
@@ -32,14 +34,13 @@ try {
 function getBrewPath() {
   const paths = [
     '/opt/homebrew/bin/brew',
-    '/usr/local/bin/brew',
-    '/home/linuxbrew/.linuxbrew/bin/brew'
+    '/usr/local/bin/brew'
   ];
   return paths.find(p => fs.existsSync(p)) || 'brew';
 }
 
 function getEnvWithBrew() {
-  const extraPaths = ['/opt/homebrew/bin', '/usr/local/bin', '/home/linuxbrew/.linuxbrew/bin'];
+  const extraPaths = ['/opt/homebrew/bin', '/usr/local/bin'];
   const currentPath = process.env.PATH || '';
   const missing = extraPaths.filter(p => !currentPath.includes(p));
   return {
@@ -61,12 +62,8 @@ function getData(file) {
 }
 
 function updateDockBadge(count) {
-  if (process.platform === 'darwin') {
-    const { app } = require('electron');
-    if (app?.dock?.setBadge) {
-      app.dock.setBadge(count > 0 ? String(count) : '');
-    }
-  }
+  const { updateBadges } = require('./auto-updater');
+  updateBadges(count);
 }
 
 function getApps() {
@@ -139,83 +136,38 @@ async function getUpdates(force = false) {
 }
 
 function findInstalledAppPath(caskOrToken, appName) {
-  // FIXME: SLOP
   const token = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.token : caskOrToken) || '';
-  const appCandidate = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.app || caskOrToken.name : appName) || token;
-  const appFile = appCandidate ? path.basename(appCandidate) : '';
-  const cleanAppFile = appFile && !appFile.endsWith('.app') ? `${appFile}.app` : appFile;
-  const rawTarget = appName ? path.basename(appName) : '';
+  const candidate = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.app || caskOrToken.name : appName) || token;
+  if (!candidate && !token) return null;
 
-  const userHome = process.env.HOME || '';
-  const pathsToTry = [];
-  if (cleanAppFile) {
-    pathsToTry.push(path.join('/Applications', cleanAppFile));
-    pathsToTry.push(path.join(userHome, 'Applications', cleanAppFile));
-    pathsToTry.push(path.join('/Applications/Utilities', cleanAppFile));
-    pathsToTry.push(path.join('/System/Applications', cleanAppFile));
-    pathsToTry.push(path.join('/System/Applications/Utilities', cleanAppFile));
-  }
-  if (appCandidate && appCandidate !== cleanAppFile) {
-    pathsToTry.push(path.join('/Applications', appCandidate));
-    pathsToTry.push(path.join(userHome, 'Applications', appCandidate));
-  }
-  if (rawTarget) {
-    pathsToTry.push(path.join('/opt/homebrew/bin', rawTarget));
-    pathsToTry.push(path.join('/usr/local/bin', rawTarget));
-    pathsToTry.push(path.join(userHome, 'Library/Fonts', rawTarget));
-    pathsToTry.push(path.join('/Library/Fonts', rawTarget));
-    pathsToTry.push(path.join(userHome, 'bin', rawTarget));
-    pathsToTry.push(path.join(userHome, '.local/bin', rawTarget));
+  if (typeof candidate === 'string' && path.isAbsolute(candidate) && fs.existsSync(candidate)) {
+    return candidate;
   }
 
-  // Check Homebrew Caskroom locations
-  const caskroomBases = ['/opt/homebrew/Caskroom', '/usr/local/Caskroom', '/home/linuxbrew/.linuxbrew/Caskroom'];
-  if (token) {
-    for (const base of caskroomBases) {
-      const tokenDir = path.join(base, token);
-      if (fs.existsSync(tokenDir)) {
-        try {
-          const versions = fs.readdirSync(tokenDir);
-          for (const ver of versions) {
-            const verDir = path.join(tokenDir, ver);
-            if (fs.existsSync(verDir) && fs.statSync(verDir).isDirectory()) {
-              if (cleanAppFile) {
-                const directApp = path.join(verDir, cleanAppFile);
-                if (fs.existsSync(directApp)) pathsToTry.push(directApp);
-              }
-              if (rawTarget) {
-                const directTarget = path.join(verDir, rawTarget);
-                if (fs.existsSync(directTarget)) pathsToTry.push(directTarget);
-              }
-              const files = fs.readdirSync(verDir);
-              for (const f of files) {
-                if (f.endsWith('.app') || (rawTarget && f === rawTarget)) {
-                  pathsToTry.push(path.join(verDir, f));
-                }
-              }
-            }
-          }
-        } catch (_) { }
+  const appFile = path.basename(candidate);
+  const cleanApp = appFile && !appFile.endsWith('.app') ? `${appFile}.app` : appFile;
+  const tokenApp = token && !token.endsWith('.app') ? `${token}.app` : token;
+
+  const searchDirs = [
+    '/Applications',
+    path.join(process.env.HOME || '', 'Applications'),
+    '/Applications/Utilities',
+    '/System/Applications',
+    '/System/Applications/Utilities'
+  ];
+
+  const namesToTry = Array.from(new Set([cleanApp, tokenApp, appFile].filter(Boolean)));
+
+  for (const dir of searchDirs) {
+    for (const name of namesToTry) {
+      const fullPath = path.join(dir, name);
+      if (fs.existsSync(fullPath)) {
+        return fullPath;
       }
     }
   }
 
-  let foundPath = pathsToTry.find(p => fs.existsSync(p));
-
-  // If still not found, search via Spotlight mdfind
-  if (!foundPath && cleanAppFile && process.platform === 'darwin') {
-    try {
-      const { execSync } = require('child_process');
-      const targetQuery = rawTarget || cleanAppFile;
-      const output = execSync(`/usr/bin/mdfind "kMDItemFSName == '${targetQuery}'"`, { encoding: 'utf8', timeout: 2000 });
-      const lines = output.split('\n').map(l => l.trim()).filter(Boolean);
-      if (lines.length > 0) {
-        foundPath = lines[0];
-      }
-    } catch (_) { }
-  }
-
-  return foundPath || null;
+  return null;
 }
 
 function getAppFileDates(foundPath, token) {
@@ -237,28 +189,26 @@ function getAppFileDates(foundPath, token) {
       }
     } catch (_) { }
 
-    if (process.platform === 'darwin') {
-      try {
-        const { execSync } = require('child_process');
-        const mdlsOut = execSync(`/usr/bin/mdls -name kMDItemLastUsedDate -name kMDItemContentModificationDate -name kMDItemDateAdded "${foundPath}"`, { encoding: 'utf8', timeout: 1500 });
-        const modMatch = mdlsOut.match(/kMDItemContentModificationDate\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
-        const usedMatch = mdlsOut.match(/kMDItemLastUsedDate\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
-        const addedMatch = mdlsOut.match(/kMDItemDateAdded\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
+    try {
+      const { execSync } = require('child_process');
+      const mdlsOut = execSync(`/usr/bin/mdls -name kMDItemLastUsedDate -name kMDItemContentModificationDate -name kMDItemDateAdded "${foundPath}"`, { encoding: 'utf8', timeout: 1500 });
+      const modMatch = mdlsOut.match(/kMDItemContentModificationDate\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
+      const usedMatch = mdlsOut.match(/kMDItemLastUsedDate\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
+      const addedMatch = mdlsOut.match(/kMDItemDateAdded\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
 
-        if (modMatch && modMatch[1]) {
-          const d = new Date(modMatch[1]);
-          if (!isNaN(d.getTime())) result.modified = d.toISOString();
-        }
-        if (usedMatch && usedMatch[1]) {
-          const d = new Date(usedMatch[1]);
-          if (!isNaN(d.getTime())) result.lastOpened = d.toISOString();
-        }
-        if (addedMatch && addedMatch[1]) {
-          const d = new Date(addedMatch[1]);
-          if (!isNaN(d.getTime())) result.installed = d.toISOString();
-        }
-      } catch (_) { }
-    }
+      if (modMatch && modMatch[1]) {
+        const d = new Date(modMatch[1]);
+        if (!isNaN(d.getTime())) result.modified = d.toISOString();
+      }
+      if (usedMatch && usedMatch[1]) {
+        const d = new Date(usedMatch[1]);
+        if (!isNaN(d.getTime())) result.lastOpened = d.toISOString();
+      }
+      if (addedMatch && addedMatch[1]) {
+        const d = new Date(addedMatch[1]);
+        if (!isNaN(d.getTime())) result.installed = d.toISOString();
+      }
+    } catch (_) { }
   }
 
   // Fallback to Caskroom directory for installed date if needed
@@ -286,30 +236,24 @@ function getAppFileDates(foundPath, token) {
 }
 
 async function openApp(caskOrToken, appName) {
-  const { shell } = require('electron');
   const foundPath = findInstalledAppPath(caskOrToken, appName);
 
   try {
     if (foundPath) {
-      if (shell && shell.openPath) {
-        const errMsg = await shell.openPath(foundPath);
-        if (!errMsg) return { success: true, path: foundPath };
-      }
-      exec(`open "${foundPath}"`);
+      await execFileAsync('/usr/bin/open', [foundPath]);
       return { success: true, path: foundPath };
     }
 
-    // Fallback attempts with open -a
-    const { execSync } = require('child_process');
     const token = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.token : caskOrToken) || '';
     const appCandidate = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.app || caskOrToken.name : appName) || token;
     const appFile = appCandidate ? path.basename(appCandidate) : '';
     const cleanAppFile = appFile && !appFile.endsWith('.app') ? `${appFile}.app` : appFile;
     const nameWithoutApp = cleanAppFile.endsWith('.app') ? cleanAppFile.slice(0, -4) : cleanAppFile;
-    const targets = [nameWithoutApp, cleanAppFile, appCandidate, token].filter(Boolean);
+    const targets = Array.from(new Set([nameWithoutApp, cleanAppFile, appCandidate, token].filter(Boolean)));
+
     for (const target of targets) {
       try {
-        execSync(`open -a "${target}"`, { stdio: 'ignore', timeout: 2000 });
+        await execFileAsync('/usr/bin/open', ['-a', target]);
         return { success: true };
       } catch (_) { }
     }
@@ -323,18 +267,6 @@ async function openApp(caskOrToken, appName) {
 
 function runAction(event, { taskId, action, token, zap }) {
   const { BrowserWindow } = require('electron');
-  const getTargetWindow = () => {
-    try {
-      return event?.sender && !event.sender.isDestroyed() ? BrowserWindow.fromWebContents(event.sender) : null;
-    } catch (_) {
-      return null;
-    }
-  };
-
-  const targetWin = getTargetWindow();
-  if (targetWin && !targetWin.isDestroyed()) {
-    targetWin.setProgressBar(0.5);
-  }
 
   const actions = {
     install: ['install', '--force', '--cask', token],
@@ -346,46 +278,21 @@ function runAction(event, { taskId, action, token, zap }) {
 
   const args = actions[action];
   if (!args) {
-    if (targetWin && !targetWin.isDestroyed()) targetWin.setProgressBar(-1);
     event.reply('task:complete', { taskId, code: 1, error: 'Invalid action' });
     return;
   }
 
   const brewCmd = `"${getBrewPath()}" ${args.map(a => `"${a}"`).join(' ')}`;
-  const shellCmd = process.platform === 'win32'
-    ? 'cmd.exe'
-    : (fs.existsSync('/bin/zsh') ? '/bin/zsh' : (fs.existsSync('/bin/bash') ? '/bin/bash' : '/bin/sh'));
-  const shellArgs = process.platform === 'win32' ? ['/c', brewCmd] : ['-l', '-c', brewCmd];
+  const shellCmd = fs.existsSync('/bin/zsh') ? '/bin/zsh' : (fs.existsSync('/bin/bash') ? '/bin/bash' : '/bin/sh');
+  const shellArgs = ['-l', '-c', brewCmd];
   const env = getEnvWithBrew();
-
-  const handleProgress = (data) => {
-    const text = typeof data === 'string' ? data : data.toString();
-    const match = text.match(/#*\s*(\d{1,3}(?:\.\d+)?)%/);
-    if (match) {
-      const percent = parseFloat(match[1]);
-      if (!isNaN(percent) && percent >= 0 && percent <= 100) {
-        const win = getTargetWindow();
-        if (win && !win.isDestroyed()) {
-          win.setProgressBar(percent / 100);
-        }
-      }
-    }
-  };
 
   const onTaskFinished = (exitCode) => {
     activeTasks.delete(taskId);
-    if (activeTasks.size === 0) {
-      const win = getTargetWindow();
-      if (win && !win.isDestroyed()) {
-        win.setProgressBar(-1);
-      }
-    }
     if (exitCode === 0 && (action === 'install' || action === 'uninstall')) {
-      if (process.platform === 'darwin') {
-        const { app } = require('electron');
-        if (app?.dock?.bounce) {
-          app.dock.bounce('informational');
-        }
+      const { app } = require('electron');
+      if (app?.dock?.bounce) {
+        app.dock.bounce('informational');
       }
     }
     if (action === 'cleanup') {
@@ -417,7 +324,6 @@ function runAction(event, { taskId, action, token, zap }) {
   if (ptyProcess) {
     activeTasks.set(taskId, ptyProcess);
     ptyProcess.onData((data) => {
-      handleProgress(data);
       event.sender.send('task:log', { taskId, type: 'stdout', text: data });
     });
     ptyProcess.onExit(({ exitCode }) => {
@@ -435,7 +341,6 @@ function runAction(event, { taskId, action, token, zap }) {
 
     const forward = (stream) => stream.on('data', (data) => {
       const text = data.toString();
-      handleProgress(text);
       event.sender.send('task:log', { taskId, type: 'stdout', text });
     });
 
@@ -453,12 +358,6 @@ function cancelAction(event, taskId) {
   if (task) {
     task.kill();
     activeTasks.delete(taskId);
-    if (activeTasks.size === 0) {
-      try {
-        const win = event?.sender && !event.sender.isDestroyed() ? BrowserWindow.fromWebContents(event.sender) : null;
-        if (win && !win.isDestroyed()) win.setProgressBar(-1);
-      } catch (_) { }
-    }
     BrowserWindow.getAllWindows().forEach(win => {
       if (!win.isDestroyed()) win.webContents.send('cleanup:status', 'complete');
     });
@@ -525,44 +424,57 @@ async function getCaskInfo(token) {
       if (fileDates.lastOpened) result.lastOpenedDate = fileDates.lastOpened;
       if (fileDates.installed) result.installedDate = fileDates.installed;
     }
+
     return result;
   }
 
   return null;
 }
 
-async function revealInFinder(caskOrToken, appName) {
-  const { shell } = require('electron');
-  const token = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.token : caskOrToken) || '';
-  let foundPath = findInstalledAppPath(caskOrToken, appName);
-  if (!foundPath && token) {
-    const caskroomBases = ['/opt/homebrew/Caskroom', '/usr/local/Caskroom', '/home/linuxbrew/.linuxbrew/Caskroom'];
-    for (const base of caskroomBases) {
-      const tokenDir = path.join(base, token);
-      if (fs.existsSync(tokenDir)) {
-        foundPath = tokenDir;
+async function getCaskSizesByToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const sanitized = token.replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!sanitized) return null;
+
+  let cask = infoCache.get(sanitized);
+  if (!cask) {
+    const brewPath = getBrewPath();
+    const { stdout } = await execAsync(`"${brewPath}" info --json=v2 --cask "${sanitized}"`, {
+      env: getEnvWithBrew(),
+      maxBuffer: 10 * 1024 * 1024
+    }).catch(() => ({ stdout: null }));
+
+    if (stdout) {
+      try {
+        cask = JSON.parse(stdout)?.casks?.[0] ?? null;
+        if (cask) infoCache.set(sanitized, cask);
+      } catch { }
+    }
+  }
+
+  if (!cask) return null;
+
+  let candidate = '';
+  if (cask.artifacts) {
+    for (const art of cask.artifacts) {
+      if (art.app && Array.isArray(art.app) && art.app[0]) {
+        candidate = art.app[0];
         break;
       }
     }
   }
-  if (foundPath && fs.existsSync(foundPath)) {
-    shell.showItemInFolder(foundPath);
-    return { success: true, path: foundPath };
-  }
-  return { success: false, error: 'File not found' };
+  const foundPath = findInstalledAppPath(sanitized, candidate || (cask.name && cask.name[0]) || sanitized);
+  return await getCaskSizes(cask, foundPath);
 }
 
 module.exports = {
-  getData: getApps,
   getApps,
   getCategories,
   getInstalled,
   getUpdates,
   getCaskInfo,
-  open: openApp,
+  getCaskSizesByToken,
   openApp,
-  reveal: revealInFinder,
-  revealInFinder,
   findInstalledAppPath,
   runAction,
   cancelAction,
@@ -571,3 +483,4 @@ module.exports = {
   getBrewPath,
   getEnvWithBrew
 };
+

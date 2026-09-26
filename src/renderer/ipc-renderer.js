@@ -55,6 +55,7 @@ contextBridge.exposeInMainWorld('ipc', {
   getCasks: () => invoke('cask:get-data'),
   getCategories: () => invoke('cask:get-categories'),
   getCaskInfo: (token) => invoke('cask:get-info', token),
+  getCaskSizes: (token) => invoke('cask:get-sizes', token),
   getInstalled: () => invoke('cask:get-installed'),
   getUpdates: (force = false) => invoke('cask:get-updates', force),
   getTranslations: () => invoke('i18n:get-catalog'),
@@ -79,7 +80,6 @@ contextBridge.exposeInMainWorld('ipc', {
     return cachedConfig;
   },
   openApp: (token, appName) => invoke('cask:open', token, appName),
-  revealInFinder: (token, appName) => invoke('cask:reveal', token, appName),
   openExternal: (url) => invoke('external:open', url),
   showErrorDialog: (title, content) => invoke('dialog:error', title, content),
   showMessage: (options) => invoke('dialog:message', options),
@@ -91,7 +91,7 @@ contextBridge.exposeInMainWorld('ipc', {
 
   getAccentColor: () => invoke('system:get-accent-color'),
   onAccentColorChanged: (cb) => on('system:accent-color-changed', cb),
-  setProgressBar: (progress, options) => ipcRenderer.send('system:set-progress-bar', progress, options),
+  setContentSize: (width, height) => ipcRenderer.send('window:set-content-size', width, height),
 
   showContextMenu: (data) => ipcRenderer.send('context-menu:show', data),
   onContextMenuAction: (cb) => on('context-menu:action', cb),
@@ -99,6 +99,7 @@ contextBridge.exposeInMainWorld('ipc', {
   onTaskLog: (cb) => on('task:log', cb),
   onTaskComplete: (cb) => on('task:complete', cb),
   onStatusLog: (cb) => on('status:log', cb),
+  onUpdatesRefreshed: (cb) => on('cask:updates-refreshed', cb),
   onCleanupStatus: (cb) => on('cleanup:status', cb),
   onConfigUpdated: (cb) => on('config:updated', cb),
   onI18nChanged: (cb) => on('i18n:changed', cb),

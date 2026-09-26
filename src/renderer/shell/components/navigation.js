@@ -178,7 +178,7 @@ Object.assign(window.shell, {
     }
 });
 
-// Global keyboard shortcuts and navigation
+// Centralized keyboard shortcuts and navigation
 window.addEventListener('keydown', (e) => {
     const store = window.shell;
     if (!store || store.showPasswordModal) return;
@@ -189,12 +189,44 @@ window.addEventListener('keydown', (e) => {
     const isInput = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
     const isKey = !e.metaKey && !e.ctrlKey && !e.altKey && e.key.length === 1 && e.key !== ' ';
 
-    // App list keyboard navigation
+    // 1. Escape key handling across the entire app
+    if (e.key === 'Escape') {
+        if (isInput) {
+            store.search = '';
+        }
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+            document.activeElement.blur();
+        }
+        if (store.showInfoPanel) {
+            e.preventDefault();
+            store.closeAppInfo();
+            return;
+        }
+        if (store.showSidebar && window.innerWidth <= 560) {
+            e.preventDefault();
+            store.showSidebar = false;
+            return;
+        }
+        return;
+    }
+
+    // 2. Discover tab slide navigation
+    if (store.currentTab === 'discover' && !isInput && !isOtherInput) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            if (store.showInfoPanel) store.closeAppInfo();
+            e.preventDefault();
+            if (e.key === 'ArrowLeft') store.prevSlide();
+            else store.nextSlide();
+            return;
+        }
+    }
+
+    // 3. App list keyboard navigation
     if (store.handleAppListNavigation(e)) {
         return;
     }
 
-    // Sidebar navigation when focus is inside sidebar
+    // 4. Sidebar navigation when focus is inside sidebar
     const activeEl = document.activeElement;
     const isSidebar = activeEl && (activeEl.closest('.app-sidebar') || activeEl.classList.contains('menu-item'));
     if (isSidebar) {
@@ -232,7 +264,7 @@ window.addEventListener('keydown', (e) => {
         }
     }
 
-    // ArrowDown when not in input and on an app list tab
+    // 5. ArrowDown when not in input and on an app list tab
     if (!isInput && !activeEl?.closest('.app-card') && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
         if (store.currentTab !== 'discover' && store.displayedItems.length > 0) {
             const firstCard = document.querySelector('.apps-viewport .app-card');
@@ -245,16 +277,7 @@ window.addEventListener('keydown', (e) => {
         }
     }
 
-    if (e.key === 'Escape') {
-        if (isInput) {
-            store.search = '';
-        }
-        if (document.activeElement && typeof document.activeElement.blur === 'function') {
-            document.activeElement.blur();
-        }
-        return;
-    }
-
+    // 6. Direct type-to-search when focused outside inputs
     if (!isInput && isKey) {
         e.preventDefault();
         if (store.showInfoPanel) store.closeAppInfo();

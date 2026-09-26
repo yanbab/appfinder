@@ -232,9 +232,11 @@ body {
 .screenshot-viewport {
   width: 100%;
   max-width: 880px;
-  display: flex;
+  display: grid;
+  grid-template-areas: "screenshot";
   align-items: center;
   justify-content: center;
+  position: relative;
   transition: transform 0.25s ease;
 }
 
@@ -243,23 +245,32 @@ body {
 }
 
 .app-image {
+  grid-area: screenshot;
   width: 100%;
   height: auto;
   max-width: 100%;
   display: block;
-  animation: fadeIn 0.3s ease;
+  will-change: opacity;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.99);
-  }
+.screenshot-viewport.animate-fade .app-image {
+  transition: opacity 0.2s ease;
+}
 
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.shot-light {
+  opacity: 1;
+}
+
+.shot-dark {
+  opacity: 0;
+}
+
+.screenshot-viewport.dark .shot-light {
+  opacity: 0;
+}
+
+.screenshot-viewport.dark .shot-dark {
+  opacity: 1;
 }
 
 /* Features Section */

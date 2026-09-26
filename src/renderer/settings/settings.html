@@ -18,10 +18,42 @@
       <div class="list-row">
         <div class="settings-label-container">
           <span class="settings-label" x-text="__('Always Show Status Bar')">Always Show Status Bar</span>
-          <!-- <span class="settings-desc" x-text="__('Keep the status bar visible at the bottom of the window.')">Keep the status bar visible at the bottom of the window.</span> -->
         </div>
         <label class="switch">
           <input type="checkbox" x-model="alwaysShowStatusBar">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Show updates in Dock Badge -->
+      <div class="list-row">
+        <div class="settings-label-container">
+          <span class="settings-label" x-text="__('Show updates count in dock badge')">Show updates count in dock badge</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" x-model="showDockBadge">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Show updates in Menu Bar Tray -->
+      <div class="list-row">
+        <div class="settings-label-container">
+          <span class="settings-label" x-text="__('Show updates count in menu bar')">Show updates count in menu bar</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" x-model="showTrayIcon">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Automatically check for updates -->
+      <div class="list-row">
+        <div class="settings-label-container">
+          <span class="settings-label" x-text="__('Automatically check for updates')">Automatically check for updates</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" x-model="autoCheckUpdates">
           <span class="slider"></span>
         </label>
       </div>
@@ -49,11 +81,6 @@
         </div>
         <button id="clear-caches-btn" class="btn btn-secondary"
           :disabled="isCleaning" @click="clearCaches()">
-          <svg class="btn-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="2.5" x-show="isCleaning" style="margin-right: 6px;">
-            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-            <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
-          </svg>
           <span x-text="isCleaning ? __('In Progress') : __('Clear')">Clear</span>
         </button>
       </div>

@@ -52,6 +52,7 @@ window.shell = {
         this.initStyles();
         this.initUI();
         this.initIPC();
+        if (this.initTasks) this.initTasks();
 
         window.shell = this;
 
@@ -148,6 +149,12 @@ window.shell = {
                 this.showSidebar = (typeof show === 'boolean') ? show : !this.showSidebar;
             });
         }
+
+        if (window.ipc?.onUpdatesRefreshed) {
+            window.ipc.onUpdatesRefreshed((data) => {
+                this.setUpdates(data);
+            });
+        }
     },
 
     sortCategories(cats) {
@@ -161,14 +168,14 @@ window.shell = {
     },
 
     setStatusMessage(msg) {
-        if (window.terminal && !window.terminal.activeTaskId) {
-            window.terminal.drawerTitle = msg;
+        if (!this.activeTaskId) {
+            this.drawerTitle = msg;
         }
     },
 
     clearStatusMessage() {
-        if (window.terminal && !window.terminal.activeTaskId) {
-            window.terminal.drawerTitle = "";
+        if (!this.activeTaskId) {
+            this.drawerTitle = "";
         }
     },
 
@@ -193,9 +200,24 @@ window.shell = {
         }
         this.outdatedMap = outdatedMap;
         this.updates = Object.keys(outdatedMap).length;
+        this.lastCheckedTime = new Date();
         if (this.currentTab === 'updates') {
             this.applyFilterAndSort();
         }
+    },
+
+    getStatusDefaultText() {
+        const count = this.updates || 0;
+        const updateText = count > 0
+            ? (count === 1 ? this.__('1 update available') : this.__('%d updates available').replace('%d', count))
+            : this.__('Up to date');
+
+        if (!this.lastCheckedTime) {
+            return updateText;
+        }
+        const timeStr = this.lastCheckedTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        const lastCheckedStr = this.__('Last checked %s').replace('%s', timeStr);
+        return `${updateText} • ${lastCheckedStr}`;
     },
 
     async refreshInstalled() {

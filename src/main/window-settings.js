@@ -18,7 +18,7 @@ function createSettingsWindow(parentWindow) {
     title: __('Settings', 'Settings'),
     name: 'settings',
     width: 380,
-    height: 230,
+    height: 340,
     acceptFirstMouse: true,
     resizable: false,
     minimizable: false,

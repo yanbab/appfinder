@@ -4,20 +4,8 @@ Object.assign(window.shell, {
   showInfoPanel: false,
   appDetails: null,
   loadingAppDetails: false,
-  isProvidesOpen: (() => {
-    try {
-      return localStorage.getItem('info_provides_open') === 'true';
-    } catch {
-      return false;
-    }
-  })(),
-
-  toggleProvides(isOpen) {
-    this.isProvidesOpen = !!isOpen;
-    try {
-      localStorage.setItem('info_provides_open', String(this.isProvidesOpen));
-    } catch (_) {}
-  },
+  loadingSizes: false,
+  infoCache: new Map(),
 
   getInfoVersion() {
     if (!this.selectedApp) return '';
@@ -47,18 +35,59 @@ Object.assign(window.shell, {
     if (!item) return;
     this.selectedApp = item;
     this.showInfoPanel = true;
-    this.appDetails = null;
-    this.loadingAppDetails = true;
 
-    window.ipc.getCaskInfo(item.token)
-      .then((details) => {
-        if (this.showInfoPanel && this.selectedApp?.token === item.token) {
-          this.appDetails = details;
+    const token = item.token;
+    const cached = this.infoCache.get(token);
+
+    if (cached) {
+      this.appDetails = cached;
+      this.loadingAppDetails = false;
+      if (cached.downloadSize !== undefined) {
+        this.loadingSizes = false;
+        return;
+      }
+      this.loadingSizes = true;
+    } else {
+      this.appDetails = null;
+      this.loadingAppDetails = true;
+      this.loadingSizes = true;
+
+      window.ipc.getCaskInfo(token)
+        .then((details) => {
+          const res = details || {};
+          const current = this.infoCache.get(token) || {};
+          const merged = { ...current, ...res };
+          this.infoCache.set(token, merged);
+          if (this.showInfoPanel && this.selectedApp?.token === token) {
+            this.appDetails = merged;
+          }
+        })
+        .finally(() => {
+          if (this.selectedApp?.token === token) {
+            this.loadingAppDetails = false;
+          }
+        });
+    }
+
+    window.ipc.getCaskSizes(token)
+      .then((sizes) => {
+        if (sizes) {
+          const current = this.infoCache.get(token) || this.appDetails || {};
+          const merged = {
+            ...current,
+            downloadSize: sizes.downloadSize,
+            installedSize: sizes.installedSize,
+            dataSize: sizes.dataSize
+          };
+          this.infoCache.set(token, merged);
+          if (this.showInfoPanel && this.selectedApp?.token === token) {
+            this.appDetails = merged;
+          }
         }
       })
       .finally(() => {
-        if (this.selectedApp?.token === item.token) {
-          this.loadingAppDetails = false;
+        if (this.selectedApp?.token === token) {
+          this.loadingSizes = false;
         }
       });
   },
@@ -70,6 +99,7 @@ Object.assign(window.shell, {
         this.selectedApp = null;
         this.appDetails = null;
         this.loadingAppDetails = false;
+        this.loadingSizes = false;
       }
     }, 300);
   },
@@ -139,44 +169,6 @@ Object.assign(window.shell, {
     } catch {
       return String(dateVal);
     }
-  },
-
-  getCaskArtifacts() {
-    const apps = [];
-    const binaries = [];
-    const fonts = [];
-
-    if (this.appDetails?.artifacts) {
-      for (const art of this.appDetails.artifacts) {
-        if (art.app) apps.push(...art.app);
-        if (art.font) {
-          const fontList = Array.isArray(art.font) ? art.font : [art.font];
-          for (const f of fontList) {
-            const name = typeof f === 'string' ? f.split('/').pop() : (f?.target || '');
-            if (name) fonts.push(name);
-          }
-        }
-        if (art.binary) {
-          for (const b of art.binary) {
-            const name = typeof b === 'string' ? b.split('/').pop() : (b.target || '');
-            if (name) binaries.push(name);
-          }
-        }
-      }
-    } else if (this.selectedApp?.app) {
-      apps.push(this.selectedApp.app);
-    }
-
-    return { apps, binaries, fonts };
-  },
-
-  getProvidesList() {
-    const { apps, binaries, fonts } = this.getCaskArtifacts();
-    const list = [];
-    for (const name of apps) list.push({ type: 'app', name, typeLabel: this.__('App') });
-    for (const name of binaries) list.push({ type: 'binary', name, typeLabel: this.__('Command') });
-    for (const name of fonts) list.push({ type: 'font', name, typeLabel: this.__('Font') });
-    return list;
   },
 
   getCaskRequirements() {
@@ -260,30 +252,5 @@ Object.assign(window.shell, {
       }
     }
     return true;
-  },
-
-  getCaskSourceUrl() {
-    const path = this.appDetails?.ruby_source_path;
-    if (path) return `https://github.com/Homebrew/homebrew-cask/blob/HEAD/${path}`;
-    if (this.selectedApp?.token) {
-      return `https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/${this.selectedApp.token.charAt(0)}/${this.selectedApp.token}.rb`;
-    }
-    return null;
-  }
-});
-
-// Close info panel or sidebar drawer on Escape
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !window.shell?.showPasswordModal) {
-    if (document.activeElement && typeof document.activeElement.blur === 'function') {
-      document.activeElement.blur();
-    }
-    if (window.shell?.showInfoPanel) {
-      e.preventDefault();
-      window.shell.closeAppInfo();
-    } else if (window.shell?.showSidebar && window.innerWidth <= 560) {
-      e.preventDefault();
-      window.shell.showSidebar = false;
-    }
   }
 });

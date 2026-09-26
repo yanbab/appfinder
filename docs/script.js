@@ -1,42 +1,38 @@
 const btnLight = document.getElementById('toggle-light');
 const btnDark = document.getElementById('toggle-dark');
-const screenshot = document.getElementById('app-screenshot');
+const screenshotViewport = document.querySelector('.screenshot-viewport');
 
-function setLightTheme() {
+function setLightTheme(animate = true) {
+  if (animate && screenshotViewport) screenshotViewport.classList.add('animate-fade');
   if (btnLight) btnLight.classList.add('active');
   if (btnDark) btnDark.classList.remove('active');
-  if (screenshot) {
-    screenshot.src = 'assets/shot-light.png';
-    screenshot.alt = 'AppFinder Light Mode Screenshot';
-  }
+  if (screenshotViewport) screenshotViewport.classList.remove('dark');
 }
 
-function setDarkTheme() {
+function setDarkTheme(animate = true) {
+  if (animate && screenshotViewport) screenshotViewport.classList.add('animate-fade');
   if (btnDark) btnDark.classList.add('active');
   if (btnLight) btnLight.classList.remove('active');
-  if (screenshot) {
-    screenshot.src = 'assets/shot-dark.png';
-    screenshot.alt = 'AppFinder Dark Mode Screenshot';
-  }
+  if (screenshotViewport) screenshotViewport.classList.add('dark');
 }
 
-if (btnLight) btnLight.addEventListener('click', setLightTheme);
-if (btnDark) btnDark.addEventListener('click', setDarkTheme);
+if (btnLight) btnLight.addEventListener('click', () => setLightTheme(true));
+if (btnDark) btnDark.addEventListener('click', () => setDarkTheme(true));
 
-// Initial detection of prefers-color-scheme
+// Initial detection of prefers-color-scheme without animation/flashing
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  setDarkTheme();
+  setDarkTheme(false);
 } else {
-  setLightTheme();
+  setLightTheme(false);
 }
 
 // Dynamic listener for prefers-color-scheme changes
 if (window.matchMedia) {
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
     if (event.matches) {
-      setDarkTheme();
+      setDarkTheme(true);
     } else {
-      setLightTheme();
+      setLightTheme(true);
     }
   });
 }

@@ -22,8 +22,8 @@ function setupIpcMain() {
     ipcMain.handle('cask:get-installed', async (event) => Brew.getInstalled(event));
     ipcMain.handle('cask:get-updates', async (_, force) => Brew.getUpdates(force));
     ipcMain.handle('cask:get-info', async (_, token) => Brew.getCaskInfo(token));
+    ipcMain.handle('cask:get-sizes', async (_, token) => Brew.getCaskSizesByToken(token));
     ipcMain.handle('cask:open', async (_, token, appName) => Brew.openApp(token, appName));
-    ipcMain.handle('cask:reveal', async (_, token, appName) => Brew.revealInFinder(token, appName));
     ipcMain.on('cask:run-action', (event, data) => Brew.runAction(event, data));
     ipcMain.on('cask:cancel-action', (event, taskId) => Brew.cancelAction(event, taskId));
     ipcMain.on('cask:write-pty-input', (_, { taskId, text }) => Brew.writePtyInput(taskId, text));
@@ -42,16 +42,16 @@ function setupIpcMain() {
 
     // System Preferences & Accent Color
     ipcMain.handle('system:get-accent-color', async () => systemPreferences.getAccentColor());
-    ipcMain.on('system:set-progress-bar', (event, progress, options) => {
-        const win = BrowserWindow.fromWebContents(event.sender);
-        if (win && !win.isDestroyed()) {
-            win.setProgressBar(progress, options);
-        }
-    });
     systemPreferences.subscribeNotification('AppleColorPreferencesChangedNotification', () => {
         broadcast('system:accent-color-changed', systemPreferences.getAccentColor());
     });
     ipcMain.on('settings:open', (event) => createSettingsWindow(event?.sender ? BrowserWindow.fromWebContents(event.sender) : null));
+    ipcMain.on('window:set-content-size', (event, width, height) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        if (win && !win.isDestroyed() && typeof width === 'number' && typeof height === 'number') {
+            win.setContentSize(width, height);
+        }
+    });
     ipcMain.on('shell:sidebar-changed', (_, visible) => {
         const { updateSidebarChecked } = require('./menu-application');
         updateSidebarChecked(visible);
@@ -81,6 +81,8 @@ function setupIpcMain() {
             setupApplicationMenu();
             broadcast('i18n:changed');
         }
+        const { syncAutoCheckWithConfig } = require('./auto-updater');
+        syncAutoCheckWithConfig();
         return updated;
     });
 

@@ -6,7 +6,8 @@ const { getConfig } = require('./config');
 const { createSettingsWindow } = require('./window-settings');
 const { getShellWindow } = require('./window-shell');
 
-const websiteUrl = 'https://github.com/yanbab/appfinder';
+const websiteUrl = 'https://yanbab.github.io/appfinder';
+const githubUrl = 'https://github.com/yanbab/appfinder';
 
 function sendToShell(channel, ...args) {
   const win = getShellWindow();
@@ -162,6 +163,9 @@ function setupApplicationMenu() {
       submenu: [{
         label: __('%s Website', app.name),
         click: async () => shell.openExternal(websiteUrl)
+      }, {
+        label: __('%s GitHub Repository', app.name),
+        click: async () => shell.openExternal(githubUrl)
       }]
     }
   ];

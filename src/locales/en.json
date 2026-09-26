@@ -81,6 +81,7 @@
   "Order By": "Order By",
   "Other": "Other",
   "Password": "Password",
+  "Password required": "Password required",
   "Paste": "Paste",
   "Please install \"%s\" and try again.": "Please install \"%s\" and try again.",
   "Popular": "Popular",
@@ -125,5 +126,14 @@
   "Yes": "Yes",
   "Yesterday": "Yesterday",
   "Yesterday at %s": "Yesterday at %s",
+  "Download Size": "Download Size",
+  "Installed Size": "Installed Size",
+  "Data Size": "Data Size",
+  "Show updates count in menu bar": "Show updates count in menu bar",
+  "Show updates count in dock badge": "Show updates count in dock badge",
+  "Automatically check for updates": "Automatically check for updates",
+  "%d updates available": "%d updates available",
+  "1 update available": "1 update available",
+  "Last checked %s": "Last checked %s",
   "You can reinstall this application later.": "You can reinstall this application later."
 }

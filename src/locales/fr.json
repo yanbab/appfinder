@@ -81,6 +81,7 @@
   "Order By": "Trier par",
   "Other": "Autre",
   "Password": "Mot de passe",
+  "Password required": "Mot de passe requis",
   "Paste": "Coller",
   "Please install \"%s\" and try again.": "Veuillez installer \"%s\" et réessayer.",
   "Popular": "Populaires",
@@ -125,5 +126,14 @@
   "Yes": "Oui",
   "Yesterday": "Hier",
   "Yesterday at %s": "Hier à %s",
+  "Download Size": "Taille de téléchargement",
+  "Installed Size": "Taille installée",
+  "Data Size": "Taille des données",
+  "Show updates count in menu bar": "Afficher le nombre de mises à jour dans la barre des menus",
+  "Show updates count in dock badge": "Afficher le badge dans le Dock",
+  "Automatically check for updates": "Rechercher automatiquement les mises à jour",
+  "%d updates available": "%d mises à jour disponibles",
+  "1 update available": "1 mise à jour disponible",
+  "Last checked %s": "Dernière vérification à %s",
   "You can reinstall this application later.": "Vous pourrez réinstaller cette application plus tard."
 }

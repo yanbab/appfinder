@@ -2,6 +2,9 @@
 
 window.settings = {
   alwaysShowStatusBar: false,
+  showDockBadge: true,
+  showTrayIcon: false,
+  autoCheckUpdates: true,
   language: 'system',
   locales: [],
   catalog: {},
@@ -16,6 +19,9 @@ window.settings = {
 
     // Watch settings and save automatically on user changes
     this.$watch('alwaysShowStatusBar', () => this.save());
+    this.$watch('showDockBadge', () => this.save());
+    this.$watch('showTrayIcon', () => this.save());
+    this.$watch('autoCheckUpdates', () => this.save());
     this.$watch('language', () => this.save());
 
     if (window.ipc?.onCleanupStatus) {
@@ -31,6 +37,7 @@ window.settings = {
           const key = el.getAttribute('data-i18n');
           if (key) el.textContent = this.__(key);
         });
+        this.resizeToContent();
       });
     }
 
@@ -40,7 +47,18 @@ window.settings = {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         document.body.classList.remove('no-transition');
+        this.resizeToContent();
       });
+    });
+  },
+
+  resizeToContent() {
+    requestAnimationFrame(() => {
+      const container = document.querySelector('.settings-container');
+      const h = container ? Math.ceil(container.getBoundingClientRect().height + 32) : Math.ceil(document.body.scrollHeight);
+      if (h > 50 && window.ipc?.setContentSize) {
+        window.ipc.setContentSize(380, h);
+      }
     });
   },
 
@@ -58,9 +76,10 @@ window.settings = {
   async loadConfig() {
     try {
       const config = (await window.ipc.getConfig()) || {};
-      this.automaticUpdates = !!config.automaticUpdates;
-      this.zap = !!config.zap;
       this.alwaysShowStatusBar = !!config.alwaysShowStatusBar;
+      this.showDockBadge = config.showDockBadge !== false;
+      this.showTrayIcon = !!config.showTrayIcon;
+      this.autoCheckUpdates = config.autoCheckUpdates !== false;
       this.language = config.language || 'system';
     } catch (e) {
       console.error('Failed to load config:', e);
@@ -88,6 +107,9 @@ window.settings = {
     try {
       await window.ipc.updateConfig({
         alwaysShowStatusBar: this.alwaysShowStatusBar,
+        showDockBadge: this.showDockBadge,
+        showTrayIcon: this.showTrayIcon,
+        autoCheckUpdates: this.autoCheckUpdates,
         language: this.language
       });
     } catch (e) {
