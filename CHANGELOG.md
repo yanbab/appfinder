@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.4] - 2026-09-27
+
+### Changes
+- ci: add automated release script and npm run release command
+- ci: add CHANGELOG.md and integrate changelog-based release notes into GitHub workflow
+
+---
+
 ## [0.9.3] - 2026-09-27
 
 ### Added
