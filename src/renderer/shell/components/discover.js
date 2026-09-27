@@ -2,6 +2,9 @@
 Object.assign(window.shell, {
   currentSlideIndex: 0,
   slideTimer: null,
+  slideIntervalMs: 4500,
+  topInstalledLimit: 6,
+  featuredTokens: ['onlyoffice', 'iina', 'visual-studio-code', 'figma', 'rectangle', 'spotify', 'raycast', 'obsidian', 'zed'],
   featuredItems: [],
   topInstalledItems: [],
 
@@ -12,7 +15,7 @@ Object.assign(window.shell, {
         if (this.currentTab === 'discover') {
           this.nextSlide();
         }
-      }, 4500);
+      }, this.slideIntervalMs || 4500);
     }
   },
 
@@ -34,7 +37,7 @@ Object.assign(window.shell, {
   },
 
   updateDiscoverItems() {
-    const featuredTokens = ['visual-studio-code', 'figma', 'spotify', 'raycast', 'obsidian', 'zed'];
+    const featuredTokens = this.featuredTokens || ['onlyoffice', 'iina', 'visual-studio-code', 'figma', 'rectangle', 'spotify', 'raycast', 'obsidian', 'zed'];
     this.featuredItems = Object.freeze(this.items.filter(c => featuredTokens.includes(c.token)));
     this.currentSlideIndex = 0;
     this.startSlideTimer();
@@ -46,13 +49,14 @@ Object.assign(window.shell, {
 
     const topInstalled = [];
     const seenCategories = new Set();
+    const maxTop = this.topInstalledLimit || 6;
 
     for (const item of sorted) {
       const cat = item.category || 'other';
       if (!seenCategories.has(cat)) {
         seenCategories.add(cat);
         topInstalled.push(item);
-        if (topInstalled.length >= 6) break;
+        if (topInstalled.length >= maxTop) break;
       }
     }
 

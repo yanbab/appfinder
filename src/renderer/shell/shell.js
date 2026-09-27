@@ -10,6 +10,14 @@ window.shell = {
     showAllCategories: false,
     catalog: {},
 
+    // Layout, pagination & debounce limits
+    compactBreakpoint: 560,
+    scrollThreshold: 250,
+    displayedCount: 50,
+    chunkSize: 50,
+    resizeDebounceMs: 100,
+    _pendingTabChange: false,
+
     // Catalog & collection state
     items: [],
     displayedItems: [],
@@ -23,19 +31,7 @@ window.shell = {
     updates: 0,
     allAppsCount: 0,
     isRefreshing: false,
-
-    // Infinite scroll pagination
-    displayedCount: 50,
-    chunkSize: 50,
-    _pendingTabChange: false,
-
-    // Password modal state
     showPasswordModal: false,
-    passwordValue: "",
-    caskName: "",
-    caskIcon: "",
-    caskToken: "",
-    caskAction: "",
 
     // Icon loading maps
     showInitialsMap: {},
@@ -169,13 +165,15 @@ window.shell = {
 
     setStatusMessage(msg) {
         if (!this.activeTaskId) {
-            this.drawerTitle = msg;
+            this.drawerTitle = msg || '';
+            if (msg) this.showDrawer = true;
         }
     },
 
     clearStatusMessage() {
         if (!this.activeTaskId) {
-            this.drawerTitle = "";
+            this.drawerTitle = '';
+            if (!this.alwaysShowStatusBar) this.showDrawer = false;
         }
     },
 
@@ -332,12 +330,17 @@ window.shell = {
     resetScroll() {
         this.displayedCount = this.chunkSize || 50;
         const el = document.getElementById('apps-container');
-        if (el) el.scrollTop = 0;
+        if (el) {
+            el.scrollTop = 0;
+            el.classList.remove('scrolled');
+        }
     },
 
     handleScroll(e) {
         const el = e.target;
-        if (el && el.scrollTop + el.clientHeight >= el.scrollHeight - 250) {
+        if (!el) return;
+        el.classList.toggle('scrolled', el.scrollTop > 0);
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - (this.scrollThreshold || 250)) {
             if (this.displayedItems.length < this.filteredCount) {
                 this.displayedCount += this.chunkSize || 50;
                 this.displayedItems = this._filteredList.slice(0, this.displayedCount);
@@ -349,7 +352,7 @@ window.shell = {
         if (this.currentTab === tab) return;
         this.currentTab = tab;
         this.resetScroll();
-        if (window.innerWidth <= 560) this.showSidebar = false;
+        if (window.innerWidth <= (this.compactBreakpoint || 560)) this.showSidebar = false;
         this.applyFilterAndSort();
     },
 
@@ -362,7 +365,7 @@ window.shell = {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => {
                 document.body.classList.remove('is-resizing');
-            }, 100);
+            }, this.resizeDebounceMs || 100);
         });
         const setAccent = (c) => c && document.documentElement.style.setProperty('--accent-color-raw', this.formatAccentColor(c));
         window.ipc.getAccentColor().then(setAccent);

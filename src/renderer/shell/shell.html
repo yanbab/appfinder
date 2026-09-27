@@ -621,11 +621,10 @@
 
         <!-- App Icon Header -->
         <div class="password-modal-icon-container">
-          <img class="password-modal-icon" :src="caskIcon || '../../../build/icon.svg'" :alt="caskName || 'App Finder'">
+          <img class="password-modal-icon" :src="getPasswordPromptIcon()" :alt="activeTaskToken || 'App Finder'">
         </div>
 
-        <h3 class="password-modal-title"
-          x-text="caskName ? (caskAction === 'uninstall' ? __('%s removal requires your password').replace('%s', caskName) : __('%s installation requires your password').replace('%s', caskName)) : __('Administrator password required')">
+        <h3 class="password-modal-title" x-text="getPasswordPromptTitle()">
           Administrator password required</h3>
 
         <form @submit.prevent="submitPassword()">

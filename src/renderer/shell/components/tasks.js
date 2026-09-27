@@ -11,6 +11,90 @@ const TaskPrompt = {
         return { isRetry, isPasswordPrompt, isInteractivePrompt };
     },
 
+    extractProgress(text) {
+        if (!text) return null;
+        const cleanText = window.ShellUtils ? window.ShellUtils.stripAnsi(text) : text;
+        const isExtractingContext = /extracting/i.test(cleanText);
+        const rawLines = cleanText.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+
+        for (let i = rawLines.length - 1; i >= 0; i--) {
+            const line = rawLines[i];
+
+            // 1. Extracting cask / artifact / archive / sizes
+            if (/extracting/i.test(line) || (isExtractingContext && /\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?)/i.test(line))) {
+                const sizeMatch = line.match(/(\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?))/i);
+                if (sizeMatch) {
+                    return `Extracting ${sizeMatch[1]}`;
+                }
+                const match = line.match(/^(?:==>\s*)?Extracting(?:\s+cask|\s+artifact)?:\s*(.*)/i);
+                const item = match && match[1] ? match[1].split(/[/\\]/).pop().trim() : '';
+                return item ? `Extracting ${item}` : 'Extracting...';
+            }
+
+            // 2. Download progress with bytes / percentage: e.g. "12.5MB / 50.0MB", "34.2%"
+            const percentMatch = line.match(/(?:#+\s*)?(\d{1,3}(?:\.\d+)?%)/);
+            const byteRangeMatch = line.match(/(\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?))\s*(?:\/|of)\s*(\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?))/i);
+            if (byteRangeMatch || percentMatch) {
+                const parts = [];
+                if (byteRangeMatch) {
+                    const current = byteRangeMatch[1].replace(/\s+/g, '').toLowerCase();
+                    const total = byteRangeMatch[2].replace(/\s+/g, '').toLowerCase();
+                    if (current === total) {
+                        parts.push(byteRangeMatch[2]);
+                    } else {
+                        parts.push(`${byteRangeMatch[1]} / ${byteRangeMatch[2]}`);
+                    }
+                }
+                if (percentMatch) parts.push(percentMatch[1]);
+                return `Downloading: ${parts.join(' ')}`;
+            }
+
+            // 3. Direct downloading URL / source
+            if (/^==>\s*Downloading\s+(https?:\/\/|from)/i.test(line) || /^Downloading\s+(https?:\/\/|from)/i.test(line)) {
+                return 'Downloading...';
+            }
+
+            // 4. Verifying checksum
+            if (/verifying.*checksum/i.test(line)) {
+                return 'Verifying checksum...';
+            }
+
+            // 5. Moving App / Linking / Backing up
+            const moveMatch = line.match(/Moving App '([^']+)'/i) || line.match(/Moving (?:Binary|Artifact) '([^']+)'/i);
+            if (moveMatch) {
+                return `Installing ${moveMatch[1]}`;
+            }
+            if (/Linking (?:Binary|Artifact)/i.test(line)) {
+                return 'Linking binaries...';
+            }
+            if (/Backing App/i.test(line)) {
+                return 'Backing up app...';
+            }
+
+            // 6. Running installer / sudo
+            if (/Running.*installer/i.test(line)) {
+                return 'Running installer...';
+            }
+
+            // 7. General ==> brew messages (strip ==> prefix)
+            if (line.startsWith('==>')) {
+                const clean = line.replace(/^==>\s*/, '').replace(/^==\s*/, '').trim();
+                if (clean && clean.length > 2 && !clean.startsWith('Caveats')) {
+                    return clean;
+                }
+            }
+
+            // 8. Action verbs
+            if (/^(Downloading|Extracting|Installing|Updating|Pouring|Fetching|Already downloaded|Upgrading|Running|Executing|Cleaning|Purging)/i.test(line)) {
+                const clean = line.replace(/^==>\s*/, '').trim();
+                if (clean && clean.length > 2) {
+                    return clean;
+                }
+            }
+        }
+        return null;
+    },
+
     extractTaskError(logText, action, appName, catalog, __) {
         const translate = typeof __ === 'function' ? __ : (s => s);
         const actionKeys = {
@@ -36,7 +120,7 @@ const TaskPrompt = {
         const nonProgressLines = lines.filter(l => !l.startsWith('==>'));
         let rawError = errorLines.length > 0 ? errorLines.slice(-3).join('\n')
             : nonProgressLines.length > 0 ? nonProgressLines[nonProgressLines.length - 1]
-            : lines.length > 0 ? lines[lines.length - 1] : defaultError;
+                : lines.length > 0 ? lines[lines.length - 1] : defaultError;
 
         let matchedKey = null;
         if (catalog) {
@@ -106,10 +190,6 @@ Object.assign(window.shell, {
     // Password modal state
     showPasswordModal: false,
     passwordValue: '',
-    caskName: '',
-    caskIcon: '',
-    caskToken: '',
-    caskAction: '',
 
     initTasks() {
         const applyConfig = (config) => {
@@ -138,11 +218,9 @@ Object.assign(window.shell, {
             this.activeTaskErrorLog += data.text;
 
             // Live progress title from Brew output
-            const rawLines = data.text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-            const brewLine = rawLines.slice().reverse().find(l => l.startsWith('==>'));
-            if (brewLine && this.activeTaskId) {
-                const clean = brewLine.replace(/^==>\s*/, '').trim();
-                if (clean) this.drawerTitle = clean;
+            const progress = TaskPrompt.extractProgress(data.text);
+            if (progress && this.activeTaskId) {
+                this.drawerTitle = progress;
             }
 
             const promptInfo = TaskPrompt.detectPrompt(data.text);
@@ -250,7 +328,7 @@ Object.assign(window.shell, {
             try {
                 const timeStr = this.lastCheckedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 text += ` • ${this.__('Checked at %s').replace('%s', timeStr)}`;
-            } catch (_) {}
+            } catch (_) { }
         }
         return text;
     },
@@ -489,18 +567,23 @@ Object.assign(window.shell, {
         if (this.isUpdatingAll) this.stopUpdateAll();
     },
 
-    requestPassword(token, action) {
-        const cask = this.items?.find(c => c.token === token);
-        if (cask) {
-            this.caskName = this.getAppName(cask);
-            this.caskIcon = cask.iconUrl;
-            this.caskToken = cask.token;
-        } else {
-            this.caskName = action === 'refresh' ? 'Homebrew' : (token || 'System');
-            this.caskIcon = '';
-            this.caskToken = '';
+    getPasswordPromptTitle() {
+        const cask = this.items?.find(c => c.token === this.activeTaskToken);
+        const name = cask ? this.getAppName(cask) : (this.activeTaskAction === 'refresh' ? 'Homebrew' : (this.activeTaskToken || ''));
+        if (!name) return this.__('Administrator password required');
+        if (this.activeTaskAction === 'uninstall') {
+            return this.__('%s removal requires your password').replace('%s', name);
         }
-        this.caskAction = action;
+        return this.__('%s installation requires your password').replace('%s', name);
+    },
+
+    getPasswordPromptIcon() {
+        const cask = this.items?.find(c => c.token === this.activeTaskToken);
+        return cask?.iconUrl || '../../../build/icon.svg';
+    },
+
+    requestPassword() {
+        this.passwordValue = '';
         this.showPasswordModal = true;
     },
 
