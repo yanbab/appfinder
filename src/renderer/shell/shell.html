@@ -16,7 +16,7 @@
   <script src="components/menu-context.js" defer></script>
   <script src="components/discover.js" defer></script>
   <script src="components/info.js" defer></script>
-  <script src="components/navigation.js" defer></script>
+  <script src="components/keyboard.js" defer></script>
   <script defer src="../../../node_modules/alpinejs/dist/cdn.min.js"></script>
 </head>
 
@@ -571,9 +571,9 @@
             </template>
             <!-- Idle default state -->
             <template x-if="!activeTaskId && !drawerTitle">
-              <div class="ellipsis" style="display: flex; align-items: center; gap: 6px; font-size: var(--font-size-caption); color: var(--text-secondary);">
+              <div class="ellipsis" style="display: flex; align-items: center; gap: 6px; font-size: var(--font-size-caption);">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                  stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-green); flex-shrink: 0;">
+                  stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
                 <span class="ellipsis" x-text="getStatusDefaultText()"></span>

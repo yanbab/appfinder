@@ -6,14 +6,25 @@ const on = (signal, callback) => {
   return () => ipcRenderer.removeListener(signal, listener);
 }
 
+const getTimestamp = () => {
+  const d = new Date();
+  const time = d.toTimeString().split(' ')[0];
+  const ms = String(d.getMilliseconds()).padStart(3, '0');
+  return `${time}.${ms}`;
+};
+
 const invoke = async (channel, ...args) => {
   const start = performance.now();
   try {
     const res = await ipcRenderer.invoke(channel, ...args);
-    console.log(`[IPC] ${channel} (${(performance.now() - start).toFixed(0)}ms)`);
+    if (cachedConfig && cachedConfig.debug) {
+      console.log(`[${getTimestamp()}] [IPC] ${channel} (${(performance.now() - start).toFixed(0)}ms)`);
+    }
     return res;
   } catch (err) {
-    console.error(`[IPC] ${channel} failed after ${(performance.now() - start).toFixed(2)}ms:`, err);
+    if (!cachedConfig || cachedConfig.debug) {
+      console.error(`[${getTimestamp()}] [IPC] ${channel} failed after ${(performance.now() - start).toFixed(2)}ms:`, err);
+    }
     throw err;
   }
 };

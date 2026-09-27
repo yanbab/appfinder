@@ -4,7 +4,7 @@ let term = null;
 
 const TaskPrompt = {
     detectPrompt(text) {
-        const clean = window.ShellUtils ? window.ShellUtils.stripAnsi(text) : text;
+        const clean = window.utils ? window.utils.stripAnsi(text) : text;
         const isRetry = /sorry, try again|incorrect password|authentication failure/i.test(clean);
         const isPasswordPrompt = /password\s*[:?]|passphrase\s*[:?]|mot de passe\s*[:?]|(?:sudo|admin).*(?:password|passphrase)/i.test(clean);
         const isInteractivePrompt = isPasswordPrompt || /\[y\/n\]/i.test(clean);
@@ -13,12 +13,17 @@ const TaskPrompt = {
 
     extractProgress(text) {
         if (!text) return null;
-        const cleanText = window.ShellUtils ? window.ShellUtils.stripAnsi(text) : text;
+        const cleanText = window.utils ? window.utils.stripAnsi(text) : text;
         const isExtractingContext = /extracting/i.test(cleanText);
         const rawLines = cleanText.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
 
         for (let i = rawLines.length - 1; i >= 0; i--) {
             const line = rawLines[i];
+
+            // 0. Ignore past-tense / summary lines like "Already downloaded", "Downloaded to: ...", "✔︎ Cask ... Downloaded ..."
+            if (/(?:already\s+)?downloaded/i.test(line) || /[✔✓]/.test(line)) {
+                continue;
+            }
 
             // 1. Extracting cask / artifact / archive / sizes
             if (/extracting/i.test(line) || (isExtractingContext && /\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?)/i.test(line))) {
@@ -85,7 +90,7 @@ const TaskPrompt = {
             }
 
             // 8. Action verbs
-            if (/^(Downloading|Extracting|Installing|Updating|Pouring|Fetching|Already downloaded|Upgrading|Running|Executing|Cleaning|Purging)/i.test(line)) {
+            if (/^(Downloading|Extracting|Installing|Updating|Pouring|Fetching|Upgrading|Running|Executing|Cleaning|Purging)\b/i.test(line)) {
                 const clean = line.replace(/^==>\s*/, '').trim();
                 if (clean && clean.length > 2) {
                     return clean;
@@ -108,7 +113,7 @@ const TaskPrompt = {
         const rawFailedTitle = translate(failedTitleKey) || failedTitleKey;
         const title = rawFailedTitle.includes('%s') ? rawFailedTitle.replace('%s', appName) : `${appName} failed`;
 
-        const cleanLogs = window.ShellUtils ? window.ShellUtils.stripAnsi(logText) : logText;
+        const cleanLogs = window.utils ? window.utils.stripAnsi(logText) : logText;
 
         const isFullDiskAccess = /Full Disk Access|Unable to remove some files/i.test(cleanLogs);
         if (isFullDiskAccess) {
@@ -151,7 +156,7 @@ const TaskPrompt = {
             const title = translate('Confirm Delete');
             const rawMsg = translate('Are you sure you want to delete %s?') || 'Are you sure you want to delete %s?';
             const message = rawMsg.includes('%s') ? rawMsg.replace('%s', name) : `Are you sure you want to delete ${name}?`;
-            let iconDataUrl = cask?.iconUrl && window.ShellUtils ? await window.ShellUtils.getIconDataUrl(cask.iconUrl) : null;
+            let iconDataUrl = cask?.iconUrl && window.utils ? await window.utils.getIconDataUrl(cask.iconUrl) : null;
 
             const response = await window.ipc.showMessage({
                 type: 'question',
@@ -204,9 +209,10 @@ Object.assign(window.shell, {
     initTasks() {
         const applyConfig = (config) => {
             if (!config) return;
+            this.debug = !!config.debug;
             this.alwaysShowStatusBar = !!config.alwaysShowStatusBar;
-            if (this.alwaysShowStatusBar && !this.activeTaskId) {
-                this.drawerTitle = '';
+            if (!this.activeTaskId && !this.alwaysShowStatusBar) {
+                this.showDrawer = false;
             }
         };
 
@@ -229,8 +235,10 @@ Object.assign(window.shell, {
 
             // Live progress title from Brew output
             const progress = TaskPrompt.extractProgress(data.text);
-            if (progress && this.activeTaskId) {
+            if (progress && this.activeTaskId && this.drawerTitle !== progress) {
                 this.drawerTitle = progress;
+                const time = window.utils?.timestamp ? window.utils.timestamp() : new Date().toLocaleTimeString();
+                if (this.debug) console.info(`[${time}] [Status]`, progress);
             }
 
             const promptInfo = TaskPrompt.detectPrompt(data.text);
@@ -281,8 +289,7 @@ Object.assign(window.shell, {
 
             if (term) {
                 if (isCancelled) term.write('\r\n\x1b[31mProcess cancelled by user.\x1b[0m\r\n');
-                else if (isSuccess) term.write('\r\n\x1b[32mProcess completed successfully!\x1b[0m\r\n');
-                else term.write(`\r\n\x1b[31mProcess failed with exit code: ${data.code}\x1b[0m\r\n`);
+                else if (!isSuccess) term.write(`\r\n\x1b[31mProcess failed with exit code: ${data.code}\x1b[0m\r\n`);
                 term.scrollToBottom();
             }
 
@@ -309,7 +316,7 @@ Object.assign(window.shell, {
             }
 
             if (finishedAction === 'cleanup' && isSuccess) {
-                const cleanLogs = window.ShellUtils ? window.ShellUtils.stripAnsi(errorLog) : errorLog;
+                const cleanLogs = window.utils ? window.utils.stripAnsi(errorLog) : errorLog;
                 const lines = cleanLogs.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
                 const freedLine = lines.slice().reverse().find(l => /freed|disk space/i.test(l));
                 const lastLine = (freedLine || (lines.length > 0 ? lines[lines.length - 1] : ''))
@@ -469,6 +476,8 @@ Object.assign(window.shell, {
         const cask = this.items?.find(c => c.token === nextToken);
         const name = cask ? this.getAppName(cask) : nextToken;
         this.drawerTitle = `Updating ${name}... (${this.updateQueue.length + 1} remaining)`;
+        const time = window.utils?.timestamp ? window.utils.timestamp() : new Date().toLocaleTimeString();
+        if (this.debug) console.info(`[${time}] [Status]`, this.drawerTitle);
 
         if (term) {
             term.reset();
@@ -493,6 +502,8 @@ Object.assign(window.shell, {
             this.drawerTitle = this.__('Cleaning up Homebrew cache...');
             this.showTerminal = true;
         }
+        const time = window.utils?.timestamp ? window.utils.timestamp() : new Date().toLocaleTimeString();
+        if (this.debug) console.info(`[${time}] [Status]`, this.drawerTitle);
 
         this.showDrawer = true;
         if (term) term.focus();
@@ -514,6 +525,8 @@ Object.assign(window.shell, {
         const titleTemplate = action === 'install' ? 'Installing {name}...'
             : action === 'uninstall' ? 'Deleting {name}...' : 'Updating {name}...';
         this.drawerTitle = titleTemplate.replace('{name}', name);
+        const time = window.utils?.timestamp ? window.utils.timestamp() : new Date().toLocaleTimeString();
+        if (this.debug) console.info(`[${time}] [Status]`, this.drawerTitle);
         this.showDrawer = true;
         if (term) term.focus();
 
@@ -527,7 +540,8 @@ Object.assign(window.shell, {
             try {
                 await window.ipc.openApp(token, app);
             } catch (e) {
-                console.error('Failed to open app:', e);
+                const time = window.utils?.timestamp ? window.utils.timestamp() : new Date().toLocaleTimeString();
+                if (this.debug) console.error(`[${time}] Failed to open app:`, e);
             }
             return;
         }
@@ -604,7 +618,7 @@ Object.assign(window.shell, {
 
     getPasswordPromptIcon() {
         const cask = this.items?.find(c => c.token === this.activeTaskToken);
-        return cask?.iconUrl || '../../../build/icon.svg';
+        return cask?.iconUrl || '../../../docs/assets/icon.svg';
     },
 
     requestPassword() {

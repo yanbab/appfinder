@@ -2,9 +2,6 @@
 
 window.settings = {
   alwaysShowStatusBar: false,
-  showDockBadge: true,
-  showTrayIcon: false,
-  autoCheckUpdates: true,
   language: 'system',
   locales: [],
   catalog: {},
@@ -19,9 +16,6 @@ window.settings = {
 
     // Watch settings and save automatically on user changes
     this.$watch('alwaysShowStatusBar', () => this.save());
-    this.$watch('showDockBadge', () => this.save());
-    this.$watch('showTrayIcon', () => this.save());
-    this.$watch('autoCheckUpdates', () => this.save());
     this.$watch('language', () => this.save());
 
     if (window.ipc?.onCleanupStatus) {
@@ -77,9 +71,6 @@ window.settings = {
     try {
       const config = (await window.ipc.getConfig()) || {};
       this.alwaysShowStatusBar = !!config.alwaysShowStatusBar;
-      this.showDockBadge = config.showDockBadge !== false;
-      this.showTrayIcon = !!config.showTrayIcon;
-      this.autoCheckUpdates = config.autoCheckUpdates !== false;
       this.language = config.language || 'system';
     } catch (e) {
       console.error('Failed to load config:', e);
@@ -107,9 +98,6 @@ window.settings = {
     try {
       await window.ipc.updateConfig({
         alwaysShowStatusBar: this.alwaysShowStatusBar,
-        showDockBadge: this.showDockBadge,
-        showTrayIcon: this.showTrayIcon,
-        autoCheckUpdates: this.autoCheckUpdates,
         language: this.language
       });
     } catch (e) {

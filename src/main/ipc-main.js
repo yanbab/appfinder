@@ -68,6 +68,10 @@ function setupIpcMain() {
         const oldConfig = getConfig();
         const updated = updateConfig(newConfig);
         broadcast('config:updated', updated);
+        if (typeof newConfig.alwaysShowStatusBar === 'boolean') {
+            const { updateStatusbarChecked } = require('./menu-application');
+            updateStatusbarChecked(newConfig.alwaysShowStatusBar);
+        }
         if (newConfig.language && newConfig.language !== oldConfig.language) {
             let lang = newConfig.language;
             if (lang === 'system') {
@@ -81,8 +85,6 @@ function setupIpcMain() {
             setupApplicationMenu();
             broadcast('i18n:changed');
         }
-        const { syncAutoCheckWithConfig } = require('./auto-updater');
-        syncAutoCheckWithConfig();
         return updated;
     });
 

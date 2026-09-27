@@ -24,6 +24,7 @@ function sendToShell(channel, ...args) {
 }
 
 let isSidebarVisible = true;
+let isStatusbarVisible = false;
 
 function updateSidebarChecked(visible) {
   isSidebarVisible = visible;
@@ -36,8 +37,21 @@ function updateSidebarChecked(visible) {
   }
 }
 
+function updateStatusbarChecked(visible) {
+  isStatusbarVisible = visible;
+  const menu = Menu.getApplicationMenu();
+  if (menu) {
+    const item = menu.getMenuItemById('show-statusbar');
+    if (item) {
+      item.checked = visible;
+    }
+  }
+}
+
 function setupApplicationMenu() {
-  const isDebug = !!getConfig().debug;
+  const config = getConfig();
+  const isDebug = !!config.debug;
+  isStatusbarVisible = !!config.alwaysShowStatusBar;
 
   const template = [
     {
@@ -143,6 +157,24 @@ function setupApplicationMenu() {
             sendToShell('shell:toggle-sidebar', menuItem.checked);
           }
         },
+        {
+          id: 'show-statusbar',
+          label: __('Show Status Bar'),
+          type: 'checkbox',
+          checked: isStatusbarVisible,
+          accelerator: 'CmdOrCtrl+/',
+          click: (menuItem) => {
+            isStatusbarVisible = menuItem.checked;
+            const { updateConfig } = require('./config');
+            const updated = updateConfig({ alwaysShowStatusBar: menuItem.checked });
+            const { BrowserWindow } = require('electron');
+            BrowserWindow.getAllWindows().forEach((win) => {
+              if (!win.isDestroyed()) {
+                win.webContents.send('config:updated', updated);
+              }
+            });
+          }
+        },
         { type: 'separator' },
         {
           label: __('Check for Updates...'),
@@ -176,5 +208,6 @@ function setupApplicationMenu() {
 
 module.exports = {
   setupApplicationMenu,
-  updateSidebarChecked
+  updateSidebarChecked,
+  updateStatusbarChecked
 };

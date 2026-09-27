@@ -657,9 +657,10 @@ body.blur .drawer-header {
     display: flex;
     align-items: center;
     gap: 8px;
+    font-family: var(--font-family-mono);
     font-size: var(--font-size-caption);
     font-weight: var(--font-weight-medium);
-    color: var(--text-primary);
+    color: var(--text-secondary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

@@ -36,12 +36,12 @@ window.shell = {
     // Icon loading maps
     showInitialsMap: {},
 
-    // Formatters delegated to ShellUtils for template compatibility
-    getAppName(item) { return window.ShellUtils.getAppName(item); },
-    name2initials(name) { return window.ShellUtils.name2initials(name); },
-    name2color(name) { return window.ShellUtils.name2color(name); },
-    formatAccentColor(color) { return window.ShellUtils.formatAccentColor(color); },
-    formatVersion(v) { return window.ShellUtils.formatVersion(v); },
+    // Formatters delegated to utils for template compatibility
+    getAppName(item) { return window.utils.getAppName(item); },
+    name2initials(name) { return window.utils.name2initials(name); },
+    name2color(name) { return window.utils.name2color(name); },
+    formatAccentColor(color) { return window.utils.formatAccentColor(color); },
+    formatVersion(v) { return window.utils.formatVersion(v); },
 
     async init() {
         this.initI18n();
@@ -163,17 +163,23 @@ window.shell = {
         }));
     },
 
+    debug: false,
+
     setStatusMessage(msg) {
         if (!this.activeTaskId) {
             this.drawerTitle = msg || '';
-            if (msg) this.showDrawer = true;
+            if (msg) {
+                this.showDrawer = true;
+                const time = window.utils?.timestamp ? window.utils.timestamp() : new Date().toLocaleTimeString();
+                if (this.debug) console.info(`[${time}] [Status]`, msg);
+            }
         }
     },
 
     clearStatusMessage() {
         if (!this.activeTaskId) {
             this.drawerTitle = '';
-            if (!this.alwaysShowStatusBar) this.showDrawer = false;
+            this.showDrawer = false;
         }
     },
 
@@ -224,7 +230,8 @@ window.shell = {
         try {
             this.setInstalled(await window.ipc.getInstalled());
         } catch (e) {
-            console.error('Failed to get installed casks:', e);
+            const time = window.utils?.timestamp ? window.utils.timestamp() : new Date().toLocaleTimeString();
+            if (this.debug) console.error(`[${time}] Failed to get installed casks:`, e);
         } finally {
             this.clearStatusMessage();
             this.isRefreshing = false;
@@ -237,7 +244,8 @@ window.shell = {
         try {
             this.setUpdates(await window.ipc.getUpdates(true));
         } catch (e) {
-            console.error('Failed to check updates:', e);
+            const time = window.utils?.timestamp ? window.utils.timestamp() : new Date().toLocaleTimeString();
+            if (this.debug) console.error(`[${time}] Failed to check updates:`, e);
         } finally {
             this.clearStatusMessage();
             this.isRefreshing = false;
@@ -256,7 +264,8 @@ window.shell = {
             this.setInstalled(installed);
             this.setUpdates(updates);
         } catch (e) {
-            console.error('Failed to get brew status:', e);
+            const time = window.utils?.timestamp ? window.utils.timestamp() : new Date().toLocaleTimeString();
+            if (this.debug) console.error(`[${time}] Failed to get brew status:`, e);
         } finally {
             this.clearStatusMessage();
             this.isRefreshing = false;

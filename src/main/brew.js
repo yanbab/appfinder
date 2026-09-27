@@ -61,11 +61,6 @@ function getData(file) {
   }
 }
 
-function updateDockBadge(count) {
-  const { updateBadges } = require('./auto-updater');
-  updateBadges(count);
-}
-
 function getApps() {
   return getData('apps.json');
 }
@@ -105,7 +100,6 @@ async function getUpdates(force = false) {
       if (raw && raw.trim()) {
         const data = JSON.parse(raw);
         const casks = Array.isArray(data) ? data : (data?.casks || []);
-        updateDockBadge(casks.length);
         return { casks };
       }
     } catch (e) {
@@ -127,7 +121,6 @@ async function getUpdates(force = false) {
       console.error('Failed to write updates cache:', err);
     }
 
-    updateDockBadge(casks.length);
     return { casks };
   } catch (err) {
     console.error('Failed to get updates:', err);

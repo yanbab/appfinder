@@ -14,7 +14,7 @@ const initialsPalette = [
     '#888888',
 ];
 
-window.ShellUtils = {
+window.utils = {
     getAppName(item) {
         if (!item) return "";
         let name = item.name || item.token || "";
@@ -88,5 +88,12 @@ window.ShellUtils = {
         } catch (e) {
             return null;
         }
+    },
+
+    timestamp() {
+        const d = new Date();
+        const time = d.toTimeString().split(' ')[0];
+        const ms = String(d.getMilliseconds()).padStart(3, '0');
+        return `${time}.${ms}`;
     }
 };

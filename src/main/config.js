@@ -10,9 +10,6 @@ const configPath = path.join(configDir, 'config.json');
 const defaults = {
   zap: false,
   alwaysShowStatusBar: false,
-  showDockBadge: true,
-  showTrayIcon: true,
-  autoCheckUpdates: true,
   debug: true,
   language: 'system'
 };
