@@ -5,7 +5,9 @@ const path = require('path');
 const { __ } = require('./i18n');
 
 const preloadPath = path.join(__dirname, '../renderer/ipc-renderer.js');
-const settingsPath = path.join(__dirname, '../renderer/settings/settings.html');
+const useReact = process.env.USE_REACT === '1' || process.env.USE_REACT === 'true';
+const reactPath = path.join(__dirname, '../renderer-react/dist/index.html');
+const alpinePath = path.join(__dirname, '../renderer/settings/settings.html');
 
 let settingsWindow = null;
 
@@ -35,7 +37,13 @@ function createSettingsWindow(parentWindow) {
       nodeIntegration: false
     }
   });
-  settingsWindow.loadFile(settingsPath);
+
+  if (useReact) {
+    settingsWindow.loadFile(reactPath, { query: { view: 'settings' } });
+  } else {
+    settingsWindow.loadFile(alpinePath);
+  }
+
   settingsWindow.once('ready-to-show', () => settingsWindow?.show());
   settingsWindow.on('closed', () => {
     settingsWindow = null;
