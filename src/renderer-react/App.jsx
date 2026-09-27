@@ -10,35 +10,19 @@ import { InfoDrawer } from '@/components/views/InfoDrawer';
 import { PasswordModal } from '@/components/modals/PasswordModal';
 import { SettingsView } from '@/components/views/SettingsView';
 
+import { useNativeContextMenu } from '@/lib/useNativeContextMenu';
+import { useKeyboardNav } from '@/lib/useKeyboardNav';
+
 export function App() {
-  const { currentTab, search, setShowSidebar } = useShell();
+  const { currentTab, search } = useShell();
 
   // Check if we are in Settings view
   const params = new URLSearchParams(window.location.search);
   const isSettings = params.get('view') === 'settings' || window.location.hash === '#settings';
 
-  // Global keyboard shortcuts (for shell)
-  useEffect(() => {
-    if (isSettings) return;
-
-    const handleKeyDown = (e) => {
-      // Cmd+F or Ctrl+F -> Focus search
-      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
-        e.preventDefault();
-        setShowSidebar?.(true);
-        setTimeout(() => {
-          const searchInput = document.getElementById('search-input');
-          if (searchInput) {
-            searchInput.focus();
-            searchInput.select?.();
-          }
-        }, 50);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSettings, setShowSidebar]);
+  // Keyboard navigation & Native context menus
+  useKeyboardNav();
+  useNativeContextMenu();
 
   if (isSettings) {
     return <SettingsView />;
@@ -58,9 +42,9 @@ export function App() {
         {/* View Switcher: Discover vs List/Grid */}
         {isDiscover ? <DiscoverView /> : <AppsListView />}
 
-        {/* Collapsible Terminal & Status Bar */}
-        <TerminalDrawer />
+        {/* Status Bar acting as Terminal Titlebar & Collapsible Terminal Drawer underneath */}
         <StatusBar />
+        <TerminalDrawer />
       </main>
 
       {/* Slide-over Info Drawer */}

@@ -63,17 +63,5 @@ Object.assign(window.shell, {
     }
 
     this.topInstalledItems = Object.freeze(topInstalled);
-  },
-
-  toggleCategories() {
-    this.showAllCategories = !this.showAllCategories;
-    if (this.showAllCategories) {
-      this.$nextTick(() => {
-        const el = document.getElementById('apps-container');
-        if (el) {
-          el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-        }
-      });
-    }
   }
 });

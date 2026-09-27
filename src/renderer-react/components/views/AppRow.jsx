@@ -30,9 +30,11 @@ export function AppRow({ item }) {
 
   return (
     <div
+      data-token={item.token}
+      tabIndex={0}
       onClick={() => openAppInfo(item)}
-      className={`group flex items-center justify-between px-3.5 py-2.5 text-card-foreground select-none cursor-default transition-none active:bg-muted/60 ${
-        isSelected ? 'bg-muted/50' : ''
+      className={`app-card app-row group flex items-center justify-between px-3.5 py-2.5 bg-card text-card-foreground select-none cursor-default transition-none active:bg-muted/60 focus:outline-none focus-visible:bg-muted/60 ${
+        isSelected ? 'bg-muted/60' : ''
       }`}
     >
       {/* Icon & Details */}
@@ -55,51 +57,57 @@ export function AppRow({ item }) {
       {/* Actions */}
       <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
         {isRunning ? (
-          <Button size="xs" variant="secondary" disabled className="gap-1.5 text-xs">
-            <Loader2 className="size-3 animate-spin" />
+          <Button size="sm" variant="secondary" disabled className="h-7 px-3 text-xs rounded-sm">
+            <Loader2 className="size-3.5 animate-spin mr-1.5" />
             <span>{__('Working...')}</span>
           </Button>
         ) : isOutdated ? (
           <Button
-            size="xs"
-            variant="default"
+            size="sm"
+            variant="secondary"
             onClick={() => startAction('upgrade', item.token)}
-            className="gap-1.5 text-xs"
+            className="h-7 px-3 text-xs rounded-sm font-medium"
           >
-            <UpgradeIcon className="size-3.5" />
             <span>{__('Upgrade')}</span>
           </Button>
         ) : isInstalled ? (
           <>
             <Button
-              size="icon-xs"
+              size="icon"
               variant="ghost"
               onClick={() => startAction('uninstall', item.token)}
-              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              className="size-7 rounded-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               title="Uninstall"
             >
-              <TrashIcon className="size-3.5" />
+              <TrashIcon className="size-4" />
             </Button>
-            {item.app && (
+            {item.app ? (
               <Button
-                size="xs"
+                size="sm"
                 variant="secondary"
                 onClick={() => startAction('open', item.token, item.app)}
-                className="gap-1.5 text-xs"
+                className="h-7 px-3 text-xs rounded-sm font-medium"
               >
-                <OpenIcon className="size-3.5" />
+                <span>{__('Open')}</span>
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled
+                className="h-7 px-3 text-xs rounded-sm font-medium opacity-40 cursor-not-allowed"
+              >
                 <span>{__('Open')}</span>
               </Button>
             )}
           </>
         ) : (
           <Button
-            size="xs"
+            size="sm"
             variant="secondary"
             onClick={() => startAction('install', item.token)}
-            className="gap-1.5 text-xs"
+            className="h-7 px-3 text-xs rounded-sm font-medium"
           >
-            <InstallIcon className="size-3.5" />
             <span>{__('Install')}</span>
           </Button>
         )}

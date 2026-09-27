@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useShell } from '@/store/useShell';
-import { Compass, LayoutGrid, CheckCircle2, RefreshCw, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
+import { Compass, LayoutGrid, CheckCircle2, RefreshCw, Search, X } from 'lucide-react';
 import { CategoryIcon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -19,10 +19,6 @@ export function Sidebar() {
     filteredCount,
     __,
   } = useShell();
-
-  const [showAllCategories, setShowAllCategories] = useState(false);
-
-  const displayedCategories = showAllCategories ? categories : categories.slice(0, 10);
 
   const navItems = [
     {
@@ -54,12 +50,13 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`h-full shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border select-none transition-all duration-200 z-20 ${
-        showSidebar ? 'w-56' : 'w-0 -translate-x-full overflow-hidden'
+      className={`h-full shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border select-none transition-[margin-left] duration-250 ease-out overflow-hidden z-20 w-56 min-w-56 ${
+        showSidebar ? 'ml-0' : '-ml-56'
       }`}
     >
-      {/* macOS Traffic Lights Window Drag Region */}
-      <div className="h-10 shrink-0 [-webkit-app-region:drag]" />
+      <div className="w-56 flex flex-col h-full shrink-0 overflow-hidden">
+        {/* macOS Traffic Lights Window Drag Region */}
+        <div className="h-10 shrink-0 [-webkit-app-region:drag]" />
 
       {/* Search Input Container */}
       <div className="px-2.5 pb-2.5">
@@ -70,15 +67,15 @@ export function Sidebar() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={__('Search')}
-            className="pl-8.5 pr-7 h-7.5 bg-background/60 border-sidebar-border focus-visible:bg-background text-sm rounded-md shadow-2xs cursor-text"
+            className="pl-8.5 pr-7 h-7.5 bg-background/60 border-sidebar-border focus:bg-background focus:outline-none focus-visible:ring-0 text-sm rounded-sm shadow-2xs cursor-text"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-2 text-muted-foreground hover:text-foreground cursor-default"
+              className="absolute right-2 size-4 rounded-full bg-muted-foreground/25 hover:bg-muted-foreground/40 flex items-center justify-center text-foreground/80 hover:text-foreground cursor-default focus:outline-none"
               aria-label="Clear search"
             >
-              <X className="size-3.5" />
+              <X className="size-2.5" />
             </button>
           )}
         </div>
@@ -91,28 +88,32 @@ export function Sidebar() {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
             return (
-              <button
-                key={item.id}
-                onClick={() => selectTab(item.id)}
-                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors text-left group cursor-default ${
-                  isActive
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-2xs'
-                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <Icon className={`size-4 shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
-                  <span className="truncate">{item.label}</span>
-                </div>
-                {item.badge !== null && item.badge !== undefined && (item.id !== 'updates' || item.badge > 0) && (
-                  <Badge
-                    variant={item.badgeVariant || (isActive ? 'default' : 'subtle')}
-                    className="ml-auto px-1.5 py-0 h-4.5 text-xs"
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
-              </button>
+              <React.Fragment key={item.id}>
+                <button
+                  data-nav-id={item.id}
+                  onClick={() => selectTab(item.id)}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-sm text-sm font-medium text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${
+                    isActive
+                      ? 'bg-primary text-white shadow-2xs'
+                      : 'text-sidebar-foreground/80'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Icon className={`size-4 shrink-0 ${isActive ? 'text-white' : 'text-muted-foreground'}`} />
+                    <span className="truncate">{item.label}</span>
+                  </div>
+                  {item.badge !== null && item.badge !== undefined && (item.id !== 'updates' || item.badge > 0) && (
+                    <Badge
+                      variant={isActive ? 'default' : item.badgeVariant || 'subtle'}
+                      className={`ml-auto ${isActive ? 'bg-white/20 text-white border-0' : ''}`}
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </button>
+                {/* Space between Explore and All Apps */}
+                {item.id === 'discover' && <div className="h-2" />}
+              </React.Fragment>
             );
           })}
         </nav>
@@ -125,44 +126,32 @@ export function Sidebar() {
             </div>
 
             <div className="space-y-0.5">
-              {displayedCategories.map((cat) => {
+              {categories.map((cat) => {
                 const isActive = currentTab === cat.name;
                 return (
                   <button
                     key={cat.name}
+                    data-nav-id={cat.name}
                     onClick={() => selectTab(cat.name)}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition-colors text-left group cursor-default ${
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-sm text-sm text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${
                       isActive
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-2xs'
-                        : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                        ? 'bg-primary text-white shadow-2xs font-medium'
+                        : 'text-sidebar-foreground/80'
                     }`}
                   >
                     <CategoryIcon
                       html={cat.icon}
-                      className={`size-[18px] shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}
+                      className={`size-[18px] shrink-0 ${isActive ? 'text-white' : 'text-muted-foreground'}`}
                     />
                     <span className="truncate">{__(cat.displayName)}</span>
                   </button>
                 );
               })}
             </div>
-
-            {categories.length > 10 && (
-              <button
-                onClick={() => setShowAllCategories(!showAllCategories)}
-                className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground rounded-md transition-colors cursor-default"
-              >
-                <span>{showAllCategories ? __('Show Less') : __('Show All')}</span>
-                {showAllCategories ? (
-                  <ChevronUp className="size-3.5" />
-                ) : (
-                  <ChevronDown className="size-3.5" />
-                )}
-              </button>
-            )}
           </div>
         )}
       </div>
-    </aside>
+    </div>
+  </aside>
   );
 }

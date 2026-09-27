@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useShell } from '@/store/useShell';
 import { useTheme } from '@/store/useTheme';
 import { Terminal } from 'xterm';
+import { FitAddon } from '@xterm/addon-fit';
 import 'xterm/css/xterm.css';
 
 export function TerminalDrawer() {
@@ -9,6 +10,10 @@ export function TerminalDrawer() {
   const { isDark } = useTheme();
   const containerRef = useRef(null);
   const termRef = useRef(null);
+  const fitAddonRef = useRef(null);
+
+  const termBg = isDark ? '#18181b' : '#f4f4f5';
+  const termFg = isDark ? '#e4e4e7' : '#18181b';
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -51,8 +56,16 @@ export function TerminalDrawer() {
           },
     });
 
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+
     term.open(containerRef.current);
     termRef.current = term;
+    fitAddonRef.current = fitAddon;
+
+    try {
+      fitAddon.fit();
+    } catch (e) {}
 
     term.onData((data) => {
       if (data === '\x03') {
@@ -64,22 +77,41 @@ export function TerminalDrawer() {
       }
     });
 
+    let hasData = false;
     const unsub = registerTerminalSubscriber((text) => {
+      hasData = true;
       term.write(text);
       term.scrollToBottom();
     });
 
+    if (!hasData) {
+      term.write('> ');
+    }
+
+    const handleResize = () => {
+      try {
+        fitAddon.fit();
+      } catch (e) {}
+    };
+
+    window.addEventListener('resize', handleResize);
+
     return () => {
+      window.removeEventListener('resize', handleResize);
       unsub();
       term.dispose();
       termRef.current = null;
+      fitAddonRef.current = null;
     };
   }, [registerTerminalSubscriber, activeTaskId, cancelAction, isDark]);
 
   useEffect(() => {
-    if (showTerminal && termRef.current) {
+    if (showTerminal && fitAddonRef.current && termRef.current) {
       setTimeout(() => {
-        termRef.current?.scrollToBottom();
+        try {
+          fitAddonRef.current?.fit();
+          termRef.current?.scrollToBottom();
+        } catch (e) {}
       }, 50);
     }
   }, [showTerminal]);
@@ -88,13 +120,15 @@ export function TerminalDrawer() {
     <div
       className={
         showTerminal
-          ? "h-44 w-full border-t border-border bg-card shrink-0 flex flex-col overflow-hidden"
+          ? "h-44 w-full border-t border-border shrink-0 flex flex-col overflow-hidden"
           : "hidden"
       }
+      style={{ backgroundColor: termBg }}
     >
       <div
         ref={containerRef}
-        className="w-full h-full p-2 overflow-hidden select-text text-left font-mono"
+        className="w-full h-full p-2.5 overflow-hidden select-text text-left font-mono"
+        style={{ backgroundColor: termBg }}
       />
     </div>
   );

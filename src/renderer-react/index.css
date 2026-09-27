@@ -118,8 +118,25 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+    outline: none !important;
     cursor: default !important;
+  }
+
+  *:focus,
+  *:focus-visible {
+    outline: none !important;
+  }
+
+  /* Instant hover responses with no hover transitions on background/colors */
+  button:hover,
+  button:active,
+  a:hover,
+  a:active,
+  .group:hover,
+  [role="button"]:hover,
+  select:hover {
+    transition: color 0s, background-color 0s, border-color 0s, opacity 0s !important;
   }
 
   input,

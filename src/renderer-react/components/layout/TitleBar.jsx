@@ -1,7 +1,8 @@
 import React from 'react';
 import { useShell } from '@/store/useShell';
 import { Button } from '@/components/ui/button';
-import { PanelLeft, LayoutGrid, List } from 'lucide-react';
+import { ButtonGroup } from '@/components/ui/button-group';
+import { PanelLeft, LayoutGrid, List, RefreshCw, ChevronDown } from 'lucide-react';
 import { UpgradeIcon } from '@/components/ui/icons';
 
 export function TitleBar() {
@@ -16,6 +17,8 @@ export function TitleBar() {
     showSidebar,
     filteredCount,
     startAction,
+    runningTasks,
+    isRefreshing,
     __,
   } = useShell();
 
@@ -28,10 +31,12 @@ export function TitleBar() {
     return cat ? __(cat.displayName) : __('Explore');
   };
 
+  const isRefreshRunning = Boolean(runningTasks['refresh']) || isRefreshing;
+
   return (
     <header
-      className={`h-11 shrink-0 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md select-none [-webkit-app-region:drag] z-10 gap-3 transition-all duration-200 ${
-        showSidebar ? 'px-3' : 'pl-[80px] pr-3'
+      className={`h-11 shrink-0 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md select-none [-webkit-app-region:drag] z-10 gap-3 transition-[padding] duration-250 ease-out ${
+        showSidebar ? 'pl-3 pr-3' : 'pl-20 pr-3'
       }`}
     >
       {/* Left section: Sidebar toggle & Title */}
@@ -40,7 +45,7 @@ export function TitleBar() {
           variant="ghost"
           size="icon-sm"
           onClick={toggleSidebar}
-          className="text-muted-foreground hover:text-foreground cursor-default"
+          className="text-muted-foreground hover:text-foreground cursor-default rounded-sm shrink-0"
           title={showSidebar ? "Hide Sidebar" : "Show Sidebar"}
         >
           <PanelLeft className="size-4" />
@@ -51,14 +56,27 @@ export function TitleBar() {
         </h1>
       </div>
 
-      {/* Right actions: Update all, Sort select, View switch */}
+      {/* Right actions: Refresh, Update all, Sort select, View switch */}
       <div className="flex items-center gap-1.5 [-webkit-app-region:no-drag]">
+        {currentTab === 'updates' && (
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            disabled={isRefreshRunning}
+            onClick={() => startAction('refresh', 'refresh')}
+            className="h-6.5 w-[28px] text-primary hover:text-primary hover:bg-primary/10 cursor-default rounded-sm"
+            title={__('Refresh')}
+          >
+            <RefreshCw className={`size-4 ${isRefreshRunning ? 'animate-spin' : ''}`} />
+          </Button>
+        )}
+
         {currentTab === 'updates' && filteredCount >= 2 && (
           <Button
             size="xs"
-            variant="default"
+            variant="secondary"
             onClick={() => startAction('upgrade-all')}
-            className="gap-1 h-5.5 px-2 text-[11px] rounded-sm cursor-default"
+            className="gap-1 h-6.5 px-2 text-[11px] rounded-sm cursor-default"
           >
             <UpgradeIcon className="size-3" />
             <span>{__('Update All')}</span>
@@ -66,42 +84,49 @@ export function TitleBar() {
         )}
 
         {currentTab !== 'discover' && currentTab !== 'updates' && (
-          <select
-            value={order}
-            onChange={(e) => setOrder(e.target.value)}
-            className="h-6.5 text-xs font-medium bg-transparent border border-border rounded-md px-2 py-0 text-muted-foreground hover:text-foreground outline-none cursor-default"
-          >
-            <option value="popularity">{__('Popular')}</option>
-            <option value="date">{__('Recent')}</option>
-            <option value="name">{__('A-Z')}</option>
-          </select>
+          <div className="relative flex items-center mr-2">
+            <select
+              value={order}
+              onChange={(e) => setOrder(e.target.value)}
+              className="h-6.5 text-xs font-medium bg-transparent border-0 rounded-sm pl-1 pr-4 text-right text-muted-foreground outline-none cursor-default appearance-none focus:outline-none"
+            >
+              <option value="popularity" className="bg-popover text-popover-foreground">{__('Popular')}</option>
+              <option value="date" className="bg-popover text-popover-foreground">{__('Recent')}</option>
+              <option value="name" className="bg-popover text-popover-foreground">{__('A-Z')}</option>
+            </select>
+            <ChevronDown className="size-3 absolute right-0.5 text-muted-foreground pointer-events-none" />
+          </div>
         )}
 
         {currentTab !== 'discover' && (
-          <div className="flex items-center border border-border rounded-md p-0.5 bg-muted/20">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-1 rounded-xs transition-colors cursor-default ${
+          <ButtonGroup className="rounded-sm">
+            <Button
+              variant={viewMode === 'list' ? 'secondary' : 'outline'}
+              size="icon-sm"
+              className={`h-6.5 w-7 text-xs rounded-sm hover:bg-transparent ${
                 viewMode === 'list'
-                  ? 'bg-background shadow-2xs text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-secondary text-secondary-foreground font-medium z-1 shadow-2xs hover:bg-secondary'
+                  : 'text-muted-foreground hover:text-muted-foreground hover:bg-transparent'
               }`}
+              onClick={() => setViewMode('list')}
               title="List View"
             >
               <List className="size-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1 rounded-xs transition-colors cursor-default ${
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'secondary' : 'outline'}
+              size="icon-sm"
+              className={`h-6.5 w-7 text-xs rounded-sm hover:bg-transparent ${
                 viewMode === 'grid'
-                  ? 'bg-background shadow-2xs text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-secondary text-secondary-foreground font-medium z-1 shadow-2xs hover:bg-secondary'
+                  : 'text-muted-foreground hover:text-muted-foreground hover:bg-transparent'
               }`}
+              onClick={() => setViewMode('grid')}
               title="Grid View"
             >
               <LayoutGrid className="size-3.5" />
-            </button>
-          </div>
+            </Button>
+          </ButtonGroup>
         )}
       </div>
     </header>

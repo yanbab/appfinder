@@ -4,7 +4,7 @@ import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
 import { CategoryIcon, UpgradeIcon, OpenIcon, InstallIcon } from '@/components/ui/icons';
 import { getAppName } from '@/lib/utils';
-import { ChevronRight, ChevronDown, ChevronUp, Loader2, Sparkles } from 'lucide-react';
+import { ChevronRight, Loader2, Sparkles } from 'lucide-react';
 
 export function DiscoverView() {
   const {
@@ -24,7 +24,6 @@ export function DiscoverView() {
   } = useShell();
 
   const [slideIndex, setSlideIndex] = useState(0);
-  const [showAllCategories, setShowAllCategories] = useState(false);
 
   // Carousel timer
   useEffect(() => {
@@ -36,7 +35,6 @@ export function DiscoverView() {
   }, [featuredItems]);
 
   const activeFeatured = featuredItems[slideIndex] || featuredItems[0];
-  const displayedCategories = showAllCategories ? categories : categories.slice(0, 8);
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -138,7 +136,7 @@ export function DiscoverView() {
       <div className="grid grid-cols-3 gap-2.5">
         <button
           onClick={() => selectTab('all-apps')}
-          className="flex flex-col items-center justify-center p-3 rounded-lg bg-card/60 hover:bg-muted/40 transition-all text-center select-none cursor-default"
+          className="flex flex-col items-center justify-center p-3 rounded-lg bg-card select-none cursor-default transition-none active:bg-muted/60 text-center"
         >
           <span className="text-xl font-bold text-foreground">
             {allAppsCount.toLocaleString()}
@@ -150,7 +148,7 @@ export function DiscoverView() {
 
         <button
           onClick={() => selectTab('installed')}
-          className="flex flex-col items-center justify-center p-3 rounded-lg bg-card/60 hover:bg-muted/40 transition-all text-center select-none cursor-default"
+          className="flex flex-col items-center justify-center p-3 rounded-lg bg-card select-none cursor-default transition-none active:bg-muted/60 text-center"
         >
           <span className="text-xl font-bold text-foreground">
             {installed.length.toLocaleString()}
@@ -162,7 +160,7 @@ export function DiscoverView() {
 
         <button
           onClick={() => selectTab('updates')}
-          className="flex flex-col items-center justify-center p-3 rounded-lg bg-card/60 hover:bg-muted/40 transition-all text-center select-none cursor-default"
+          className="flex flex-col items-center justify-center p-3 rounded-lg bg-card select-none cursor-default transition-none active:bg-muted/60 text-center"
         >
           <span className="text-xl font-bold text-foreground">
             {updatesCount}
@@ -173,7 +171,7 @@ export function DiscoverView() {
         </button>
       </div>
 
-      {/* Popular Apps Section (bg on popular tiles like in app rows) */}
+      {/* Popular Apps Section */}
       {topInstalledItems.length > 0 && (
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
@@ -185,7 +183,7 @@ export function DiscoverView() {
                 setOrder('popularity');
                 selectTab('all-apps');
               }}
-              className="text-xs text-primary hover:underline flex items-center gap-0.5 font-medium cursor-default"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-default outline-none focus:outline-none"
             >
               <span>{__('Show All')}</span>
               <ChevronRight className="size-3.5" />
@@ -219,7 +217,7 @@ export function DiscoverView() {
                   ) : outdatedMap[item.token] ? (
                     <Button
                       size="icon-xs"
-                      variant="default"
+                      variant="secondary"
                       className="rounded-sm"
                       onClick={() => startAction('upgrade', item.token)}
                     >
@@ -251,34 +249,25 @@ export function DiscoverView() {
         </div>
       )}
 
-      {/* Categories Grid (No border on categories and less padding) */}
+      {/* Categories Grid */}
       {categories.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {__('Categories')}
             </h3>
-            {categories.length > 8 && (
-              <button
-                onClick={() => setShowAllCategories(!showAllCategories)}
-                className="text-xs text-primary hover:underline flex items-center gap-0.5 font-medium cursor-default"
-              >
-                <span>{showAllCategories ? __('Show Less') : __('Show All')}</span>
-                {showAllCategories ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-              </button>
-            )}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-            {displayedCategories.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.name}
                 onClick={() => selectTab(cat.name)}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-card/60 hover:bg-muted/40 transition-colors text-left group select-none cursor-default"
+                className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-card active:bg-muted/60 text-left group select-none cursor-default transition-none"
               >
                 <CategoryIcon
                   html={cat.icon}
-                  className="size-[18px] shrink-0 text-muted-foreground group-hover:text-primary transition-colors"
+                  className="size-[18px] shrink-0 text-muted-foreground group-hover:text-primary"
                 />
                 <span className="text-sm font-medium text-foreground truncate">
                   {__(cat.displayName)}

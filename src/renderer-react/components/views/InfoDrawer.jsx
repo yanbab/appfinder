@@ -1,8 +1,15 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useShell } from '@/store/useShell';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
 import { CategoryIcon, UpgradeIcon, OpenIcon, InstallIcon, TrashIcon } from '@/components/ui/icons';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerClose,
+} from '@/components/ui/drawer';
 import {
   getAppName,
   formatVersion,
@@ -11,7 +18,7 @@ import {
   getCaskRequirements,
   isRequirementMet,
 } from '@/lib/utils';
-import { X, ExternalLink, AlertTriangle, Check, Loader2 } from 'lucide-react';
+import { X, ExternalLink, AlertTriangle, Check, Loader2, ArrowDown } from 'lucide-react';
 
 export function InfoDrawer() {
   const {
@@ -29,18 +36,15 @@ export function InfoDrawer() {
     __,
   } = useShell();
 
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && selectedApp) {
-        closeAppInfo();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedApp, closeAppInfo]);
+  const isOpen = Boolean(selectedApp);
 
-  if (!selectedApp) return null;
+  if (!selectedApp) {
+    return (
+      <Drawer open={false} onOpenChange={() => {}} direction="right">
+        <DrawerContent className="w-[280px]" />
+      </Drawer>
+    );
+  }
 
   const isRunning = Boolean(runningTasks[selectedApp.token]);
   const isInstalled = installed.includes(selectedApp.token);
@@ -85,124 +89,121 @@ export function InfoDrawer() {
   })();
 
   return (
-    <aside
-      className="fixed inset-y-0 right-0 w-88 sm:w-96 bg-card border-l border-border shadow-2xl flex flex-col z-30 select-none animate-in slide-in-from-right duration-200"
+    <Drawer
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) closeAppInfo();
+      }}
+      direction="right"
+      shouldScaleBackground={false}
     >
-      {/* Header with Close Button on the Left */}
-      <div className="h-11 shrink-0 px-3 border-b border-border flex items-center justify-between bg-card [-webkit-app-region:drag]">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={closeAppInfo}
-            className="text-muted-foreground hover:text-foreground [-webkit-app-region:no-drag] cursor-default rounded-sm"
-            title="Close"
-          >
-            <X className="size-4" />
-          </Button>
-          <h2 className="text-sm font-semibold text-foreground">
-            {__('Infos')}
-          </h2>
-        </div>
-      </div>
-
-      {/* Body content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
-        {/* App Hero: Centered Icon, Name, Description before Version */}
-        <div className="flex flex-col items-center text-center pt-1 pb-0.5 space-y-2">
-          <AppIcon item={selectedApp} size="hero" className="size-32 rounded-2xl shadow-md shrink-0" />
-          <div className="space-y-1 max-w-xs">
-            <h3 className="font-bold text-base text-foreground leading-tight">
-              {name}
-            </h3>
-            {selectedApp.desc && (
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {selectedApp.desc}
-              </p>
-            )}
-            {version && (
-              <div className="text-xs text-muted-foreground font-mono">
-                {__('Version')} {formatVersion(version)}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Primary Actions (Equal size when multiple) */}
-        <div className="flex items-center gap-2 pt-0.5">
-          {isRunning ? (
-            <Button className="w-full gap-2 text-xs h-7 rounded-md" variant="secondary" disabled>
-              <Loader2 className="size-3.5 animate-spin" />
-              <span>{__('Working...')}</span>
+      <DrawerContent className="w-[280px] max-w-[280px] h-full bg-card border-l border-border select-none flex flex-col focus:outline-none">
+        {/* Header with Close Button on the Left */}
+        <div className="h-11 shrink-0 px-3 border-b border-border flex items-center justify-between bg-card [-webkit-app-region:drag]">
+          <div className="flex items-center gap-2 [-webkit-app-region:no-drag]">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={closeAppInfo}
+              className="text-muted-foreground hover:text-foreground cursor-default rounded-sm"
+              title="Close"
+            >
+              <X className="size-4" />
             </Button>
-          ) : (
-            <>
-              {isOutdated && (
-                <Button
-                  className="flex-1 gap-1.5 text-xs h-7 rounded-md"
-                  variant="default"
-                  onClick={() => startAction('upgrade', selectedApp.token)}
-                >
-                  <UpgradeIcon className="size-3.5" />
-                  <span>{__('Upgrade')}</span>
-                </Button>
-              )}
-
-              {isInstalled && selectedApp.app && !isOutdated && (
-                <Button
-                  className="flex-1 gap-1.5 text-xs h-7 rounded-md"
-                  variant="secondary"
-                  onClick={() => startAction('open', selectedApp.token, selectedApp.app)}
-                >
-                  <OpenIcon className="size-3.5" />
-                  <span>{__('Open')}</span>
-                </Button>
-              )}
-
-              {isInstalled && (
-                <Button
-                  variant="destructive"
-                  className="flex-1 gap-1.5 text-xs h-7 rounded-md"
-                  onClick={() => startAction('uninstall', selectedApp.token)}
-                >
-                  <TrashIcon className="size-3.5" />
-                  <span>{__('Delete')}</span>
-                </Button>
-              )}
-
-              {!isInstalled && (
-                <Button
-                  className="w-full gap-1.5 text-xs h-7 rounded-md"
-                  variant="default"
-                  onClick={() => startAction('install', selectedApp.token)}
-                >
-                  <InstallIcon className="size-3.5" />
-                  <span>{__('Install')}</span>
-                </Button>
-              )}
-            </>
-          )}
+            <DrawerTitle className="text-sm font-semibold text-foreground">
+              {__('Infos')}
+            </DrawerTitle>
+          </div>
         </div>
 
-        {/* Caveats Notice */}
-        {appDetails?.caveats && (
-          <div className="p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1">
-            <div className="flex items-center gap-1.5 font-semibold text-xs">
-              <AlertTriangle className="size-3.5 shrink-0" />
-              <span>{__('Caveats')}</span>
+        {/* Body content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+          {/* App Hero: Centered Icon, Name, Description before Version */}
+          <div className="flex flex-col items-center text-center pt-1 pb-0.5 space-y-2">
+            <AppIcon item={selectedApp} size="hero" className="size-32 rounded-[28px] shrink-0" />
+            <div className="space-y-1 w-full px-1">
+              <h3 className="font-bold text-base text-foreground leading-tight truncate">
+                {name}
+              </h3>
+              {selectedApp.desc && (
+                <DrawerDescription className="text-xs text-foreground leading-relaxed line-clamp-3">
+                  {selectedApp.desc}
+                </DrawerDescription>
+              )}
+              {version && (
+                <div className="text-[11px] text-muted-foreground font-normal">
+                  {__('Version')} {formatVersion(version)}
+                </div>
+              )}
             </div>
-            <p className="text-xs leading-relaxed whitespace-pre-wrap font-mono">
-              {appDetails.caveats}
-            </p>
           </div>
-        )}
 
-        {/* Metadata Section in Card: No border between lines, compact padding */}
-        <div className="space-y-1">
-          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
-            {__('Details')}
-          </h4>
+          {/* Primary Actions (Equal size when multiple, no icons) */}
+          <div className="flex items-center gap-2 pt-0.5">
+            {isRunning ? (
+              <Button className="w-full gap-2 text-xs h-7 rounded-sm" variant="secondary" disabled>
+                <Loader2 className="size-3.5 animate-spin" />
+                <span>{__('Working...')}</span>
+              </Button>
+            ) : (
+              <>
+                {isOutdated && (
+                  <Button
+                    className="flex-1 text-xs h-7 rounded-sm"
+                    variant="secondary"
+                    onClick={() => startAction('upgrade', selectedApp.token)}
+                  >
+                    <span>{__('Upgrade')}</span>
+                  </Button>
+                )}
 
+                {isInstalled && selectedApp.app && !isOutdated && (
+                  <Button
+                    className="flex-1 text-xs h-7 rounded-sm"
+                    variant="secondary"
+                    onClick={() => startAction('open', selectedApp.token, selectedApp.app)}
+                  >
+                    <span>{__('Open')}</span>
+                  </Button>
+                )}
+
+                {isInstalled && (
+                  <Button
+                    variant="destructive"
+                    className="flex-1 text-xs h-7 rounded-sm"
+                    onClick={() => startAction('uninstall', selectedApp.token)}
+                  >
+                    <span>{__('Delete')}</span>
+                  </Button>
+                )}
+
+                {!isInstalled && (
+                  <Button
+                    className="w-full text-xs h-7 rounded-sm"
+                    variant="default"
+                    onClick={() => startAction('install', selectedApp.token)}
+                  >
+                    <span>{__('Install')}</span>
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Caveats Notice */}
+          {appDetails?.caveats && (
+            <div className="p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-xs">
+                <AlertTriangle className="size-3.5 shrink-0" />
+                <span>{__('Caveats')}</span>
+              </div>
+              <p className="text-xs leading-relaxed whitespace-pre-wrap font-mono text-foreground">
+                {appDetails.caveats}
+              </p>
+            </div>
+          )}
+
+          {/* Metadata Section in Card: No border between lines, compact padding */}
           <div className="border border-border rounded-lg p-2.5 bg-card/60 shadow-2xs text-xs space-y-1.5">
             {/* Homepage */}
             <div className="flex items-center justify-between py-0.5">
@@ -210,7 +211,7 @@ export function InfoDrawer() {
               {selectedApp.homepage ? (
                 <button
                   onClick={() => window.ipc?.openExternal?.(selectedApp.homepage)}
-                  className="text-primary hover:underline flex items-center gap-1 max-w-[180px] truncate cursor-default"
+                  className="text-primary hover:underline flex items-center gap-1 max-w-[150px] truncate cursor-default"
                 >
                   <span className="truncate">{selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
                   <ExternalLink className="size-3 shrink-0" />
@@ -223,14 +224,14 @@ export function InfoDrawer() {
             {/* Token */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Token')}</span>
-              <span className="font-mono text-foreground select-text">{selectedApp.token}</span>
+              <span className="font-mono text-foreground select-text truncate max-w-[150px]">{selectedApp.token}</span>
             </div>
 
             {/* Categories */}
             {appCategories.length > 0 && (
               <div className="flex items-start justify-between py-0.5 gap-2">
                 <span className="text-muted-foreground">{appCategories.length > 1 ? __('Categories') : __('Category')}</span>
-                <div className="flex flex-wrap gap-1 justify-end">
+                <div className="flex flex-wrap gap-1 justify-end max-w-[160px]">
                   {appCategories.map((c) => (
                     <span
                       key={c.name}
@@ -247,16 +248,14 @@ export function InfoDrawer() {
             {/* Require */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Require', 'Require')}</span>
-              <div className="flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium">
                 {reqMet ? (
-                  <Check className="size-3.5 text-emerald-500" />
+                  <Check className="size-3 text-emerald-500 shrink-0" />
                 ) : (
-                  <AlertTriangle className="size-3.5 text-amber-500" />
+                  <AlertTriangle className="size-3 text-amber-500 shrink-0" />
                 )}
-                <span className="text-foreground">
-                  {loadingAppDetails ? '...' : (reqText || 'macOS')}
-                </span>
-              </div>
+                <span>{loadingAppDetails ? '...' : (reqText || 'macOS')}</span>
+              </span>
             </div>
 
             {/* Latest Version */}
@@ -270,7 +269,10 @@ export function InfoDrawer() {
             {/* Monthly Installs */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Monthly Installs')}</span>
-              <span className="text-foreground">{formatCountK(selectedApp.count)}</span>
+              <div className="flex items-center gap-1 text-foreground">
+                <ArrowDown className="size-3 text-muted-foreground shrink-0" />
+                <span>{formatCountK(selectedApp.count)}</span>
+              </div>
             </div>
 
             {/* Added */}
@@ -281,14 +283,8 @@ export function InfoDrawer() {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Storage & Usage Section in Card: No border between lines, compact padding */}
-        <div className="space-y-1">
-          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
-            {__('Storage')}
-          </h4>
-
+          {/* Storage & Usage Section in Card: No border between lines, compact padding */}
           <div className="border border-border rounded-lg p-2.5 bg-card/60 shadow-2xs text-xs space-y-1.5">
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Download Size')}</span>
@@ -316,7 +312,7 @@ export function InfoDrawer() {
             )}
           </div>
         </div>
-      </div>
-    </aside>
+      </DrawerContent>
+    </Drawer>
   );
 }

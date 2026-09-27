@@ -1,6 +1,6 @@
 import React from 'react';
 import { useShell } from '@/store/useShell';
-import { Check, Loader2, X } from 'lucide-react';
+import { Check, Loader2, Square } from 'lucide-react';
 
 function TerminalPromptIcon({ className = "size-4" }) {
   return (
@@ -31,6 +31,8 @@ export function StatusBar() {
     toggleTerminal,
     showDrawer,
     alwaysShowStatusBar,
+    selectTab,
+    closeAppInfo,
     __,
   } = useShell();
 
@@ -53,16 +55,26 @@ export function StatusBar() {
     return `${updateText} • ${__('Checked at %s').replace('%s', timeStr)}`;
   };
 
+  const handleMessageClick = () => {
+    if (!activeTaskId) {
+      closeAppInfo();
+      selectTab('updates');
+    }
+  };
+
   return (
-    <footer className="h-6 shrink-0 flex items-center justify-between border-t border-border bg-card text-[11px] font-mono text-muted-foreground select-none overflow-hidden">
+    <footer className="h-7 shrink-0 flex items-center justify-between border-t border-border bg-card text-xs font-sans text-muted-foreground select-none overflow-hidden">
       {/* Left: Status message or running task indicator with live download progress */}
-      <div className="h-full flex items-center gap-2 px-2.5 min-w-0 mr-2 hover:bg-white/5 cursor-default transition-colors">
+      <div
+        onClick={handleMessageClick}
+        className="h-full flex items-center gap-2 px-2.5 min-w-0 mr-2 hover:bg-white/5 active:bg-white/10 cursor-default transition-colors"
+      >
         {activeTaskId ? (
           <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
         ) : (
           <Check className="size-3.5 text-muted-foreground shrink-0" />
         )}
-        <span className="truncate text-foreground/80">{getStatusText()}</span>
+        <span className="truncate font-mono text-foreground/80">{getStatusText()}</span>
 
         {/* Live download percentage progress bar */}
         {activeTaskId && taskProgressPercent !== null && (
@@ -80,9 +92,9 @@ export function StatusBar() {
         {activeTaskId && (
           <button
             onClick={cancelAction}
-            className="h-full px-2.5 flex items-center gap-1 text-xs text-destructive hover:bg-destructive/15 transition-colors cursor-default"
+            className="h-full px-2.5 flex items-center gap-1.5 text-xs text-destructive hover:bg-destructive/15 transition-colors cursor-default"
           >
-            <X className="size-3" />
+            <Square className="size-2.5 fill-destructive text-destructive shrink-0" />
             <span>{__('Cancel')}</span>
           </button>
         )}

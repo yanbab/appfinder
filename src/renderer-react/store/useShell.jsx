@@ -55,7 +55,7 @@ export function ShellProvider({ children }) {
   const chunkSize = 50;
 
   // Terminal log listener callback registration & history buffer
-  const terminalHistoryRef = useRef('');
+  const terminalHistoryRef = useRef('> ');
   const terminalLogSubscribers = useRef(new Set());
   const registerTerminalSubscriber = useCallback((cb) => {
     terminalLogSubscribers.current.add(cb);
@@ -473,8 +473,33 @@ export function ShellProvider({ children }) {
     if (action === 'uninstall') {
       const cask = items.find(c => c.token === token);
       const name = cask ? getAppName(cask) : token;
-      const confirmed = window.confirm(`Are you sure you want to uninstall ${name}?`);
-      if (!confirmed) return;
+
+      if (window.ipc?.showMessage) {
+        const config = (await window.ipc?.getConfig?.()) || {};
+        const title = __('Confirm Delete');
+        const rawMsg = __('Are you sure you want to delete %s?') || 'Are you sure you want to delete %s?';
+        const message = rawMsg.includes('%s') ? rawMsg.replace('%s', name) : `Are you sure you want to delete ${name}?`;
+
+        const response = await window.ipc.showMessage({
+          type: 'question',
+          buttons: [__('Delete'), __('Cancel')],
+          defaultId: 0,
+          cancelId: 1,
+          title,
+          message,
+          detail: '',
+          icon: null,
+          checkboxLabel: __('Delete settings and data'),
+          checkboxChecked: !!config.zap,
+        });
+
+        if (response.response !== 0) return;
+        zap = !!response.checkboxChecked;
+        await window.ipc.updateConfig({ zap });
+      } else {
+        const confirmed = window.confirm(`Are you sure you want to delete ${name}?`);
+        if (!confirmed) return;
+      }
     }
 
     executeTask(action, token, zap);

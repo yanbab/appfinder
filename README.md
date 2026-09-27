@@ -24,6 +24,14 @@
 AppFinder aggregates official Homebrew cask formulas and installation analytics with structured categories and release dates provided by [CaskFlow](https://github.com/alielsokary/CaskFlow). 
 This catalog is indexed locally to enable fast searching and application management directly via Homebrew.
 
+### Installation
+
+Install via Homebrew:
+
+```bash
+brew install --cask yanbab/tap/appfinder
+```
+
 ### Install from source
 
 ```bash

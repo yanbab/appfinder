@@ -7,7 +7,6 @@ window.shell = {
     currentTab: "discover",
     showLoading: true,
     showSidebar: window.innerWidth > 560,
-    showAllCategories: false,
     catalog: {},
 
     // Layout, pagination & debounce limits
