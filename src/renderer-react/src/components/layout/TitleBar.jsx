@@ -1,8 +1,7 @@
 import React from 'react';
 import { useShell } from '@/store/useShell';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { PanelLeft, LayoutGrid, List, Search, X } from 'lucide-react';
+import { PanelLeft, LayoutGrid, List } from 'lucide-react';
 import { UpgradeIcon } from '@/components/ui/icons';
 
 export function TitleBar() {
@@ -17,9 +16,6 @@ export function TitleBar() {
     showSidebar,
     filteredCount,
     startAction,
-    updatesCount,
-    search,
-    setSearch,
     __,
   } = useShell();
 
@@ -40,7 +36,7 @@ export function TitleBar() {
           variant="ghost"
           size="icon-sm"
           onClick={toggleSidebar}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground cursor-pointer"
           title={showSidebar ? "Hide Sidebar" : "Show Sidebar"}
         >
           <PanelLeft className="size-4" />
@@ -51,28 +47,6 @@ export function TitleBar() {
         </h1>
       </div>
 
-      {/* Center/Search Bar (especially useful on compact or quick search) */}
-      <div className="flex-1 max-w-sm [-webkit-app-region:no-drag]">
-        <div className="relative flex items-center">
-          <Search className="absolute left-2 size-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            id="search-input"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={__('Search')}
-            className="pl-7 pr-7 h-7 bg-muted/40 border-border/60 focus-visible:bg-background text-xs"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="size-3" />
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* Right actions: Update all, Sort select, View switch */}
       <div className="flex items-center gap-1.5 [-webkit-app-region:no-drag]">
         {currentTab === 'updates' && filteredCount >= 2 && (
@@ -80,7 +54,7 @@ export function TitleBar() {
             size="xs"
             variant="default"
             onClick={() => startAction('upgrade-all')}
-            className="gap-1 h-6"
+            className="gap-1 h-6 cursor-pointer"
           >
             <UpgradeIcon className="size-3" />
             <span>{__('Update All')}</span>
@@ -103,7 +77,7 @@ export function TitleBar() {
           <div className="flex items-center border border-border rounded-md p-0.5 bg-muted/20">
             <button
               onClick={() => setViewMode('list')}
-              className={`p-1 rounded-xs transition-colors ${
+              className={`p-1 rounded-xs transition-colors cursor-pointer ${
                 viewMode === 'list'
                   ? 'bg-background shadow-2xs text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
@@ -114,7 +88,7 @@ export function TitleBar() {
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1 rounded-xs transition-colors ${
+              className={`p-1 rounded-xs transition-colors cursor-pointer ${
                 viewMode === 'grid'
                   ? 'bg-background shadow-2xs text-foreground'
                   : 'text-muted-foreground hover:text-foreground'

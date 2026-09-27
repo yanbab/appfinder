@@ -192,11 +192,14 @@ export function ShellProvider({ children }) {
     if (window.ipc?.onFocusSearch) {
       unsubs.push(window.ipc.onFocusSearch(() => {
         closeAppInfo();
-        const searchInput = document.getElementById('search-input');
-        if (searchInput) {
-          searchInput.focus();
-          searchInput.select?.();
-        }
+        setShowSidebar(true);
+        setTimeout(() => {
+          const searchInput = document.getElementById('search-input');
+          if (searchInput) {
+            searchInput.focus();
+            searchInput.select?.();
+          }
+        }, 50);
       }));
     }
 

@@ -18,11 +18,14 @@ export function App() {
       // Cmd+F or Ctrl+F -> Focus search
       if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
         e.preventDefault();
-        const searchInput = document.getElementById('search-input');
-        if (searchInput) {
-          searchInput.focus();
-          searchInput.select?.();
-        }
+        setShowSidebar(true);
+        setTimeout(() => {
+          const searchInput = document.getElementById('search-input');
+          if (searchInput) {
+            searchInput.focus();
+            searchInput.select?.();
+          }
+        }, 50);
       }
     };
 
