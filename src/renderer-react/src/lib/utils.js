@@ -165,3 +165,105 @@ export function isRequirementMet(appDetails) {
   }
   return true;
 }
+
+export function detectPrompt(text) {
+  const clean = stripAnsi(text);
+  const isRetry = /sorry, try again|incorrect password|authentication failure/i.test(clean);
+  const isPasswordPrompt = /password\s*[:?]|passphrase\s*[:?]|mot de passe\s*[:?]|(?:sudo|admin).*(?:password|passphrase)/i.test(clean);
+  const isInteractivePrompt = isPasswordPrompt || /\[y\/n\]/i.test(clean);
+  return { isRetry, isPasswordPrompt, isInteractivePrompt };
+}
+
+export function extractProgress(text) {
+  if (!text) return null;
+  const cleanText = stripAnsi(text);
+  const isExtractingContext = /extracting/i.test(cleanText);
+  const rawLines = cleanText.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+
+  for (let i = rawLines.length - 1; i >= 0; i--) {
+    const line = rawLines[i];
+
+    // 0. Ignore past-tense / summary lines like "Already downloaded", "Downloaded to: ...", "✔︎ Cask ... Downloaded ..."
+    if (/(?:already\s+)?downloaded/i.test(line) || /[✔✓]/.test(line)) {
+      continue;
+    }
+
+    // 1. Extracting cask / artifact / archive / sizes
+    if (/extracting/i.test(line) || (isExtractingContext && /\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?)/i.test(line))) {
+      const sizeMatch = line.match(/(\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?))/i);
+      if (sizeMatch) {
+        return { message: `Extracting ${sizeMatch[1]}`, percent: null };
+      }
+      const match = line.match(/^(?:==>\s*)?Extracting(?:\s+cask|\s+artifact)?:\s*(.*)/i);
+      const item = match && match[1] ? match[1].split(/[/\\]/).pop().trim() : '';
+      return { message: item ? `Extracting ${item}` : 'Extracting...', percent: null };
+    }
+
+    // 2. Download progress with bytes / percentage: e.g. "12.5MB / 50.0MB", "34.2%"
+    const percentMatch = line.match(/(?:#+\s*)?(\d{1,3}(?:\.\d+)?%)/);
+    const byteRangeMatch = line.match(/(\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?))\s*(?:\/|of)\s*(\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?))/i);
+    if (byteRangeMatch || percentMatch) {
+      const parts = [];
+      let percentVal = null;
+      if (byteRangeMatch) {
+        const current = byteRangeMatch[1].replace(/\s+/g, '').toLowerCase();
+        const total = byteRangeMatch[2].replace(/\s+/g, '').toLowerCase();
+        if (current === total) {
+          parts.push(byteRangeMatch[2]);
+        } else {
+          parts.push(`${byteRangeMatch[1]} / ${byteRangeMatch[2]}`);
+        }
+      }
+      if (percentMatch) {
+        parts.push(percentMatch[1]);
+        percentVal = parseFloat(percentMatch[1]);
+      }
+      return { message: `Downloading: ${parts.join(' ')}`, percent: percentVal };
+    }
+
+    // 3. Direct downloading URL / source
+    if (/^==>\s*Downloading\s+(https?:\/\/|from)/i.test(line) || /^Downloading\s+(https?:\/\/|from)/i.test(line)) {
+      return { message: 'Downloading...', percent: null };
+    }
+
+    // 4. Verifying checksum
+    if (/verifying.*checksum/i.test(line)) {
+      return { message: 'Verifying checksum...', percent: null };
+    }
+
+    // 5. Moving App / Linking / Backing up
+    const moveMatch = line.match(/Moving App '([^']+)'/i) || line.match(/Moving (?:Binary|Artifact) '([^']+)'/i);
+    if (moveMatch) {
+      return { message: `Installing ${moveMatch[1]}`, percent: null };
+    }
+    if (/Linking (?:Binary|Artifact)/i.test(line)) {
+      return { message: 'Linking binaries...', percent: null };
+    }
+    if (/Backing App/i.test(line)) {
+      return { message: 'Backing up app...', percent: null };
+    }
+
+    // 6. Running installer / sudo
+    if (/Running.*installer/i.test(line)) {
+      return { message: 'Running installer...', percent: null };
+    }
+
+    // 7. General ==> brew messages (strip ==> prefix)
+    if (line.startsWith('==>')) {
+      const clean = line.replace(/^==>\s*/, '').replace(/^==\s*/, '').trim();
+      if (clean && clean.length > 2 && !clean.startsWith('Caveats')) {
+        return { message: clean, percent: null };
+      }
+    }
+
+    // 8. Action verbs
+    if (/^(Downloading|Extracting|Installing|Updating|Pouring|Fetching|Upgrading|Running|Executing|Cleaning|Purging)\b/i.test(line)) {
+      const clean = line.replace(/^==>\s*/, '').trim();
+      if (clean && clean.length > 2) {
+        return { message: clean, percent: null };
+      }
+    }
+  }
+  return null;
+}
+

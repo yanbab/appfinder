@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { getAppName, formatVersion, stripAnsi } from '../lib/utils';
+import { getAppName, formatVersion, stripAnsi, extractProgress, detectPrompt } from '../lib/utils';
 
 const ShellContext = createContext(null);
 
@@ -40,6 +40,7 @@ export function ShellProvider({ children }) {
   const [activeTaskToken, setActiveTaskToken] = useState(null);
   const [activeTaskAction, setActiveTaskAction] = useState(null);
   const [drawerTitle, setDrawerTitle] = useState('');
+  const [taskProgressPercent, setTaskProgressPercent] = useState(null);
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const activeTaskPasswordRef = useRef(null);
@@ -259,15 +260,12 @@ export function ShellProvider({ children }) {
         activeTaskErrorLogRef.current += data.text;
 
         // Extract live progress
-        const clean = stripAnsi(data.text);
-        if (/extracting/i.test(clean)) {
-          setDrawerTitle('Extracting files...');
-        } else if (/downloading/i.test(clean)) {
-          setDrawerTitle('Downloading package...');
-        } else if (/verifying/i.test(clean)) {
-          setDrawerTitle('Verifying checksum...');
-        } else if (/moving|installing/i.test(clean)) {
-          setDrawerTitle('Installing application...');
+        const prog = extractProgress(data.text);
+        if (prog && prog.message) {
+          setDrawerTitle(prog.message);
+          if (prog.percent !== null) {
+            setTaskProgressPercent(prog.percent);
+          }
         }
 
         // Detect password prompt
@@ -309,6 +307,7 @@ export function ShellProvider({ children }) {
         setActiveTaskId(null);
         setActiveTaskToken(null);
         setActiveTaskAction(null);
+        setTaskProgressPercent(null);
         activeTaskPasswordRef.current = null;
         lastPasswordAttemptFailedRef.current = false;
         lastPasswordSentTimeRef.current = 0;
@@ -694,6 +693,7 @@ export function ShellProvider({ children }) {
     activeTaskToken,
     activeTaskAction,
     drawerTitle,
+    taskProgressPercent,
     isWaitingForInput,
     startAction,
     cancelAction,

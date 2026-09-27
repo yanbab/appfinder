@@ -7,6 +7,7 @@ export function StatusBar() {
   const {
     activeTaskId,
     drawerTitle,
+    taskProgressPercent,
     cancelAction,
     updatesCount,
     lastCheckedTime,
@@ -38,14 +39,24 @@ export function StatusBar() {
 
   return (
     <footer className="h-7 shrink-0 flex items-center justify-between px-3 border-t border-border bg-card/60 backdrop-blur-xs text-[11px] text-muted-foreground select-none">
-      {/* Left: Status message or running task indicator */}
-      <div className="flex items-center gap-2 min-w-0">
+      {/* Left: Status message or running task indicator with live download progress */}
+      <div className="flex items-center gap-2 min-w-0 mr-2">
         {activeTaskId ? (
           <Loader2 className="size-3 text-primary animate-spin shrink-0" />
         ) : (
           <Check className="size-3 text-muted-foreground shrink-0" />
         )}
         <span className="truncate">{getStatusText()}</span>
+
+        {/* Live download percentage progress bar */}
+        {activeTaskId && taskProgressPercent !== null && (
+          <div className="w-16 h-1.5 rounded-full bg-muted/80 overflow-hidden shrink-0 hidden sm:block">
+            <div
+              className="h-full bg-primary transition-all duration-150 rounded-full"
+              style={{ width: `${Math.min(100, Math.max(0, taskProgressPercent))}%` }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Right: Actions */}
@@ -55,7 +66,7 @@ export function StatusBar() {
             size="xs"
             variant="ghost"
             onClick={cancelAction}
-            className="h-5 px-1.5 text-[10px] text-destructive hover:bg-destructive/10"
+            className="h-5 px-1.5 text-[10px] text-destructive hover:bg-destructive/10 cursor-pointer"
           >
             <X className="size-2.5 mr-1" />
             <span>{__('Cancel')}</span>
@@ -66,7 +77,7 @@ export function StatusBar() {
           size="icon-xs"
           variant="ghost"
           onClick={toggleTerminal}
-          className="size-5 text-muted-foreground hover:text-foreground"
+          className="size-5 text-muted-foreground hover:text-foreground cursor-pointer"
           title={showTerminal ? "Hide Terminal" : "Show Terminal"}
         >
           <TerminalIcon className="size-2.5" />
