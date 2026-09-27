@@ -36,12 +36,12 @@ export function App() {
   const isDiscover = currentTab === 'discover' && (!search || !search.trim());
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-background text-foreground font-sans select-none antialiased">
-      {/* Full-height Sidebar */}
+    <div className="h-screen w-screen flex overflow-hidden bg-transparent text-foreground font-sans select-none antialiased">
+      {/* Full-height Sidebar with macOS Vibrancy */}
       <Sidebar />
 
       {/* Main Content Column */}
-      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative bg-background">
         <TitleBar />
 
         {/* View Switcher: Discover vs List/Grid */}
