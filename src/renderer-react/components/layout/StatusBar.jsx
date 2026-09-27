@@ -54,7 +54,7 @@ export function StatusBar() {
   };
 
   return (
-    <footer className="h-6 shrink-0 flex items-center justify-between border-t border-border bg-card text-xs font-mono text-muted-foreground select-none overflow-hidden">
+    <footer className="h-6 shrink-0 flex items-center justify-between border-t border-border bg-card text-[11px] font-mono text-muted-foreground select-none overflow-hidden">
       {/* Left: Status message or running task indicator with live download progress */}
       <div className="h-full flex items-center gap-2 px-2.5 min-w-0 mr-2 hover:bg-white/5 cursor-default transition-colors">
         {activeTaskId ? (

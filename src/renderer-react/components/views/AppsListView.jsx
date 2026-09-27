@@ -64,8 +64,8 @@ export function AppsListView() {
       <div
         className={
           viewMode === 'grid'
-            ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
-            : "border border-border rounded-xl overflow-hidden bg-card divide-y divide-border shadow-2xs"
+            ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5"
+            : "border border-border rounded-lg overflow-hidden bg-card divide-y divide-border shadow-2xs"
         }
       >
         {displayedItems.map((item) => (

@@ -100,7 +100,16 @@ export function getCaskRequirements(appDetails) {
   if (typeof macos === 'object') {
     const entries = Object.entries(macos);
     if (entries.length === 0) return 'macOS';
-    return `macOS ${entries.map(([op, val]) => `${op} ${Array.isArray(val) ? val.join(', ') : val}`).join(', ')}`;
+    const text = entries
+      .map(([op, val]) => {
+        const v = Array.isArray(val) ? val.join(', ') : val;
+        if (op === '>=' || op === '>= ') return `${v}+`;
+        if (op === '<=' || op === '<= ') return `≤ ${v}`;
+        if (op === '==' || op === '=') return v;
+        return `${op} ${v}`;
+      })
+      .join(', ');
+    return `macOS ${text}`;
   }
   return 'macOS';
 }

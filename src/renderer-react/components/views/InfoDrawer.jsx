@@ -95,7 +95,7 @@ export function InfoDrawer() {
             variant="ghost"
             size="icon-xs"
             onClick={closeAppInfo}
-            className="text-muted-foreground hover:text-foreground [-webkit-app-region:no-drag] cursor-pointer"
+            className="text-muted-foreground hover:text-foreground [-webkit-app-region:no-drag] cursor-default rounded-sm"
             title="Close"
           >
             <X className="size-4" />
@@ -107,31 +107,31 @@ export function InfoDrawer() {
       </div>
 
       {/* Body content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-5 text-sm">
-        {/* App Hero: Centered Icon, Name, and Version Vertically */}
-        <div className="flex flex-col items-center text-center pt-2 pb-1 space-y-2.5">
-          <AppIcon item={selectedApp} size="hero" className="size-32 rounded-3xl shadow-md shrink-0" />
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+        {/* App Hero: Centered Icon, Name, Description before Version */}
+        <div className="flex flex-col items-center text-center pt-1 pb-0.5 space-y-2">
+          <AppIcon item={selectedApp} size="hero" className="size-32 rounded-2xl shadow-md shrink-0" />
           <div className="space-y-1 max-w-xs">
             <h3 className="font-bold text-base text-foreground leading-tight">
               {name}
             </h3>
+            {selectedApp.desc && (
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {selectedApp.desc}
+              </p>
+            )}
             {version && (
               <div className="text-xs text-muted-foreground font-mono">
                 {__('Version')} {formatVersion(version)}
               </div>
             )}
-            {selectedApp.desc && (
-              <p className="text-xs text-muted-foreground leading-relaxed pt-1">
-                {selectedApp.desc}
-              </p>
-            )}
           </div>
         </div>
 
-        {/* Primary Actions */}
-        <div className="flex items-center gap-2 pt-1">
+        {/* Primary Actions (Equal size when multiple) */}
+        <div className="flex items-center gap-2 pt-0.5">
           {isRunning ? (
-            <Button className="w-full gap-2 text-xs" variant="secondary" disabled>
+            <Button className="w-full gap-2 text-xs h-7 rounded-md" variant="secondary" disabled>
               <Loader2 className="size-3.5 animate-spin" />
               <span>{__('Working...')}</span>
             </Button>
@@ -139,7 +139,7 @@ export function InfoDrawer() {
             <>
               {isOutdated && (
                 <Button
-                  className="flex-1 gap-1.5 text-xs"
+                  className="flex-1 gap-1.5 text-xs h-7 rounded-md"
                   variant="default"
                   onClick={() => startAction('upgrade', selectedApp.token)}
                 >
@@ -150,7 +150,7 @@ export function InfoDrawer() {
 
               {isInstalled && selectedApp.app && !isOutdated && (
                 <Button
-                  className="flex-1 gap-1.5 text-xs"
+                  className="flex-1 gap-1.5 text-xs h-7 rounded-md"
                   variant="secondary"
                   onClick={() => startAction('open', selectedApp.token, selectedApp.app)}
                 >
@@ -162,7 +162,7 @@ export function InfoDrawer() {
               {isInstalled && (
                 <Button
                   variant="destructive"
-                  className={selectedApp.app && !isOutdated ? "text-xs" : "flex-1 text-xs"}
+                  className="flex-1 gap-1.5 text-xs h-7 rounded-md"
                   onClick={() => startAction('uninstall', selectedApp.token)}
                 >
                   <TrashIcon className="size-3.5" />
@@ -172,7 +172,7 @@ export function InfoDrawer() {
 
               {!isInstalled && (
                 <Button
-                  className="w-full gap-1.5 text-xs"
+                  className="w-full gap-1.5 text-xs h-7 rounded-md"
                   variant="default"
                   onClick={() => startAction('install', selectedApp.token)}
                 >
@@ -186,7 +186,7 @@ export function InfoDrawer() {
 
         {/* Caveats Notice */}
         {appDetails?.caveats && (
-          <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1">
+          <div className="p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1">
             <div className="flex items-center gap-1.5 font-semibold text-xs">
               <AlertTriangle className="size-3.5 shrink-0" />
               <span>{__('Caveats')}</span>
@@ -197,20 +197,20 @@ export function InfoDrawer() {
           </div>
         )}
 
-        {/* Metadata Section in Card */}
-        <div className="space-y-1.5">
+        {/* Metadata Section in Card: No border between lines, compact padding */}
+        <div className="space-y-1">
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
             {__('Details')}
           </h4>
 
-          <div className="border border-border rounded-xl p-3 bg-card/60 divide-y divide-border/60 shadow-2xs text-xs space-y-0">
+          <div className="border border-border rounded-lg p-2.5 bg-card/60 shadow-2xs text-xs space-y-1.5">
             {/* Homepage */}
-            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+            <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Homepage')}</span>
               {selectedApp.homepage ? (
                 <button
                   onClick={() => window.ipc?.openExternal?.(selectedApp.homepage)}
-                  className="text-primary hover:underline flex items-center gap-1 max-w-[180px] truncate cursor-pointer"
+                  className="text-primary hover:underline flex items-center gap-1 max-w-[180px] truncate cursor-default"
                 >
                   <span className="truncate">{selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
                   <ExternalLink className="size-3 shrink-0" />
@@ -221,20 +221,20 @@ export function InfoDrawer() {
             </div>
 
             {/* Token */}
-            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+            <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Token')}</span>
               <span className="font-mono text-foreground select-text">{selectedApp.token}</span>
             </div>
 
             {/* Categories */}
             {appCategories.length > 0 && (
-              <div className="flex items-start justify-between py-2 first:pt-0 last:pb-0 gap-2">
+              <div className="flex items-start justify-between py-0.5 gap-2">
                 <span className="text-muted-foreground">{appCategories.length > 1 ? __('Categories') : __('Category')}</span>
                 <div className="flex flex-wrap gap-1 justify-end">
                   {appCategories.map((c) => (
                     <span
                       key={c.name}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-muted text-xs text-foreground font-medium"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium"
                     >
                       <CategoryIcon html={c.icon} className="size-[14px]" />
                       <span>{__(c.displayName)}</span>
@@ -244,9 +244,9 @@ export function InfoDrawer() {
               </div>
             )}
 
-            {/* Requirements */}
-            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
-              <span className="text-muted-foreground">{__('Requirements')}</span>
+            {/* Require */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Require', 'Require')}</span>
               <div className="flex items-center gap-1.5">
                 {reqMet ? (
                   <Check className="size-3.5 text-emerald-500" />
@@ -260,7 +260,7 @@ export function InfoDrawer() {
             </div>
 
             {/* Latest Version */}
-            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+            <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Latest Version')}</span>
               <span className="font-mono text-foreground">
                 {formatVersion(outdatedMap[selectedApp.token]?.currentVersion || appDetails?.version || selectedApp.version)}
@@ -268,14 +268,14 @@ export function InfoDrawer() {
             </div>
 
             {/* Monthly Installs */}
-            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+            <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Monthly Installs')}</span>
               <span className="text-foreground">{formatCountK(selectedApp.count)}</span>
             </div>
 
             {/* Added */}
             {selectedApp.added && (
-              <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+              <div className="flex items-center justify-between py-0.5">
                 <span className="text-muted-foreground">{__('Added')}</span>
                 <span className="text-foreground">{formatDate(selectedApp.added)}</span>
               </div>
@@ -283,14 +283,14 @@ export function InfoDrawer() {
           </div>
         </div>
 
-        {/* Storage & Usage Section in Card */}
-        <div className="space-y-1.5">
+        {/* Storage & Usage Section in Card: No border between lines, compact padding */}
+        <div className="space-y-1">
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
             {__('Storage')}
           </h4>
 
-          <div className="border border-border rounded-xl p-3 bg-card/60 divide-y divide-border/60 shadow-2xs text-xs space-y-0">
-            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+          <div className="border border-border rounded-lg p-2.5 bg-card/60 shadow-2xs text-xs space-y-1.5">
+            <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Download Size')}</span>
               <span className="text-foreground font-mono">
                 {loadingSizes ? '...' : (appDetails?.downloadSize || '—')}
@@ -299,14 +299,14 @@ export function InfoDrawer() {
 
             {isInstalled && (
               <>
-                <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+                <div className="flex items-center justify-between py-0.5">
                   <span className="text-muted-foreground">{__('Installed Size')}</span>
                   <span className="text-foreground font-mono">
                     {loadingSizes ? '...' : (appDetails?.installedSize || '—')}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
+                <div className="flex items-center justify-between py-0.5">
                   <span className="text-muted-foreground">{__('Data Size')}</span>
                   <span className="text-foreground font-mono">
                     {loadingSizes ? '...' : (appDetails?.dataSize || '—')}

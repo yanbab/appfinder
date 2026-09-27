@@ -31,10 +31,8 @@ export function AppRow({ item }) {
   return (
     <div
       onClick={() => openAppInfo(item)}
-      className={`group flex items-center justify-between px-3.5 py-2.5 text-card-foreground transition-colors cursor-default select-none ${
-        isSelected
-          ? 'bg-accent/40'
-          : 'hover:bg-muted/50'
+      className={`group flex items-center justify-between px-3.5 py-2.5 text-card-foreground select-none cursor-default transition-none active:bg-muted/60 ${
+        isSelected ? 'bg-muted/50' : ''
       }`}
     >
       {/* Icon & Details */}

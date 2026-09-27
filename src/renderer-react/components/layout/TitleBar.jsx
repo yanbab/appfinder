@@ -29,7 +29,11 @@ export function TitleBar() {
   };
 
   return (
-    <header className="h-11 shrink-0 flex items-center justify-between px-3 border-b border-border bg-background/80 backdrop-blur-md select-none [-webkit-app-region:drag] z-10 gap-3">
+    <header
+      className={`h-11 shrink-0 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md select-none [-webkit-app-region:drag] z-10 gap-3 transition-all duration-200 ${
+        showSidebar ? 'px-3' : 'pl-[80px] pr-3'
+      }`}
+    >
       {/* Left section: Sidebar toggle & Title */}
       <div className="flex items-center gap-2.5 [-webkit-app-region:no-drag] min-w-0">
         <Button
@@ -51,12 +55,12 @@ export function TitleBar() {
       <div className="flex items-center gap-1.5 [-webkit-app-region:no-drag]">
         {currentTab === 'updates' && filteredCount >= 2 && (
           <Button
-            size="sm"
+            size="xs"
             variant="default"
             onClick={() => startAction('upgrade-all')}
-            className="gap-1.5 h-6.5 text-xs cursor-default"
+            className="gap-1 h-5.5 px-2 text-[11px] rounded-sm cursor-default"
           >
-            <UpgradeIcon className="size-3.5" />
+            <UpgradeIcon className="size-3" />
             <span>{__('Update All')}</span>
           </Button>
         )}

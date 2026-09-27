@@ -23,9 +23,24 @@ const badgeVariants = cva(
   }
 );
 
-function Badge({ className, variant, ...props }) {
+function Badge({ className, variant, children, ...props }) {
+  const isSingleDigit =
+    typeof children === 'number' ||
+    (typeof children === 'string' && children.trim().length === 1);
+
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <div
+      className={cn(
+        badgeVariants({ variant }),
+        isSingleDigit
+          ? "size-4.5 p-0 aspect-square justify-center text-center leading-none"
+          : "px-1.5 py-0 h-4.5",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
   );
 }
 
