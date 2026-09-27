@@ -109,6 +109,16 @@ const TaskPrompt = {
         const title = rawFailedTitle.includes('%s') ? rawFailedTitle.replace('%s', appName) : `${appName} failed`;
 
         const cleanLogs = window.ShellUtils ? window.ShellUtils.stripAnsi(logText) : logText;
+
+        const isFullDiskAccess = /Full Disk Access|Unable to remove some files/i.test(cleanLogs);
+        if (isFullDiskAccess) {
+            return {
+                title: translate('Full Disk Access Required'),
+                details: translate('Homebrew requires Full Disk Access to delete protected settings and files in ~/Library. You can grant Full Disk Access in System Settings, or delete the app without selecting "Delete settings and data".'),
+                isFullDiskAccess: true
+            };
+        }
+
         const lines = cleanLogs.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
         const defaultError = translate('No error details recorded.');
 
@@ -280,7 +290,22 @@ Object.assign(window.shell, {
                 const cask = this.items?.find(c => c.token === finishedToken);
                 const name = cask ? this.getAppName(cask) : finishedToken;
                 const err = TaskPrompt.extractTaskError(errorLog, finishedAction, name, this.catalog, this.__.bind(this));
-                window.ipc.showErrorDialog(err.title, `${err.details}`);
+                if (err.isFullDiskAccess) {
+                    const res = await window.ipc.showMessage({
+                        type: 'warning',
+                        title: err.title,
+                        message: err.title,
+                        detail: err.details,
+                        buttons: [this.__('Open System Settings'), this.__('Cancel')],
+                        defaultId: 0,
+                        cancelId: 1
+                    });
+                    if (res && res.response === 0) {
+                        window.ipc.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles');
+                    }
+                } else {
+                    window.ipc.showErrorDialog(err.title, `${err.details}`);
+                }
             }
 
             if (finishedAction === 'cleanup' && isSuccess) {

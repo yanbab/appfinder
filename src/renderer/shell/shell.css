@@ -628,6 +628,10 @@ body.blur .drawer-header {
     height: var(--titlebar-height);
 }
 
+.drawer-container.collapsed .drawer-body {
+    display: none;
+}
+
 .drawer-header {
     -webkit-app-region: drag;
     user-select: none;
@@ -646,6 +650,7 @@ body.blur .drawer-header {
 
 .drawer-container.open.collapsed .drawer-header {
     border-bottom: none;
+    height: 100%;
 }
 
 .drawer-status {
