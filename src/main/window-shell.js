@@ -4,11 +4,17 @@ const { BrowserWindow, app } = require('electron');
 const path = require('path');
 
 const preloadPath = path.join(__dirname, '../renderer/ipc-renderer.js');
-const rendererPath = path.join(__dirname, '../renderer/shell/shell.html');
+const useReact = process.env.USE_REACT === '1' || process.env.USE_REACT === 'true';
+const getRendererPath = (forceReact) => {
+    const isReact = typeof forceReact === 'boolean' ? forceReact : useReact;
+    return isReact
+        ? path.join(__dirname, '../renderer-react/dist/index.html')
+        : path.join(__dirname, '../renderer/shell/shell.html');
+};
 
 let mainWindow = null;
 
-function createShellWindow() {
+function createShellWindow(forceReact) {
     mainWindow = new BrowserWindow({
         title: 'AppFinder',
         name: 'shell',
@@ -30,7 +36,7 @@ function createShellWindow() {
             scrollBounce: true
         }
     });
-    mainWindow.loadFile(rendererPath);
+    mainWindow.loadFile(getRendererPath(forceReact));
     mainWindow.on('close', () => {
         app.quit();
     });

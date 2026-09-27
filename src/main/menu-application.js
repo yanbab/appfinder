@@ -183,6 +183,20 @@ function setupApplicationMenu() {
         },
         ...(isDebug ? [
           { type: 'separator' },
+          {
+            label: __('Open React Shell'),
+            click: () => {
+              const { createShellWindow } = require('./window-shell');
+              createShellWindow(true);
+            }
+          },
+          {
+            label: __('Open Alpine Shell'),
+            click: () => {
+              const { createShellWindow } = require('./window-shell');
+              createShellWindow(false);
+            }
+          },
           { role: 'reload' },
           { role: 'toggleDevTools' }
         ] : [])

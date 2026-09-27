@@ -1,0 +1,157 @@
+import React, { useState } from 'react';
+import { useShell } from '@/store/useShell';
+import { useTheme } from '@/store/useTheme';
+import { Compass, LayoutGrid, CheckCircle2, RefreshCw, ChevronDown, ChevronUp, Sun, Moon } from 'lucide-react';
+import { CategoryIcon } from '@/components/ui/icons';
+import { Badge } from '@/components/ui/badge';
+
+export function Sidebar() {
+  const {
+    currentTab,
+    selectTab,
+    showSidebar,
+    allAppsCount,
+    installed,
+    updatesCount,
+    categories,
+    search,
+    filteredCount,
+    __,
+  } = useShell();
+
+  const { isDark, setTheme, theme } = useTheme();
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
+  const displayedCategories = showAllCategories ? categories : categories.slice(0, 10);
+
+  const navItems = [
+    {
+      id: 'discover',
+      label: __('Explore'),
+      icon: Compass,
+      badge: null,
+    },
+    {
+      id: 'all-apps',
+      label: __('All Apps'),
+      icon: LayoutGrid,
+      badge: currentTab === 'all-apps' && search ? filteredCount : allAppsCount,
+    },
+    {
+      id: 'installed',
+      label: __('Installed'),
+      icon: CheckCircle2,
+      badge: currentTab === 'installed' && search ? filteredCount : installed.length,
+    },
+    {
+      id: 'updates',
+      label: __('Updates'),
+      icon: RefreshCw,
+      badge: currentTab === 'updates' && search ? filteredCount : updatesCount,
+      badgeVariant: 'default',
+    },
+  ];
+
+  return (
+    <aside
+      className={`h-full shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border select-none transition-all duration-200 z-20 ${
+        showSidebar ? 'w-56' : 'w-0 -translate-x-full overflow-hidden'
+      }`}
+    >
+      {/* macOS Traffic Lights Window Drag Region */}
+      <div className="h-10 shrink-0 [-webkit-app-region:drag]" />
+
+      {/* Main Navigation */}
+      <div className="flex-1 overflow-y-auto px-2 py-1 space-y-4">
+        <nav className="space-y-0.5">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => selectTab(item.id)}
+                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors text-left group ${
+                  isActive
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-2xs'
+                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Icon className={`size-3.5 shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
+                  <span className="truncate">{item.label}</span>
+                </div>
+                {item.badge !== null && item.badge !== undefined && (item.id !== 'updates' || item.badge > 0) && (
+                  <Badge
+                    variant={item.badgeVariant || (isActive ? 'default' : 'subtle')}
+                    className="ml-auto px-1.5 py-0 h-4 text-[10px]"
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Categories Section */}
+        {categories.length > 0 && (
+          <div className="space-y-1">
+            <div className="px-2.5 py-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              {__('Categories')}
+            </div>
+
+            <div className="space-y-0.5">
+              {displayedCategories.map((cat) => {
+                const isActive = currentTab === cat.name;
+                return (
+                  <button
+                    key={cat.name}
+                    onClick={() => selectTab(cat.name)}
+                    className={`w-full flex items-center gap-2 px-2.5 py-1 rounded-md text-xs transition-colors text-left group ${
+                      isActive
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-2xs'
+                        : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                    }`}
+                  >
+                    <CategoryIcon
+                      html={cat.icon}
+                      className={`size-3.5 shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}
+                    />
+                    <span className="truncate">{__(cat.displayName)}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {categories.length > 10 && (
+              <button
+                onClick={() => setShowAllCategories(!showAllCategories)}
+                className="w-full flex items-center justify-between px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground rounded-md transition-colors"
+              >
+                <span>{showAllCategories ? __('Show Less') : __('Show All')}</span>
+                {showAllCategories ? (
+                  <ChevronUp className="size-3" />
+                ) : (
+                  <ChevronDown className="size-3" />
+                )}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Footer: Theme toggler */}
+      <div className="p-2 border-t border-sidebar-border flex items-center justify-between text-xs text-muted-foreground">
+        <span className="text-[11px] px-1 font-mono text-muted-foreground/60">AppFinder</span>
+        <button
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+          className="p-1.5 rounded-md hover:bg-sidebar-accent hover:text-foreground transition-colors"
+          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+        </button>
+      </div>
+    </aside>
+  );
+}
