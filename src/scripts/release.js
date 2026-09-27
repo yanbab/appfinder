@@ -102,7 +102,11 @@ async function main() {
     if (input) message = input;
   }
 
-  // 4. Update CHANGELOG.md
+  // 4. Fetch latest cask catalog and update data
+  console.log(`🔄 Fetching latest casks and generating catalog data...`);
+  run(`npm run fetch`);
+
+  // 5. Update CHANGELOG.md
   if (fs.existsSync(changelogPath)) {
     let changelog = fs.readFileSync(changelogPath, 'utf8');
     const today = new Date().toISOString().split('T')[0];
@@ -133,16 +137,16 @@ async function main() {
     }
   }
 
-  // 5. Update package.json
+  // 6. Update package.json
   pkg.version = newVersion;
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
   console.log(`📦 Updated package.json version to ${newVersion}`);
 
-  // 6. Git commit, tag, and push
+  // 7. Git commit, tag, and push
   const currentBranch = runOutput('git branch --show-current') || 'main';
 
   console.log(`\n📌 Committing and tagging release...`);
-  run(`git add package.json CHANGELOG.md`);
+  run(`git add package.json CHANGELOG.md data/`);
   
   // Commit if anything is staged
   const staged = runOutput('git diff --cached --name-only');
