@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.5] - 2026-09-27
+
+### Changes
+- ci: activate native ad-hoc signing with electron-builder
+
+---
+
 ## [0.9.4] - 2026-09-27
 
 ### Changes
