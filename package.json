@@ -18,7 +18,8 @@
     "start": "electron .",
     "build": "electron-builder build --mac",
     "fetch": "cd src/scripts && bash fetch-casks.sh",
-    "clean": "rm -rf ./cache ./dist $HOME/.config/appfinder \"$HOME/Library/Application Support/AppFinder\""
+    "clean": "rm -rf ./cache ./dist $HOME/.config/appfinder \"$HOME/Library/Application Support/AppFinder\"",
+    "release": "node src/scripts/release.js"
   },
   "keywords": [
     "casks",
