@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
 const ThemeContext = createContext({
   theme: 'system',
@@ -41,29 +41,35 @@ export function ThemeProvider({ children }) {
     localStorage.setItem('appfinder-theme', theme);
   }, [theme]);
 
-  // Accent color sync with macOS
+  // Apply macOS native accent color directly to ShadCN accent & primary variables
+  const applyAccentColor = useCallback((color) => {
+    if (!color) return;
+    const clean = typeof color === 'string' ? color.trim().replace(/^#/, '') : '';
+    const hex = color.startsWith?.('rgb') ? color : `#${clean.length === 8 ? clean.slice(0, 6) : clean}`;
+    if (!hex || hex === '#') return;
+
+    const root = document.documentElement;
+    root.style.setProperty('--primary', hex);
+    root.style.setProperty('--ring', hex);
+    root.style.setProperty('--accent', hex);
+    root.style.setProperty('--sidebar-primary', hex);
+    root.style.setProperty('--sidebar-ring', hex);
+  }, []);
+
   useEffect(() => {
     if (window.ipc?.getAccentColor) {
       window.ipc.getAccentColor().then((color) => {
-        if (color) {
-          const clean = typeof color === 'string' ? color.replace(/^#/, '') : '';
-          const hex = color.startsWith?.('rgb') ? color : `#${clean.length === 8 ? clean.slice(0, 6) : clean}`;
-          document.documentElement.style.setProperty('--accent-color-raw', hex);
-        }
-      });
+        if (color) applyAccentColor(color);
+      }).catch(console.error);
     }
 
     if (window.ipc?.onAccentColorChanged) {
       const unsub = window.ipc.onAccentColorChanged((color) => {
-        if (color) {
-          const clean = typeof color === 'string' ? color.replace(/^#/, '') : '';
-          const hex = color.startsWith?.('rgb') ? color : `#${clean.length === 8 ? clean.slice(0, 6) : clean}`;
-          document.documentElement.style.setProperty('--accent-color-raw', hex);
-        }
+        if (color) applyAccentColor(color);
       });
       return () => unsub?.();
     }
-  }, []);
+  }, [applyAccentColor]);
 
   return (
     <ThemeContext.Provider value={{ theme, isDark, setTheme }}>
@@ -75,3 +81,5 @@ export function ThemeProvider({ children }) {
 export function useTheme() {
   return useContext(ThemeContext);
 }
+
+export default ThemeProvider;

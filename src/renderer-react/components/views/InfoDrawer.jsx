@@ -88,39 +88,42 @@ export function InfoDrawer() {
     <aside
       className="fixed inset-y-0 right-0 w-88 sm:w-96 bg-card border-l border-border shadow-2xl flex flex-col z-30 select-none animate-in slide-in-from-right duration-200"
     >
-      {/* Header */}
-      <div className="h-11 shrink-0 px-4 border-b border-border flex items-center justify-between bg-card [-webkit-app-region:drag]">
-        <h2 className="text-xs font-semibold text-foreground">
-          {__('Infos')}
-        </h2>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={closeAppInfo}
-          className="text-muted-foreground hover:text-foreground [-webkit-app-region:no-drag]"
-        >
-          <X className="size-3.5" />
-        </Button>
+      {/* Header with Close Button on the Left */}
+      <div className="h-11 shrink-0 px-3 border-b border-border flex items-center justify-between bg-card [-webkit-app-region:drag]">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={closeAppInfo}
+            className="text-muted-foreground hover:text-foreground [-webkit-app-region:no-drag] cursor-pointer"
+            title="Close"
+          >
+            <X className="size-4" />
+          </Button>
+          <h2 className="text-sm font-semibold text-foreground">
+            {__('Infos')}
+          </h2>
+        </div>
       </div>
 
       {/* Body content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-5 text-xs">
-        {/* App Hero */}
-        <div className="flex items-start gap-3.5 pb-2">
-          <AppIcon item={selectedApp} size="xl" className="rounded-2xl shadow-sm shrink-0" />
-          <div className="min-w-0 flex-1">
-            <h3 className="font-bold text-sm text-foreground leading-tight">
+      <div className="flex-1 overflow-y-auto p-4 space-y-5 text-sm">
+        {/* App Hero: Centered Icon, Name, and Version Vertically */}
+        <div className="flex flex-col items-center text-center pt-2 pb-1 space-y-2.5">
+          <AppIcon item={selectedApp} size="hero" className="size-32 rounded-3xl shadow-md shrink-0" />
+          <div className="space-y-1 max-w-xs">
+            <h3 className="font-bold text-base text-foreground leading-tight">
               {name}
             </h3>
+            {version && (
+              <div className="text-xs text-muted-foreground font-mono">
+                {__('Version')} {formatVersion(version)}
+              </div>
+            )}
             {selectedApp.desc && (
-              <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+              <p className="text-xs text-muted-foreground leading-relaxed pt-1">
                 {selectedApp.desc}
               </p>
-            )}
-            {version && (
-              <span className="inline-block text-[11px] text-muted-foreground/80 font-mono mt-1">
-                {__('Version')} {formatVersion(version)}
-              </span>
             )}
           </div>
         </div>
@@ -128,7 +131,7 @@ export function InfoDrawer() {
         {/* Primary Actions */}
         <div className="flex items-center gap-2 pt-1">
           {isRunning ? (
-            <Button className="w-full gap-2" variant="secondary" disabled>
+            <Button className="w-full gap-2 text-xs" variant="secondary" disabled>
               <Loader2 className="size-3.5 animate-spin" />
               <span>{__('Working...')}</span>
             </Button>
@@ -136,7 +139,7 @@ export function InfoDrawer() {
             <>
               {isOutdated && (
                 <Button
-                  className="flex-1 gap-1.5"
+                  className="flex-1 gap-1.5 text-xs"
                   variant="default"
                   onClick={() => startAction('upgrade', selectedApp.token)}
                 >
@@ -147,7 +150,7 @@ export function InfoDrawer() {
 
               {isInstalled && selectedApp.app && !isOutdated && (
                 <Button
-                  className="flex-1 gap-1.5"
+                  className="flex-1 gap-1.5 text-xs"
                   variant="secondary"
                   onClick={() => startAction('open', selectedApp.token, selectedApp.app)}
                 >
@@ -159,7 +162,7 @@ export function InfoDrawer() {
               {isInstalled && (
                 <Button
                   variant="destructive"
-                  className={selectedApp.app && !isOutdated ? "" : "flex-1"}
+                  className={selectedApp.app && !isOutdated ? "text-xs" : "flex-1 text-xs"}
                   onClick={() => startAction('uninstall', selectedApp.token)}
                 >
                   <TrashIcon className="size-3.5" />
@@ -169,7 +172,7 @@ export function InfoDrawer() {
 
               {!isInstalled && (
                 <Button
-                  className="w-full gap-1.5"
+                  className="w-full gap-1.5 text-xs"
                   variant="default"
                   onClick={() => startAction('install', selectedApp.token)}
                 >
@@ -183,34 +186,34 @@ export function InfoDrawer() {
 
         {/* Caveats Notice */}
         {appDetails?.caveats && (
-          <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1">
-            <div className="flex items-center gap-1.5 font-semibold text-[11px]">
+          <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1">
+            <div className="flex items-center gap-1.5 font-semibold text-xs">
               <AlertTriangle className="size-3.5 shrink-0" />
               <span>{__('Caveats')}</span>
             </div>
-            <p className="text-[11px] leading-relaxed whitespace-pre-wrap font-mono">
+            <p className="text-xs leading-relaxed whitespace-pre-wrap font-mono">
               {appDetails.caveats}
             </p>
           </div>
         )}
 
-        {/* Metadata Section */}
-        <div className="space-y-2 border-t border-border pt-4">
-          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+        {/* Metadata Section in Card */}
+        <div className="space-y-1.5">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
             {__('Details')}
           </h4>
 
-          <div className="space-y-2 text-[11px]">
+          <div className="border border-border rounded-xl p-3 bg-card/60 divide-y divide-border/60 shadow-2xs text-xs space-y-0">
             {/* Homepage */}
-            <div className="flex items-center justify-between py-0.5">
+            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
               <span className="text-muted-foreground">{__('Homepage')}</span>
               {selectedApp.homepage ? (
                 <button
                   onClick={() => window.ipc?.openExternal?.(selectedApp.homepage)}
-                  className="text-primary hover:underline flex items-center gap-1 max-w-[180px] truncate"
+                  className="text-primary hover:underline flex items-center gap-1 max-w-[180px] truncate cursor-pointer"
                 >
                   <span className="truncate">{selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
-                  <ExternalLink className="size-2.5 shrink-0" />
+                  <ExternalLink className="size-3 shrink-0" />
                 </button>
               ) : (
                 <span className="text-muted-foreground/60">—</span>
@@ -218,22 +221,22 @@ export function InfoDrawer() {
             </div>
 
             {/* Token */}
-            <div className="flex items-center justify-between py-0.5">
+            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
               <span className="text-muted-foreground">{__('Token')}</span>
               <span className="font-mono text-foreground select-text">{selectedApp.token}</span>
             </div>
 
             {/* Categories */}
             {appCategories.length > 0 && (
-              <div className="flex items-start justify-between py-0.5 gap-2">
+              <div className="flex items-start justify-between py-2 first:pt-0 last:pb-0 gap-2">
                 <span className="text-muted-foreground">{appCategories.length > 1 ? __('Categories') : __('Category')}</span>
                 <div className="flex flex-wrap gap-1 justify-end">
                   {appCategories.map((c) => (
                     <span
                       key={c.name}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-muted text-[10px] text-foreground font-medium"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-muted text-xs text-foreground font-medium"
                     >
-                      <CategoryIcon html={c.icon} className="size-3" />
+                      <CategoryIcon html={c.icon} className="size-[14px]" />
                       <span>{__(c.displayName)}</span>
                     </span>
                   ))}
@@ -242,13 +245,13 @@ export function InfoDrawer() {
             )}
 
             {/* Requirements */}
-            <div className="flex items-center justify-between py-0.5">
+            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
               <span className="text-muted-foreground">{__('Requirements')}</span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 {reqMet ? (
-                  <Check className="size-3 text-emerald-500" />
+                  <Check className="size-3.5 text-emerald-500" />
                 ) : (
-                  <AlertTriangle className="size-3 text-amber-500" />
+                  <AlertTriangle className="size-3.5 text-amber-500" />
                 )}
                 <span className="text-foreground">
                   {loadingAppDetails ? '...' : (reqText || 'macOS')}
@@ -257,7 +260,7 @@ export function InfoDrawer() {
             </div>
 
             {/* Latest Version */}
-            <div className="flex items-center justify-between py-0.5">
+            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
               <span className="text-muted-foreground">{__('Latest Version')}</span>
               <span className="font-mono text-foreground">
                 {formatVersion(outdatedMap[selectedApp.token]?.currentVersion || appDetails?.version || selectedApp.version)}
@@ -265,14 +268,14 @@ export function InfoDrawer() {
             </div>
 
             {/* Monthly Installs */}
-            <div className="flex items-center justify-between py-0.5">
+            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
               <span className="text-muted-foreground">{__('Monthly Installs')}</span>
               <span className="text-foreground">{formatCountK(selectedApp.count)}</span>
             </div>
 
             {/* Added */}
             {selectedApp.added && (
-              <div className="flex items-center justify-between py-0.5">
+              <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
                 <span className="text-muted-foreground">{__('Added')}</span>
                 <span className="text-foreground">{formatDate(selectedApp.added)}</span>
               </div>
@@ -280,14 +283,14 @@ export function InfoDrawer() {
           </div>
         </div>
 
-        {/* Storage & Usage Section */}
-        <div className="space-y-2 border-t border-border pt-4">
-          <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+        {/* Storage & Usage Section in Card */}
+        <div className="space-y-1.5">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
             {__('Storage')}
           </h4>
 
-          <div className="space-y-2 text-[11px]">
-            <div className="flex items-center justify-between py-0.5">
+          <div className="border border-border rounded-xl p-3 bg-card/60 divide-y divide-border/60 shadow-2xs text-xs space-y-0">
+            <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
               <span className="text-muted-foreground">{__('Download Size')}</span>
               <span className="text-foreground font-mono">
                 {loadingSizes ? '...' : (appDetails?.downloadSize || '—')}
@@ -296,14 +299,14 @@ export function InfoDrawer() {
 
             {isInstalled && (
               <>
-                <div className="flex items-center justify-between py-0.5">
+                <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
                   <span className="text-muted-foreground">{__('Installed Size')}</span>
                   <span className="text-foreground font-mono">
                     {loadingSizes ? '...' : (appDetails?.installedSize || '—')}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between py-0.5">
+                <div className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
                   <span className="text-muted-foreground">{__('Data Size')}</span>
                   <span className="text-foreground font-mono">
                     {loadingSizes ? '...' : (appDetails?.dataSize || '—')}

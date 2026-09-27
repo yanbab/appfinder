@@ -8,9 +8,17 @@ export function AppIcon({ item, size = "md", className }) {
   const sizeClasses = {
     xs: "size-5 text-[9px] rounded-sm",
     sm: "size-7 text-[10px] rounded-md",
-    md: "size-9 text-xs rounded-lg",
-    lg: "size-12 text-sm rounded-xl",
-    xl: "size-16 text-base rounded-2xl",
+    md: "size-12 text-sm rounded-xl",
+    row: "size-12 text-sm rounded-xl",
+    tile: "size-12 text-sm rounded-xl",
+    "48": "size-12 text-sm rounded-xl",
+    lg: "size-16 text-base rounded-2xl",
+    grid: "size-16 text-base rounded-2xl",
+    "64": "size-16 text-base rounded-2xl",
+    xl: "size-32 text-3xl rounded-3xl",
+    "2xl": "size-32 text-3xl rounded-3xl",
+    hero: "size-32 text-3xl rounded-3xl",
+    "128": "size-32 text-3xl rounded-3xl",
   };
 
   const currentSizeClass = sizeClasses[size] || sizeClasses.md;

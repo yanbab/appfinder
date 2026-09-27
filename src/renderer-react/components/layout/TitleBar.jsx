@@ -36,13 +36,13 @@ export function TitleBar() {
           variant="ghost"
           size="icon-sm"
           onClick={toggleSidebar}
-          className="text-muted-foreground hover:text-foreground cursor-pointer"
+          className="text-muted-foreground hover:text-foreground cursor-default"
           title={showSidebar ? "Hide Sidebar" : "Show Sidebar"}
         >
           <PanelLeft className="size-4" />
         </Button>
 
-        <h1 className="text-xs font-semibold tracking-tight text-foreground truncate">
+        <h1 className="text-sm font-semibold tracking-tight text-foreground truncate">
           {getPageTitle()}
         </h1>
       </div>
@@ -51,12 +51,12 @@ export function TitleBar() {
       <div className="flex items-center gap-1.5 [-webkit-app-region:no-drag]">
         {currentTab === 'updates' && filteredCount >= 2 && (
           <Button
-            size="xs"
+            size="sm"
             variant="default"
             onClick={() => startAction('upgrade-all')}
-            className="gap-1 h-6 cursor-pointer"
+            className="gap-1.5 h-6.5 text-xs cursor-default"
           >
-            <UpgradeIcon className="size-3" />
+            <UpgradeIcon className="size-3.5" />
             <span>{__('Update All')}</span>
           </Button>
         )}
@@ -65,7 +65,7 @@ export function TitleBar() {
           <select
             value={order}
             onChange={(e) => setOrder(e.target.value)}
-            className="h-6 text-[11px] font-medium bg-transparent border border-border rounded-md px-1.5 py-0 text-muted-foreground hover:text-foreground outline-none cursor-pointer"
+            className="h-6.5 text-xs font-medium bg-transparent border border-border rounded-md px-2 py-0 text-muted-foreground hover:text-foreground outline-none cursor-default"
           >
             <option value="popularity">{__('Popular')}</option>
             <option value="date">{__('Recent')}</option>
@@ -77,25 +77,25 @@ export function TitleBar() {
           <div className="flex items-center border border-border rounded-md p-0.5 bg-muted/20">
             <button
               onClick={() => setViewMode('list')}
-              className={`p-1 rounded-xs transition-colors cursor-pointer ${
+              className={`p-1 rounded-xs transition-colors cursor-default ${
                 viewMode === 'list'
                   ? 'bg-background shadow-2xs text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               title="List View"
             >
-              <List className="size-3" />
+              <List className="size-3.5" />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1 rounded-xs transition-colors cursor-pointer ${
+              className={`p-1 rounded-xs transition-colors cursor-default ${
                 viewMode === 'grid'
                   ? 'bg-background shadow-2xs text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               title="Grid View"
             >
-              <LayoutGrid className="size-3" />
+              <LayoutGrid className="size-3.5" />
             </button>
           </div>
         )}

@@ -1,7 +1,23 @@
 import React from 'react';
 import { useShell } from '@/store/useShell';
-import { Button } from '@/components/ui/button';
-import { Check, Loader2, X, Terminal as TerminalIcon, ChevronUp, ChevronDown } from 'lucide-react';
+import { Check, Loader2, X } from 'lucide-react';
+
+function TerminalPromptIcon({ className = "size-4" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="4 17 10 12 4 7" />
+      <line x1="12" y1="19" x2="20" y2="19" />
+    </svg>
+  );
+}
 
 export function StatusBar() {
   const {
@@ -38,15 +54,15 @@ export function StatusBar() {
   };
 
   return (
-    <footer className="h-7 shrink-0 flex items-center justify-between px-3 border-t border-border bg-card/60 backdrop-blur-xs text-[11px] text-muted-foreground select-none">
+    <footer className="h-6 shrink-0 flex items-center justify-between border-t border-border bg-card text-xs font-mono text-muted-foreground select-none overflow-hidden">
       {/* Left: Status message or running task indicator with live download progress */}
-      <div className="flex items-center gap-2 min-w-0 mr-2">
+      <div className="h-full flex items-center gap-2 px-2.5 min-w-0 mr-2 hover:bg-white/5 cursor-default transition-colors">
         {activeTaskId ? (
-          <Loader2 className="size-3 text-primary animate-spin shrink-0" />
+          <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
         ) : (
-          <Check className="size-3 text-muted-foreground shrink-0" />
+          <Check className="size-3.5 text-muted-foreground shrink-0" />
         )}
-        <span className="truncate">{getStatusText()}</span>
+        <span className="truncate text-foreground/80">{getStatusText()}</span>
 
         {/* Live download percentage progress bar */}
         {activeTaskId && taskProgressPercent !== null && (
@@ -59,30 +75,29 @@ export function StatusBar() {
         )}
       </div>
 
-      {/* Right: Actions */}
-      <div className="flex items-center gap-1.5 shrink-0">
+      {/* Right: Actions (VS Code flat full-height style) */}
+      <div className="h-full flex items-center shrink-0">
         {activeTaskId && (
-          <Button
-            size="xs"
-            variant="ghost"
+          <button
             onClick={cancelAction}
-            className="h-5 px-1.5 text-[10px] text-destructive hover:bg-destructive/10 cursor-pointer"
+            className="h-full px-2.5 flex items-center gap-1 text-xs text-destructive hover:bg-destructive/15 transition-colors cursor-default"
           >
-            <X className="size-2.5 mr-1" />
+            <X className="size-3" />
             <span>{__('Cancel')}</span>
-          </Button>
+          </button>
         )}
 
-        <Button
-          size="icon-xs"
-          variant="ghost"
+        <button
           onClick={toggleTerminal}
-          className="size-5 text-muted-foreground hover:text-foreground cursor-pointer"
+          className={`h-full px-2.5 flex items-center gap-1.5 transition-colors cursor-default ${
+            showTerminal
+              ? 'bg-white/15 text-foreground'
+              : 'text-muted-foreground hover:bg-white/10 hover:text-foreground'
+          }`}
           title={showTerminal ? "Hide Terminal" : "Show Terminal"}
         >
-          <TerminalIcon className="size-2.5" />
-          {showTerminal ? <ChevronDown className="size-2 ml-0.5" /> : <ChevronUp className="size-2 ml-0.5" />}
-        </Button>
+          <TerminalPromptIcon className="size-4" />
+        </button>
       </div>
     </footer>
   );

@@ -31,34 +31,33 @@ export function AppRow({ item }) {
   return (
     <div
       onClick={() => openAppInfo(item)}
-      className={`group flex items-center justify-between px-3 py-2 rounded-lg border text-card-foreground transition-all cursor-pointer ${
+      className={`group flex items-center justify-between px-3.5 py-2.5 text-card-foreground transition-colors cursor-default select-none ${
         isSelected
-          ? 'bg-accent/40 border-primary/50'
-          : 'bg-card/40 border-transparent hover:border-border/60 hover:bg-card/80'
+          ? 'bg-accent/40'
+          : 'hover:bg-muted/50'
       }`}
     >
       {/* Icon & Details */}
-      <div className="flex items-center gap-3 min-w-0 flex-1 mr-3">
-        <AppIcon item={item} size="md" className="rounded-lg shadow-2xs" />
+      <div className="flex items-center gap-3.5 min-w-0 flex-1 mr-3">
+        <AppIcon item={item} size="row" className="size-12 rounded-xl shadow-2xs shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-xs text-foreground truncate group-hover:text-primary transition-colors">
+            <span className="font-semibold text-sm text-foreground truncate">
               {name}
             </span>
-            <span className="text-[10px] text-muted-foreground/60 font-mono truncate hidden sm:inline">
-              {item.token}
-            </span>
           </div>
-          <p className="text-[11px] text-muted-foreground truncate leading-snug">
-            {desc}
-          </p>
+          {desc && (
+            <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
+              {desc}
+            </p>
+          )}
         </div>
       </div>
 
       {/* Actions */}
       <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
         {isRunning ? (
-          <Button size="xs" variant="secondary" disabled className="gap-1 text-[11px]">
+          <Button size="xs" variant="secondary" disabled className="gap-1.5 text-xs">
             <Loader2 className="size-3 animate-spin" />
             <span>{__('Working...')}</span>
           </Button>
@@ -67,9 +66,9 @@ export function AppRow({ item }) {
             size="xs"
             variant="default"
             onClick={() => startAction('upgrade', item.token)}
-            className="gap-1 text-[11px]"
+            className="gap-1.5 text-xs"
           >
-            <UpgradeIcon className="size-3" />
+            <UpgradeIcon className="size-3.5" />
             <span>{__('Upgrade')}</span>
           </Button>
         ) : isInstalled ? (
@@ -81,16 +80,16 @@ export function AppRow({ item }) {
               className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               title="Uninstall"
             >
-              <TrashIcon className="size-3" />
+              <TrashIcon className="size-3.5" />
             </Button>
             {item.app && (
               <Button
                 size="xs"
                 variant="secondary"
                 onClick={() => startAction('open', item.token, item.app)}
-                className="gap-1 text-[11px]"
+                className="gap-1.5 text-xs"
               >
-                <OpenIcon className="size-3" />
+                <OpenIcon className="size-3.5" />
                 <span>{__('Open')}</span>
               </Button>
             )}
@@ -100,9 +99,9 @@ export function AppRow({ item }) {
             size="xs"
             variant="secondary"
             onClick={() => startAction('install', item.token)}
-            className="gap-1 text-[11px]"
+            className="gap-1.5 text-xs"
           >
-            <InstallIcon className="size-3" />
+            <InstallIcon className="size-3.5" />
             <span>{__('Install')}</span>
           </Button>
         )}

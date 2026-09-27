@@ -54,20 +54,20 @@ export function DiscoverView() {
             }}
           />
 
-          <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4 min-w-0">
-              <AppIcon item={activeFeatured} size="xl" className="rounded-2xl shadow-sm shrink-0" />
+          <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+            <div className="flex items-center gap-5 min-w-0">
+              <AppIcon item={activeFeatured} size="hero" className="size-32 rounded-3xl shadow-sm shrink-0" />
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-semibold text-primary uppercase tracking-wider flex items-center gap-1">
-                    <Sparkles className="size-3" />
+                  <span className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-1">
+                    <Sparkles className="size-3.5" />
                     {__('Featured')}
                   </span>
                 </div>
-                <h2 className="text-base font-bold text-foreground truncate">
+                <h2 className="text-lg font-bold text-foreground truncate">
                   {getAppName(activeFeatured)}
                 </h2>
-                <p className="text-xs text-muted-foreground line-clamp-2 max-w-xl mt-0.5">
+                <p className="text-sm text-muted-foreground line-clamp-2 max-w-xl mt-0.5">
                   {activeFeatured.desc || 'No description available for this package.'}
                 </p>
               </div>
@@ -93,8 +93,8 @@ export function DiscoverView() {
 
               <div className="ml-2">
                 {runningTasks[activeFeatured.token] ? (
-                  <Button size="sm" variant="secondary" disabled className="gap-1.5">
-                    <Loader2 className="size-3 animate-spin" />
+                  <Button size="sm" variant="secondary" disabled className="gap-1.5 text-xs">
+                    <Loader2 className="size-3.5 animate-spin" />
                     <span>{__('Working...')}</span>
                   </Button>
                 ) : outdatedMap[activeFeatured.token] ? (
@@ -102,7 +102,7 @@ export function DiscoverView() {
                     size="sm"
                     variant="default"
                     onClick={() => startAction('upgrade', activeFeatured.token)}
-                    className="gap-1.5"
+                    className="gap-1.5 text-xs"
                   >
                     <UpgradeIcon className="size-3.5" />
                     <span>{__('Upgrade')}</span>
@@ -112,7 +112,7 @@ export function DiscoverView() {
                     size="sm"
                     variant="secondary"
                     onClick={() => startAction('open', activeFeatured.token, activeFeatured.app)}
-                    className="gap-1.5"
+                    className="gap-1.5 text-xs"
                   >
                     <OpenIcon className="size-3.5" />
                     <span>{__('Open')}</span>
@@ -122,7 +122,7 @@ export function DiscoverView() {
                     size="sm"
                     variant="secondary"
                     onClick={() => startAction('install', activeFeatured.token)}
-                    className="gap-1.5"
+                    className="gap-1.5 text-xs"
                   >
                     <InstallIcon className="size-3.5" />
                     <span>{__('Install')}</span>
@@ -138,36 +138,36 @@ export function DiscoverView() {
       <div className="grid grid-cols-3 gap-3">
         <button
           onClick={() => selectTab('all-apps')}
-          className="flex flex-col items-center justify-center p-3 rounded-xl border border-border bg-card/60 hover:bg-accent/40 hover:border-border/80 transition-all text-center select-none"
+          className="flex flex-col items-center justify-center p-3.5 rounded-xl border border-border bg-card/60 hover:bg-accent/40 hover:border-border/80 transition-all text-center select-none"
         >
-          <span className="text-lg font-bold text-foreground">
+          <span className="text-xl font-bold text-foreground">
             {allAppsCount.toLocaleString()}
           </span>
-          <span className="text-[11px] text-muted-foreground font-medium">
+          <span className="text-xs text-muted-foreground font-medium">
             {__('Available')}
           </span>
         </button>
 
         <button
           onClick={() => selectTab('installed')}
-          className="flex flex-col items-center justify-center p-3 rounded-xl border border-border bg-card/60 hover:bg-accent/40 hover:border-border/80 transition-all text-center select-none"
+          className="flex flex-col items-center justify-center p-3.5 rounded-xl border border-border bg-card/60 hover:bg-accent/40 hover:border-border/80 transition-all text-center select-none"
         >
-          <span className="text-lg font-bold text-foreground">
+          <span className="text-xl font-bold text-foreground">
             {installed.length.toLocaleString()}
           </span>
-          <span className="text-[11px] text-muted-foreground font-medium">
+          <span className="text-xs text-muted-foreground font-medium">
             {__('Installed')}
           </span>
         </button>
 
         <button
           onClick={() => selectTab('updates')}
-          className="flex flex-col items-center justify-center p-3 rounded-xl border border-border bg-card/60 hover:bg-accent/40 hover:border-border/80 transition-all text-center select-none"
+          className="flex flex-col items-center justify-center p-3.5 rounded-xl border border-border bg-card/60 hover:bg-accent/40 hover:border-border/80 transition-all text-center select-none"
         >
-          <span className="text-lg font-bold text-foreground">
+          <span className="text-xl font-bold text-foreground">
             {updatesCount}
           </span>
-          <span className="text-[11px] text-muted-foreground font-medium">
+          <span className="text-xs text-muted-foreground font-medium">
             {updatesCount === 1 ? __('Update') : __('Updates')}
           </span>
         </button>
@@ -188,7 +188,7 @@ export function DiscoverView() {
               className="text-xs text-primary hover:underline flex items-center gap-0.5 font-medium"
             >
               <span>{__('Show All')}</span>
-              <ChevronRight className="size-3" />
+              <ChevronRight className="size-3.5" />
             </button>
           </div>
 
@@ -197,15 +197,15 @@ export function DiscoverView() {
               <div
                 key={item.token}
                 onClick={() => openAppInfo(item)}
-                className="flex items-center justify-between p-2.5 rounded-xl border border-border bg-card hover:border-border/80 hover:bg-accent/30 transition-all cursor-pointer select-none group"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-transparent select-none cursor-default transition-none active:bg-muted/50 group"
               >
-                <div className="flex items-center gap-2.5 min-w-0 mr-2">
-                  <AppIcon item={item} size="md" className="rounded-lg shadow-2xs shrink-0" />
+                <div className="flex items-center gap-3 min-w-0 mr-2">
+                  <AppIcon item={item} size="tile" className="size-12 rounded-xl shadow-2xs shrink-0" />
                   <div className="min-w-0">
-                    <h4 className="font-semibold text-xs text-foreground truncate group-hover:text-primary transition-colors">
+                    <h4 className="font-semibold text-sm text-foreground truncate">
                       {getAppName(item)}
                     </h4>
-                    <p className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
+                    <p className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
                       {item.desc || item.category || ''}
                     </p>
                   </div>
@@ -214,7 +214,7 @@ export function DiscoverView() {
                 <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                   {runningTasks[item.token] ? (
                     <Button size="icon-xs" variant="secondary" disabled>
-                      <Loader2 className="size-2.5 animate-spin" />
+                      <Loader2 className="size-3 animate-spin" />
                     </Button>
                   ) : outdatedMap[item.token] ? (
                     <Button
@@ -222,7 +222,7 @@ export function DiscoverView() {
                       variant="default"
                       onClick={() => startAction('upgrade', item.token)}
                     >
-                      <UpgradeIcon className="size-3" />
+                      <UpgradeIcon className="size-3.5" />
                     </Button>
                   ) : installed.includes(item.token) && item.app ? (
                     <Button
@@ -230,7 +230,7 @@ export function DiscoverView() {
                       variant="secondary"
                       onClick={() => startAction('open', item.token, item.app)}
                     >
-                      <OpenIcon className="size-3" />
+                      <OpenIcon className="size-3.5" />
                     </Button>
                   ) : !installed.includes(item.token) ? (
                     <Button
@@ -238,7 +238,7 @@ export function DiscoverView() {
                       variant="secondary"
                       onClick={() => startAction('install', item.token)}
                     >
-                      <InstallIcon className="size-3" />
+                      <InstallIcon className="size-3.5" />
                     </Button>
                   ) : null}
                 </div>
@@ -261,7 +261,7 @@ export function DiscoverView() {
                 className="text-xs text-primary hover:underline flex items-center gap-0.5 font-medium"
               >
                 <span>{showAllCategories ? __('Show Less') : __('Show All')}</span>
-                {showAllCategories ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+                {showAllCategories ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
               </button>
             )}
           </div>
@@ -271,13 +271,13 @@ export function DiscoverView() {
               <button
                 key={cat.name}
                 onClick={() => selectTab(cat.name)}
-                className="flex items-center gap-2.5 p-2.5 rounded-xl border border-border bg-card/60 hover:bg-accent/40 hover:border-border/80 transition-all text-left group select-none"
+                className="flex items-center gap-2.5 p-2.5 rounded-xl border border-border bg-card/60 hover:bg-accent/40 hover:border-border/80 transition-all text-left group select-none cursor-pointer"
               >
                 <CategoryIcon
                   html={cat.icon}
-                  className="size-4 shrink-0 text-muted-foreground group-hover:text-primary transition-colors"
+                  className="size-[18px] shrink-0 text-muted-foreground group-hover:text-primary transition-colors"
                 />
-                <span className="text-xs font-medium text-foreground truncate">
+                <span className="text-sm font-medium text-foreground truncate">
                   {__(cat.displayName)}
                 </span>
               </button>

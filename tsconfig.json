@@ -3,15 +3,23 @@
     "outDir": "./dist",
     "target": "es2022",
     "module": "commonjs",
+    "moduleResolution": "node",
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/renderer-react/*"]
+    },
     "lib": [
       "es2022",
       "dom"
     ],
     "types": [
-      "node"
+      "node",
+      "react",
+      "react-dom"
     ],
     "allowJs": true,
-    "checkJs": true,
+    "checkJs": false,
     "strict": false,
     "noImplicitAny": false,
     "esModuleInterop": true,

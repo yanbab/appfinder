@@ -54,10 +54,14 @@ export function ShellProvider({ children }) {
   const [displayedCount, setDisplayedCount] = useState(50);
   const chunkSize = 50;
 
-  // Terminal log listener callback registration
+  // Terminal log listener callback registration & history buffer
+  const terminalHistoryRef = useRef('');
   const terminalLogSubscribers = useRef(new Set());
   const registerTerminalSubscriber = useCallback((cb) => {
     terminalLogSubscribers.current.add(cb);
+    if (terminalHistoryRef.current) {
+      cb(terminalHistoryRef.current);
+    }
     return () => terminalLogSubscribers.current.delete(cb);
   }, []);
 
@@ -256,8 +260,11 @@ export function ShellProvider({ children }) {
 
     if (window.ipc.onTaskLog) {
       unsubs.push(window.ipc.onTaskLog(data => {
+        terminalHistoryRef.current += data.text;
         terminalLogSubscribers.current.forEach(cb => cb(data.text));
         activeTaskErrorLogRef.current += data.text;
+
+        const clean = stripAnsi(data.text);
 
         // Extract live progress
         const prog = extractProgress(data.text);
@@ -293,6 +300,7 @@ export function ShellProvider({ children }) {
 
     if (window.ipc.onStatusLog) {
       unsubs.push(window.ipc.onStatusLog(text => {
+        terminalHistoryRef.current += text;
         terminalLogSubscribers.current.forEach(cb => cb(text));
       }));
     }

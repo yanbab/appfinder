@@ -76,13 +76,25 @@ export function TerminalDrawer() {
     };
   }, [registerTerminalSubscriber, activeTaskId, cancelAction, isDark]);
 
-  if (!showTerminal) return null;
+  useEffect(() => {
+    if (showTerminal && termRef.current) {
+      setTimeout(() => {
+        termRef.current?.scrollToBottom();
+      }, 50);
+    }
+  }, [showTerminal]);
 
   return (
-    <div className="h-44 w-full border-t border-border bg-card shrink-0 flex flex-col overflow-hidden">
+    <div
+      className={
+        showTerminal
+          ? "h-44 w-full border-t border-border bg-card shrink-0 flex flex-col overflow-hidden"
+          : "hidden"
+      }
+    >
       <div
         ref={containerRef}
-        className="w-full h-full p-2 overflow-hidden select-text text-left"
+        className="w-full h-full p-2 overflow-hidden select-text text-left font-mono"
       />
     </div>
   );
