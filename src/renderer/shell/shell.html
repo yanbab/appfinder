@@ -74,7 +74,12 @@
         <input id="search-input" class="shared-input" type="text" :placeholder="__('Search')" autocomplete="off"
           x-model="search" x-ref="search">
         <button tabindex="-1" id="clear-search" class="clear-search-btn" x-show="search" @mousedown.prevent
-          @click="search=''">&times;</button>
+          @click="search=''" aria-label="Clear">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd"
+              d="M6.5 13C10.0899 13 13 10.0899 13 6.5C13 2.91015 10.0899 0 6.5 0C2.91015 0 0 2.91015 0 6.5C0 10.0899 2.91015 13 6.5 13ZM4.14645 4.14645C4.34171 3.95118 4.65829 3.95118 4.85355 4.14645L6.5 5.79289L8.14645 4.14645C8.34171 3.95118 8.65829 3.95118 8.85355 4.14645C9.04882 4.34171 9.04882 4.65829 8.85355 4.85355L7.20711 6.5L8.85355 8.14645C9.04882 8.34171 9.04882 8.65829 8.85355 8.85355C8.65829 9.04882 8.34171 9.04882 8.14645 8.85355L6.5 7.20711L4.85355 8.85355C4.65829 9.04882 4.34171 9.04882 4.14645 8.85355C3.95118 8.65829 3.95118 8.34171 4.14645 8.14645L5.79289 6.5L4.14645 4.85355C3.95118 4.65829 3.95118 4.34171 4.14645 4.14645Z" />
+          </svg>
+        </button>
       </div>
 
       <nav class="sidebar-menu" tabindex="-1">
@@ -235,8 +240,8 @@
                     <img class="featured-slide-bg-icon" :src="item.iconUrl" alt="" loading="eager">
                   </template>
                   <template x-if="!item.icon || showInitialsMap[item.token]">
-                    <div class="featured-slide-bg-fallback"
-                      :style="`background-color: ${name2color(item.name)};`"></div>
+                    <div class="featured-slide-bg-fallback" :style="`background-color: ${name2color(item.name)};`">
+                    </div>
                   </template>
                   <div class="featured-slide-bg-backdrop"></div>
                 </div>
@@ -546,7 +551,8 @@
           <div class="drawer-status">
             <!-- Password required state -->
             <template x-if="activeTaskId && isWaitingForInput">
-              <div class="ellipsis" style="display: flex; align-items: center; gap: 6px; font-size: var(--font-size-caption);">
+              <div class="ellipsis"
+                style="display: flex; align-items: center; gap: 6px; font-size: var(--font-size-caption);">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                   stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -571,7 +577,8 @@
             </template>
             <!-- Idle default state -->
             <template x-if="!activeTaskId && !drawerTitle">
-              <div class="ellipsis" style="display: flex; align-items: center; gap: 6px; font-size: var(--font-size-caption);">
+              <div class="ellipsis"
+                style="display: flex; align-items: center; gap: 6px; font-size: var(--font-size-caption);">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                   stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
                   <polyline points="20 6 9 17 4 12"></polyline>
@@ -582,7 +589,7 @@
           </div>
           <div class="drawer-actions">
             <button id="drawer-cancel-btn" class="btn btn-secondary" x-show="activeTaskId" @click="cancel()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -590,7 +597,7 @@
               <span x-text="__('Cancel')">Cancel</span>
             </button>
             <button id="drawer-toggle-btn" class="header-icon-btn" @click="showTerminal = !showTerminal">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="m18 15-6-6-6 6"></path>
               </svg>
@@ -694,7 +701,8 @@
             <!-- Primary Actions -->
             <div class="info-app-actions">
               <button class="btn btn-secondary" disabled x-show="runningTasks[selectedApp.token]" @click.stop>
-                <span x-text="runningTasks[selectedApp.token] === 'install' ? __('Installing...') : runningTasks[selectedApp.token] === 'uninstall' ? __('Deleting...') : __('Working...')"></span>
+                <span
+                  x-text="runningTasks[selectedApp.token] === 'install' ? __('Installing...') : runningTasks[selectedApp.token] === 'uninstall' ? __('Deleting...') : __('Working...')"></span>
               </button>
 
               <div class="display-contents" x-show="!runningTasks[selectedApp.token]">
@@ -724,8 +732,9 @@
                 <div class="info-meta-row">
                   <span class="info-meta-label" data-i18n="Homepage" x-text="__('Homepage')">Homepage</span>
                   <template x-if="selectedApp.homepage">
-                    <a class="info-meta-link info-meta-val ellipsis" :href="selectedApp.homepage" tabindex="0" target="_blank"
-                      rel="noopener noreferrer" @click.prevent.stop="window.ipc.openExternal(selectedApp.homepage)"
+                    <a class="info-meta-link info-meta-val ellipsis" :href="selectedApp.homepage" tabindex="0"
+                      target="_blank" rel="noopener noreferrer"
+                      @click.prevent.stop="window.ipc.openExternal(selectedApp.homepage)"
                       @keydown.enter.prevent.stop="window.ipc.openExternal(selectedApp.homepage)"
                       @keydown.space.prevent.stop="window.ipc.openExternal(selectedApp.homepage)">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -741,6 +750,10 @@
                   <template x-if="!selectedApp.homepage">
                     <span class="info-meta-val">—</span>
                   </template>
+                </div>
+                <div class="info-meta-row" x-show="selectedApp.token">
+                  <span class="info-meta-label" data-i18n="Token" x-text="__('Token')">Token</span>
+                  <span class="info-meta-val info-meta-token ellipsis" x-text="selectedApp.token"></span>
                 </div>
                 <div class="info-meta-row info-categories-row" x-show="getAppCategories(selectedApp).length > 0">
                   <span class="info-meta-label"
@@ -800,11 +813,13 @@
             <div class="info-section">
               <div class="info-meta-list">
                 <div class="info-meta-row">
-                  <span class="info-meta-label" data-i18n="Download Size" x-text="__('Download Size')">Download Size</span>
+                  <span class="info-meta-label" data-i18n="Download Size" x-text="__('Download Size')">Download
+                    Size</span>
                   <span class="info-meta-val" x-text="loadingSizes ? '...' : (appDetails?.downloadSize || '—')"></span>
                 </div>
                 <div class="info-meta-row" x-show="installed.includes(selectedApp.token)">
-                  <span class="info-meta-label" data-i18n="Installed Size" x-text="__('Installed Size')">Installed Size</span>
+                  <span class="info-meta-label" data-i18n="Installed Size" x-text="__('Installed Size')">Installed
+                    Size</span>
                   <span class="info-meta-val" x-text="loadingSizes ? '...' : (appDetails?.installedSize || '—')"></span>
                 </div>
                 <div class="info-meta-row" x-show="installed.includes(selectedApp.token)">

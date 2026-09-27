@@ -28,12 +28,6 @@ function setupContextMenu() {
                     click: () => clipboard.writeText(selectedText)
                 });
             }
-            if (linkUrl) {
-                template.push({
-                    label: __('Copy Link'),
-                    click: () => clipboard.writeText(linkUrl)
-                });
-            }
         } else if (type === 'text') {
             template.push({
                 label: __('Copy'),
@@ -85,10 +79,6 @@ function setupContextMenu() {
                     template.push({
                         label: __('Website'),
                         click: () => shell.openExternal(homepage)
-                    });
-                    template.push({
-                        label: __('Copy Link'),
-                        click: () => clipboard.writeText(homepage)
                     });
                 }
             }

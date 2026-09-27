@@ -289,6 +289,13 @@ body.blur .info-panel-header {
   text-align: right;
   flex-shrink: 0;
   white-space: nowrap;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.info-meta-token {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-caption);
 }
 
 a.info-meta-val,
@@ -300,6 +307,14 @@ a.info-meta-val,
   min-width: 0;
   max-width: 170px;
   flex-shrink: 1;
+  overflow: hidden;
+}
+
+.info-meta-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .info-meta-link svg {

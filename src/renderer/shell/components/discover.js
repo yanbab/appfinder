@@ -37,7 +37,9 @@ Object.assign(window.shell, {
   },
 
   updateDiscoverItems() {
-    const featuredTokens = this.featuredTokens || ['onlyoffice', 'iina', 'visual-studio-code', 'figma', 'rectangle', 'spotify', 'raycast', 'obsidian', 'zed'];
+    const featuredTokens = this.featuredTokens || [
+      'stats', 'textmate', 'vorssaint',
+      'alfred', 'onlyoffice', 'iina', 'visual-studio-code', 'figma', 'rectangle', 'spotify', 'raycast', 'obsidian', 'zed'];
     this.featuredItems = Object.freeze(this.items.filter(c => featuredTokens.includes(c.token)));
     this.currentSlideIndex = 0;
     this.startSlideTimer();

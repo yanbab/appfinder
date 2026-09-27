@@ -2,7 +2,7 @@
 
 :root {
   --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-family-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", Consolas, "Courier New", monospace;
+  --font-family-mono: Menlo, Monaco, "Cascadia Mono", Consolas, "Courier New", monospace;
 
   /* Typography Scale */
   --font-size-hero: 24px;
@@ -420,8 +420,7 @@ button:focus-visible,
   }
 }
 
-.ellipsis,
-.text-ellipsis {
+.ellipsis {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
