@@ -91,12 +91,12 @@ export function Sidebar() {
                     data-nav-id={item.id}
                     onClick={() => selectTab(item.id)}
                     className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs font-medium text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
-                        ? 'active bg-primary text-primary-foreground shadow-2xs'
+                        ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs'
                         : 'text-sidebar-foreground'
                       }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <Icon className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-primary-foreground' : 'text-primary'}`} />
+                      <Icon className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`} />
                       <span className="truncate">{item.label}</span>
                     </div>
                     {item.badge !== null && item.badge !== undefined && (item.id !== 'updates' || item.badge > 0) && (
@@ -131,14 +131,14 @@ export function Sidebar() {
                       data-nav-id={cat.name}
                       onClick={() => selectTab(cat.name)}
                       className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
-                          ? 'active bg-primary text-primary-foreground shadow-2xs font-medium'
+                          ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs font-medium'
                           : 'text-sidebar-foreground'
                         }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <CategoryIcon
                           html={cat.icon}
-                          className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-primary-foreground' : 'text-primary'}`}
+                          className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`}
                         />
                         <span className="truncate">{__(cat.displayName)}</span>
                       </div>

@@ -1,51 +1,128 @@
 import * as React from "react";
-import { Drawer as DrawerPrimitive } from "vaul";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
+const DrawerContext = React.createContext({
+  open: false,
+  onOpenChange: () => { },
+  direction: "right",
+});
+
 function Drawer({
-  shouldScaleBackground = false,
-  ...props
+  open = false,
+  onOpenChange = () => { },
+  direction = "right",
+  children,
 }) {
+  React.useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onOpenChange(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onOpenChange]);
+
   return (
-    <DrawerPrimitive.Root
-      shouldScaleBackground={shouldScaleBackground}
-      {...props}
-    />
+    <DrawerContext.Provider value={{ open, onOpenChange, direction }}>
+      {children}
+    </DrawerContext.Provider>
   );
 }
 Drawer.displayName = "Drawer";
 
-const DrawerTrigger = DrawerPrimitive.Trigger;
-const DrawerPortal = DrawerPrimitive.Portal;
-const DrawerClose = DrawerPrimitive.Close;
+function DrawerTrigger({ children, asChild, ...props }) {
+  const { onOpenChange } = React.useContext(DrawerContext);
+  return (
+    <div onClick={() => onOpenChange(true)} {...props}>
+      {children}
+    </div>
+  );
+}
 
-const DrawerOverlay = React.forwardRef(({ className, ...props }, ref) => (
-  <DrawerPrimitive.Overlay
-    ref={ref}
-    className={cn("fixed inset-0 z-50 bg-black/40", className)}
-    {...props}
-  />
-));
-DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
+function DrawerPortal({ children }) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+  if (!mounted || typeof document === "undefined") return null;
+  return createPortal(children, document.body);
+}
+
+const DrawerOverlay = React.forwardRef(({ className, onClick, ...props }, ref) => {
+  const { open, onOpenChange } = React.useContext(DrawerContext);
+  if (!open) return null;
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "fixed inset-0 z-50 bg-black/40 transition-opacity duration-200 animate-in fade-in-0",
+        className
+      )}
+      onClick={(e) => {
+        onOpenChange(false);
+        onClick?.(e);
+      }}
+      {...props}
+    />
+  );
+});
+DrawerOverlay.displayName = "DrawerOverlay";
 
 const DrawerContent = React.forwardRef(
-  ({ className, children, direction = "right", ...props }, ref) => (
-    <DrawerPortal>
-      <DrawerOverlay />
-      <DrawerPrimitive.Content
-        ref={ref}
-        className={cn(
-          "fixed inset-y-0 right-0 z-50 flex h-full flex-col border-l border-border bg-card shadow-2xl focus:outline-none",
-          className
-        )}
-        {...props}
-      >
-        {children}
-      </DrawerPrimitive.Content>
-    </DrawerPortal>
-  )
+  ({ className, children, ...props }, ref) => {
+    const { open, direction } = React.useContext(DrawerContext);
+
+    if (!open) return null;
+
+    const directionClasses = {
+      right: "inset-y-0 right-0 border-l animate-in slide-in-from-right duration-200",
+      left: "inset-y-0 left-0 border-r animate-in slide-in-from-left duration-200",
+      bottom: "inset-x-0 bottom-0 border-t animate-in slide-in-from-bottom duration-200",
+      top: "inset-x-0 top-0 border-b animate-in slide-in-from-top duration-200",
+    }[direction] || "inset-y-0 right-0 border-l";
+
+    return (
+      <DrawerPortal>
+        <DrawerOverlay />
+        <div
+          ref={ref}
+          role="dialog"
+          aria-modal="true"
+          className={cn(
+            "fixed z-50 flex h-full flex-col border-border bg-background shadow-xl outline-none focus:outline-none select-none",
+            directionClasses,
+            className
+          )}
+          {...props}
+        >
+          {children}
+        </div>
+      </DrawerPortal>
+    );
+  }
 );
 DrawerContent.displayName = "DrawerContent";
+
+const DrawerClose = React.forwardRef(({ children, onClick, ...props }, ref) => {
+  const { onOpenChange } = React.useContext(DrawerContext);
+  return (
+    <div
+      ref={ref}
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        onOpenChange(false);
+        onClick?.(e);
+      }}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+});
+DrawerClose.displayName = "DrawerClose";
 
 function DrawerHeader({ className, ...props }) {
   return (
@@ -68,22 +145,22 @@ function DrawerFooter({ className, ...props }) {
 DrawerFooter.displayName = "DrawerFooter";
 
 const DrawerTitle = React.forwardRef(({ className, ...props }, ref) => (
-  <DrawerPrimitive.Title
+  <h2
     ref={ref}
     className={cn("text-base font-semibold leading-none tracking-tight text-foreground", className)}
     {...props}
   />
 ));
-DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
+DrawerTitle.displayName = "DrawerTitle";
 
 const DrawerDescription = React.forwardRef(({ className, ...props }, ref) => (
-  <DrawerPrimitive.Description
+  <p
     ref={ref}
     className={cn("text-xs text-muted-foreground", className)}
     {...props}
   />
 ));
-DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
+DrawerDescription.displayName = "DrawerDescription";
 
 export {
   Drawer,

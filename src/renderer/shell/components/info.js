@@ -7,28 +7,20 @@ Object.assign(window.shell, {
   loadingSizes: false,
   infoCache: new Map(),
 
-  getInfoVersion() {
+  getLatestVersion() {
     if (!this.selectedApp) return '';
     const token = this.selectedApp.token;
-    if (this.outdatedMap && this.outdatedMap[token]) {
-      return this.outdatedMap[token].installedVersion || this.installedVersions?.[token] || this.appDetails?.installed || (this.loadingAppDetails ? '...' : '');
-    }
-    if (this.installedVersions && this.installedVersions[token]) {
-      return this.installedVersions[token];
-    }
-    if (this.appDetails) {
-      if (this.appDetails.installed) {
-        return typeof this.appDetails.installed === 'string' ? this.appDetails.installed : (this.appDetails.installed[0]?.version || this.appDetails.version || '');
-      }
-      if (this.appDetails.version) {
-        return this.appDetails.version;
-      }
-      return '';
-    }
-    if (this.loadingAppDetails || !this.appDetails) {
-      return '...';
-    }
-    return '';
+    return this.outdatedMap?.[token]?.currentVersion || this.appDetails?.version || this.selectedApp.version || '';
+  },
+
+  getInstalledVersion() {
+    if (!this.selectedApp) return '';
+    const token = this.selectedApp.token;
+    return this.outdatedMap?.[token]?.installedVersion || this.installedVersions?.[token] || (typeof this.appDetails?.installed === 'string' ? this.appDetails.installed : this.appDetails?.installed?.[0]?.version) || (this.installed?.includes(token) ? this.getLatestVersion() : '');
+  },
+
+  getInfoVersion() {
+    return this.getLatestVersion();
   },
 
   openAppInfo(item) {

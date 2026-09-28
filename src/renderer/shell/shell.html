@@ -785,12 +785,6 @@
                     <span x-text="loadingAppDetails ? '...' : (getCaskRequirements() || 'macOS')"></span>
                   </span>
                 </div>
-                <div class="info-meta-row" x-show="outdatedMap[selectedApp.token]">
-                  <span class="info-meta-label" data-i18n="Latest Version" x-text="__('Latest Version')">Latest
-                    Version</span>
-                  <span class="info-meta-val"
-                    x-text="(outdatedMap[selectedApp.token]?.currentVersion || outdatedMap[selectedApp.token]?.latestVersion || appDetails?.version) ? formatVersion(outdatedMap[selectedApp.token]?.currentVersion || outdatedMap[selectedApp.token]?.latestVersion || appDetails?.version) : (loadingAppDetails ? '...' : '—')"></span>
-                </div>
                 <div class="info-meta-row">
                   <span class="info-meta-label" data-i18n="Auto-updates" x-text="__('Auto-updates')">Auto-updates</span>
                   <span class="info-meta-val"
@@ -812,6 +806,23 @@
             <!-- Group 2: Storage & Usage Info (Async / Time-consuming info) -->
             <div class="info-section">
               <div class="info-meta-list">
+                <div class="info-meta-row" x-show="installed.includes(selectedApp.token)">
+                  <span class="info-meta-label" data-i18n="Installed Version" x-text="__('Installed Version')">Installed Version</span>
+                  <span class="info-meta-val info-req-val">
+                    <svg class="req-icon req-met" x-show="!outdatedMap[selectedApp.token]" width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="m5 12 5 5L20 7"></path>
+                    </svg>
+                    <svg class="req-icon req-unmet" x-show="outdatedMap[selectedApp.token]" width="14" height="14"
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="M21 4v6h-6"></path>
+                      <path d="M20.49 9A9 9 0 1 0 21 12.5"></path>
+                    </svg>
+                    <span x-text="formatVersion(getInstalledVersion())"></span>
+                  </span>
+                </div>
                 <div class="info-meta-row">
                   <span class="info-meta-label" data-i18n="Download Size" x-text="__('Download Size')">Download
                     Size</span>

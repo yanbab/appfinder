@@ -10,7 +10,7 @@ export function useKeyboardNav() {
     setSearch,
     showSidebar,
     setShowSidebar,
-    showDrawer,
+    selectedApp,
     closeAppInfo,
     openAppInfo,
     showPasswordModal,
@@ -47,7 +47,7 @@ export function useKeyboardNav() {
 
       // 2. Escape key
       if (e.key === 'Escape') {
-        if (showDrawer) {
+        if (selectedApp) {
           e.preventDefault();
           closeAppInfo?.();
           return;
@@ -72,7 +72,7 @@ export function useKeyboardNav() {
       // 3. Discover tab slide navigation
       if (currentTab === 'discover' && !isInput) {
         if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-          if (showDrawer) closeAppInfo?.();
+          if (selectedApp) closeAppInfo?.();
           e.preventDefault();
           if (e.key === 'ArrowLeft') prevSlide?.();
           else nextSlide?.();
@@ -247,7 +247,7 @@ export function useKeyboardNav() {
       const isKey = !e.metaKey && !e.ctrlKey && !e.altKey && e.key.length === 1 && e.key !== ' ';
       if (!isInput && isKey) {
         e.preventDefault();
-        if (showDrawer) closeAppInfo?.();
+        if (selectedApp) closeAppInfo?.();
         const newSearch = (search || '') + e.key;
         setSearch(newSearch);
         if (currentTab === 'discover') {
@@ -276,7 +276,7 @@ export function useKeyboardNav() {
     setSearch,
     showSidebar,
     setShowSidebar,
-    showDrawer,
+    selectedApp,
     closeAppInfo,
     openAppInfo,
     showPasswordModal,

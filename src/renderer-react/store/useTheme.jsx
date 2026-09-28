@@ -3,14 +3,30 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 const ThemeContext = createContext({
   theme: 'system',
   isDark: false,
+  accentColor: null,
+  isLightAccent: false,
   setTheme: () => { },
 });
+
+// Relative luminance following WCAG 2.1 specifications:
+// https://www.w3.org/WAI/GL/wiki/Relative_luminance
+function getLuminance(hex) {
+  const clean = hex.replace(/^#/, '');
+  if (clean.length < 6) return 0.5;
+  const r = parseInt(clean.substring(0, 2), 16) / 255;
+  const g = parseInt(clean.substring(2, 4), 16) / 255;
+  const b = parseInt(clean.substring(4, 6), 16) / 255;
+
+  const toLinear = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
 
 export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false;
   });
+  const [accentColor, setAccentColor] = useState(null);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -40,11 +56,23 @@ export function ThemeProvider({ children }) {
     const hex = color.startsWith?.('rgb') ? color : `#${clean.length === 8 ? clean.slice(0, 6) : clean}`;
     if (!hex || hex === '#') return;
 
+    // For high-luminance accent colors (e.g. Yellow, Orange), macOS mutes/darkens the accent color
+    // on controls like sidebar buttons so white text maintains good contrast.
+    const lum = getLuminance(hex);
+    const mutePercent = lum > 0.60 ? 65 : (lum > 0.40 ? 75 : 85);
+
     const root = document.documentElement;
+    root.style.setProperty('--accent-color-raw', hex);
+    root.style.setProperty('--accent-color', hex);
     root.style.setProperty('--primary', hex);
     root.style.setProperty('--ring', hex);
-    root.style.setProperty('--sidebar-primary', hex);
     root.style.setProperty('--sidebar-ring', hex);
+    root.style.setProperty('--accent-color-muted', `color-mix(in srgb, ${hex} ${mutePercent}%, black)`);
+    root.style.setProperty('--sidebar-primary', 'var(--accent-color-muted)');
+    root.style.setProperty('--primary-foreground', '#ffffff');
+    root.style.setProperty('--sidebar-primary-foreground', '#ffffff');
+
+    setAccentColor(hex);
   }, []);
 
   useEffect(() => {
@@ -62,8 +90,10 @@ export function ThemeProvider({ children }) {
     }
   }, [applyAccentColor]);
 
+  const isLightAccent = accentColor ? getLuminance(accentColor) > 0.40 : false;
+
   return (
-    <ThemeContext.Provider value={{ isDark }}>
+    <ThemeContext.Provider value={{ isDark, accentColor, isLightAccent }}>
       {children}
     </ThemeContext.Provider>
   );

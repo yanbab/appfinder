@@ -18,7 +18,7 @@ import {
   getCaskRequirements,
   isRequirementMet,
 } from '@/lib/utils';
-import { X, ExternalLink, AlertTriangle, Check, Loader2, ArrowDown } from 'lucide-react';
+import { X, ExternalLink, AlertTriangle, Check, Loader2, ArrowDown, RefreshCw } from 'lucide-react';
 
 export function InfoDrawer() {
   const {
@@ -52,23 +52,18 @@ export function InfoDrawer() {
 
   const name = getAppName(selectedApp);
 
-  const getInfoVersion = () => {
-    if (outdatedMap[selectedApp.token]) {
-      return outdatedMap[selectedApp.token].installedVersion || installedVersions[selectedApp.token] || appDetails?.installed || '';
-    }
-    if (installedVersions[selectedApp.token]) {
-      return installedVersions[selectedApp.token];
-    }
-    if (appDetails?.version) {
-      return appDetails.version;
-    }
-    if (selectedApp.version) {
-      return selectedApp.version;
-    }
-    return '';
-  };
+  const latestVersion =
+    outdatedMap[selectedApp.token]?.currentVersion ||
+    appDetails?.version ||
+    selectedApp.version ||
+    '';
 
-  const version = getInfoVersion();
+  const installedVersion =
+    outdatedMap[selectedApp.token]?.installedVersion ||
+    installedVersions[selectedApp.token] ||
+    (typeof appDetails?.installed === 'string' ? appDetails.installed : appDetails?.installed?.[0]?.version) ||
+    (isInstalled ? latestVersion : '');
+
   const reqText = getCaskRequirements(appDetails);
   const reqMet = isRequirementMet(appDetails);
 
@@ -97,7 +92,7 @@ export function InfoDrawer() {
       direction="right"
       shouldScaleBackground={false}
     >
-      <DrawerContent className="w-[280px] max-w-[280px] h-full bg-background border-l border-border select-none flex flex-col focus:outline-none">
+      <DrawerContent className="w-[280px] max-w-[280px] h-full bg-background border-l border-border select-none flex flex-col outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
         {/* Header with Close Button on the Left */}
         <div className="app-header h-11 shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
           <div className="flex items-center gap-2 min-w-0 flex-1 h-full [-webkit-app-region:drag]">
@@ -130,9 +125,9 @@ export function InfoDrawer() {
                   {selectedApp.desc}
                 </DrawerDescription>
               )}
-              {version && (
+              {latestVersion && (
                 <div className="text-xs text-muted-foreground font-normal">
-                  {__('Version')} {formatVersion(version)}
+                  {__('Version')} {formatVersion(latestVersion)}
                 </div>
               )}
             </div>
@@ -253,11 +248,11 @@ export function InfoDrawer() {
               )}
             </div>
 
-            {/* Latest Version */}
+            {/* Auto-updates */}
             <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Latest Version')}</span>
+              <span className="text-muted-foreground">{__('Auto-updates')}</span>
               <span className="text-foreground">
-                {formatVersion(outdatedMap[selectedApp.token]?.currentVersion || appDetails?.version || selectedApp.version)}
+                {loadingAppDetails ? '...' : (appDetails ? (appDetails.auto_updates ? __('Yes') : __('No')) : '—')}
               </span>
             </div>
 
@@ -274,13 +269,27 @@ export function InfoDrawer() {
             {selectedApp.added && (
               <div className="flex items-center justify-between py-0.5">
                 <span className="text-muted-foreground">{__('Added')}</span>
-                <span className="text-foreground">{formatDate(selectedApp.added)}</span>
+                <span className="text-foreground">{formatDate(selectedApp.added, __)}</span>
               </div>
             )}
           </div>
 
           {/* Storage & Usage Section in Card: No border between lines, compact padding */}
           <div className="border border-[var(--card-border)] rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
+            {isInstalled && (
+              <div className="flex items-center justify-between py-0.5">
+                <span className="text-muted-foreground">{__('Installed Version')}</span>
+                <div className="flex items-center gap-1 text-foreground">
+                  {isOutdated ? (
+                    <RefreshCw className="size-3 text-amber-500 shrink-0" />
+                  ) : (
+                    <Check className="size-3 text-emerald-500 shrink-0" />
+                  )}
+                  <span>{formatVersion(installedVersion)}</span>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Download Size')}</span>
               <span className="text-foreground">
@@ -301,6 +310,20 @@ export function InfoDrawer() {
                   <span className="text-muted-foreground">{__('Data Size')}</span>
                   <span className="text-foreground">
                     {loadingSizes ? '...' : (appDetails?.dataSize || '—')}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between py-0.5">
+                  <span className="text-muted-foreground">{__('Installed')}</span>
+                  <span className="text-foreground">
+                    {loadingAppDetails ? '...' : (appDetails?.installedDate ? formatDate(appDetails.installedDate, __) : '—')}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between py-0.5">
+                  <span className="text-muted-foreground">{__('Last Opened')}</span>
+                  <span className="text-foreground">
+                    {loadingAppDetails ? '...' : (appDetails?.lastOpenedDate ? formatDate(appDetails.lastOpenedDate, __) : '—')}
                   </span>
                 </div>
               </>

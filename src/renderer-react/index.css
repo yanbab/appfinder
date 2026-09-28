@@ -11,6 +11,8 @@
   --radius-btn: var(--radius-btn);
   --radius-card: var(--radius-card);
   --radius-badge: var(--radius-badge);
+  --color-accent-muted: var(--accent-color-muted);
+  --color-accent-color-muted: var(--accent-color-muted);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -74,6 +76,9 @@
   --popover-foreground: #1d1d1f;
   --primary: #8e8e93;
   --primary-foreground: #ffffff;
+  --accent-color-raw: #8e8e93;
+  --accent-color: var(--primary);
+  --accent-color-muted: color-mix(in srgb, var(--primary) 85%, black);
   --secondary: #e5e5ea;
   --secondary-foreground: #1d1d1f;
   --btn-bg-active: #d5d5da;
@@ -97,8 +102,8 @@
   --font-mono: Menlo, Monaco, Consolas, "Courier New", monospace;
   --sidebar: transparent;
   --sidebar-foreground: #1d1d1f;
-  --sidebar-primary: #8e8e93;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary: var(--accent-color-muted);
+  --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: rgba(0, 0, 0, 0.06);
   --sidebar-accent-foreground: #1d1d1f;
   --sidebar-border: rgba(0, 0, 0, 0.09);
@@ -118,6 +123,9 @@
   --popover-foreground: #f5f5f7;
   --primary: #98989d;
   --primary-foreground: #ffffff;
+  --accent-color-raw: #98989d;
+  --accent-color: var(--primary);
+  --accent-color-muted: color-mix(in srgb, var(--primary) 80%, black);
   --secondary: #48484b;
   /* Lighter button bg */
   --secondary-foreground: #f5f5f7;
@@ -143,8 +151,8 @@
   --font-mono: Menlo, Monaco, Consolas, "Courier New", monospace;
   --sidebar: transparent;
   --sidebar-foreground: #f5f5f7;
-  --sidebar-primary: #98989d;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary: var(--accent-color-muted);
+  --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: rgba(255, 255, 255, 0.06);
   --sidebar-accent-foreground: #f5f5f7;
   --sidebar-border: rgba(255, 255, 255, 0.08);
@@ -178,6 +186,10 @@
   .app-card:hover,
   .sidebar-btn:hover {
     transition: none !important;
+  }
+
+  .sidebar-btn:active:not(.active) {
+    background-color: var(--sidebar-accent);
   }
 
   .dark .app-card:active,
@@ -247,4 +259,11 @@ body.window-blurred .sidebar-btn.active {
 
 body.window-blurred .sidebar-btn.active .sidebar-btn-icon {
   color: var(--muted-foreground) !important;
+}
+
+/* InfoDrawer Outline Reset */
+[role="dialog"],
+[role="dialog"]:focus,
+[role="dialog"]:focus-visible {
+  outline: none !important;
 }

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { getAppName, formatVersion, stripAnsi, extractProgress, detectPrompt, getIconDataUrl, extractTaskError } from '../lib/utils';
+import { getAppName, formatVersion, stripAnsi, extractProgress, detectPrompt, parseConfirmationDetails, getIconDataUrl, extractTaskError } from '../lib/utils';
 
 const ShellContext = createContext(null);
 
@@ -53,6 +53,7 @@ export function ShellProvider({ children }) {
   const updateQueueRef = useRef([]);
   const isUpdatingAllRef = useRef(false);
   const batchActionRef = useRef('upgrade');
+  const isConfirmPromptOpenRef = useRef(false);
 
   // Pagination
   const [displayedCount, setDisplayedCount] = useState(50);
@@ -310,6 +311,7 @@ export function ShellProvider({ children }) {
     }
     isUpdatingAllRef.current = false;
     updateQueueRef.current = [];
+    isConfirmPromptOpenRef.current = false;
     setShowPasswordModal(false);
     setIsWaitingForInput(false);
     setShowDrawer(false);
@@ -647,16 +649,14 @@ export function ShellProvider({ children }) {
           }
         }
 
-        // Detect password prompt
-        const isRetry = /sorry, try again|incorrect password|authentication failure/i.test(clean);
-        const isPasswordPrompt = /password\s*[:?]|passphrase\s*[:?]|mot de passe\s*[:?]|(?:sudo|admin).*(?:password|passphrase)/i.test(clean);
-
-        if (isRetry) {
+        // Detect prompts
+        const promptInfo = detectPrompt(data.text);
+        if (promptInfo.isRetry) {
           lastPasswordAttemptFailedRef.current = true;
           activeTaskPasswordRef.current = null;
         }
 
-        if (isPasswordPrompt) {
+        if (promptInfo.isPasswordPrompt) {
           if (Date.now() - lastPasswordSentTimeRef.current < 1500) return;
           if (activeTaskPasswordRef.current && !lastPasswordAttemptFailedRef.current) {
             lastPasswordSentTimeRef.current = Date.now();
@@ -666,6 +666,37 @@ export function ShellProvider({ children }) {
           }
           setIsWaitingForInput(true);
           setShowPasswordModal(true);
+        } else if (promptInfo.isConfirmPrompt) {
+          if (!isConfirmPromptOpenRef.current) {
+            isConfirmPromptOpenRef.current = true;
+            setIsWaitingForInput(true);
+            setShowTerminal(true);
+
+            if (window.ipc?.showMessage) {
+              const { prompt: promptLine, details: detailText } = parseConfirmationDetails(clean);
+              const message = promptLine || __('Do you want to proceed?');
+
+              window.ipc.showMessage({
+                type: 'question',
+                buttons: [__('Proceed'), __('Cancel')],
+                defaultId: 0,
+                cancelId: 1,
+                title: __('Confirmation Required'),
+                message,
+                detail: detailText
+              }).then(res => {
+                isConfirmPromptOpenRef.current = false;
+                setIsWaitingForInput(false);
+                const answer = (res && res.response === 0) ? 'y\r' : 'n\r';
+                if (activeTaskId) {
+                  window.ipc.writePtyInput(activeTaskId, answer);
+                }
+              }).catch(() => {
+                isConfirmPromptOpenRef.current = false;
+                setIsWaitingForInput(false);
+              });
+            }
+          }
         }
       }));
     }
@@ -692,6 +723,7 @@ export function ShellProvider({ children }) {
         lastPasswordAttemptFailedRef.current = false;
         lastPasswordSentTimeRef.current = 0;
         activeTaskErrorLogRef.current = '';
+        isConfirmPromptOpenRef.current = false;
         setIsWaitingForInput(false);
 
         setRunningTasks(prev => {

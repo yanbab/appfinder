@@ -76,16 +76,37 @@ export function formatCountK(count) {
   return `${(num / 1000000).toFixed(1).replace(/\.0$/, '')} M`;
 }
 
-export function formatDate(dateVal) {
+export function formatDate(dateVal, __) {
   if (!dateVal) return '—';
   try {
-    const d = new Date(dateVal);
+    let d;
+    let hasTime = true;
+    if (typeof dateVal === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateVal.trim())) {
+      const [y, m, day] = dateVal.trim().split('-').map(Number);
+      d = new Date(y, m - 1, day);
+      hasTime = false;
+    } else {
+      d = new Date(typeof dateVal === 'number' ? (dateVal > 1e11 ? dateVal : dateVal * 1000) : dateVal);
+    }
     if (isNaN(d.getTime())) return String(dateVal);
+
     const now = new Date();
     const isSameDay = (d1, d2) => d1.toDateString() === d2.toDateString();
-    if (isSameDay(d, now)) return 'Today';
+    const translate = typeof __ === 'function' ? __ : (s => s);
+
+    if (isSameDay(d, now)) {
+      return hasTime
+        ? translate('Today at %s').replace('%s', d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }))
+        : translate('Today');
+    }
+
     const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-    if (isSameDay(d, yesterday)) return 'Yesterday';
+    if (isSameDay(d, yesterday)) {
+      return hasTime
+        ? translate('Yesterday at %s').replace('%s', d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }))
+        : translate('Yesterday');
+    }
+
     return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   } catch {
     return String(dateVal);
@@ -179,8 +200,26 @@ export function detectPrompt(text) {
   const clean = stripAnsi(text);
   const isRetry = /sorry, try again|incorrect password|authentication failure/i.test(clean);
   const isPasswordPrompt = /password\s*[:?]|passphrase\s*[:?]|mot de passe\s*[:?]|(?:sudo|admin).*(?:password|passphrase)/i.test(clean);
-  const isInteractivePrompt = isPasswordPrompt || /\[y\/n\]/i.test(clean);
-  return { isRetry, isPasswordPrompt, isInteractivePrompt };
+  const isConfirmPrompt = !isPasswordPrompt && (/\[y\/n\]/i.test(clean) || /\(y\/n\)/i.test(clean));
+  const isInteractivePrompt = isPasswordPrompt || isConfirmPrompt;
+  return { isRetry, isPasswordPrompt, isInteractivePrompt, isConfirmPrompt };
+}
+
+export function parseConfirmationDetails(cleanText) {
+  if (!cleanText) return { prompt: '', details: '' };
+  const lines = cleanText.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+  const promptLine = lines.slice().reverse().find(l => /\[y\/n\]|\(y\/n\)/i.test(l)) || lines[lines.length - 1] || '';
+
+  const detailLines = lines
+    .filter(l => !/\[y\/n\]|\(y\/n\)/i.test(l) && (l.startsWith('==>') || /dependenc|install|require|package/i.test(l)))
+    .slice(-5)
+    .map(l => l.replace(/^==>\s*/, '• '))
+    .join('\n');
+
+  return {
+    prompt: promptLine,
+    details: detailLines
+  };
 }
 
 export function extractProgress(text) {

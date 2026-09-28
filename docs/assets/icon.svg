@@ -1,15 +1,113 @@
-<?xml version="1.0" encoding="utf-8"?>
-<svg fill="none" height="1024" viewBox="0 0 1024 1024" width="1024" xmlns="http://www.w3.org/2000/svg">
-  <linearGradient id="a" gradientUnits="userSpaceOnUse" x1="100" x2="100" y1="100" y2="924.005">
-    <stop offset="0" stop-color="#fdfdfd" stop-opacity=".72"/>
-    <stop offset="1" stop-color="#f4f4f6"/>
-  </linearGradient>
-  <path d="m100 724.005v-424c0-114.999 70-200.005 200.026-200l423.974-.005c130 .005 200 85.006 200 200.005v424c0 115.001-70 199.995-200 200h-423.974c-130.026 0-200.026-84.999-200.026-200z" fill="url(#a)"/>
-  <path d="m100 724.005v-424c0-114.999 70-200.005 200.026-200l423.974-.005c130 .005 200 85.006 200 200.005v424c0 115.001-70 199.995-200 200h-423.974c-130.026 0-200.026-84.999-200.026-200z" stroke="#000" stroke-opacity=".08" style="stroke-width: 30px;"/>
-  <path d="m430.571 242h-130.714c-31.953 0-57.857 25.904-57.857 57.857v130.714c0 31.954 25.904 57.858 57.857 57.858h130.714c31.954 0 57.858-25.904 57.858-57.858v-130.714c0-31.953-25.904-57.857-57.858-57.857z" fill="#fcb346"/>
-  <path d="m724.143 242h-130.714c-31.954 0-57.858 25.904-57.858 57.857v130.714c0 31.954 25.904 57.858 57.858 57.858h130.714c31.953 0 57.857-25.904 57.857-57.858v-130.714c0-31.953-25.904-57.857-57.857-57.857z" fill="#e55d61"/>
-  <path d="M 426.571 538.571 L 295.857 538.571 C 263.904 538.571 238 564.475 238 596.429 L 238 727.143 C 238 759.096 263.904 785 295.857 785 L 426.571 785 C 458.525 785 484.429 759.096 484.429 727.143 L 484.429 596.429 C 484.429 564.475 458.525 538.571 426.571 538.571 Z" fill="#4f68b1" style="stroke: rgb(186, 218, 85);"/>
-  <path d="m724.571 536h-130.714c-31.953 0-57.857 25.904-57.857 57.857v130.714c0 31.954 25.904 57.858 57.857 57.858h130.714c31.954 0 57.858-25.904 57.858-57.858v-130.714c0-31.953-25.904-57.857-57.858-57.857z" fill="#fff" fill-opacity=".17" stroke-dasharray="14 14" style="stroke-width: 20px; stroke: rgb(82, 82, 90); paint-order: stroke; stroke-opacity: 0.41;"/>
-  <path d="m658.5 596v125zm-62.5 62.5h125z" fill="#000"/>
-  <path d="m658.5 596v125m-62.5-62.5h125" stroke="#8e8e93" stroke-linecap="round" stroke-linejoin="round" style="stroke-width: 30px;"/>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- macOS App Icon Drop Shadow -->
+    <filter id="mac-shadow" x="50" y="50" width="924" height="934" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.12" />
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.08" />
+    </filter>
+
+    <!-- Subtle Tile Shadow for prominent icons -->
+    <filter id="tile-shadow" x="-10%" y="-10%" width="120%" height="130%" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.10" />
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.06" />
+    </filter>
+
+    <!-- Base Canvas Gradient -->
+    <linearGradient id="bg-grad" x1="512" y1="100" x2="512" y2="924" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F2F3F7" />
+    </linearGradient>
+
+    <!-- Dimmed Corner Tile Gradients (30% lighter soft pastels) -->
+    <!-- (0,0) Top-Left: Soft Slate Blue -->
+    <linearGradient id="dimmed-tl" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#C7D8E7" />
+      <stop offset="100%" stop-color="#B3C6D6" />
+    </linearGradient>
+
+    <!-- (0,2) Top-Right: Soft Mint/Sage -->
+    <linearGradient id="dimmed-tr" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#C8E4D6" />
+      <stop offset="100%" stop-color="#B5D4C3" />
+    </linearGradient>
+
+    <!-- (2,0) Bottom-Left: Soft Warm Peach/Sand -->
+    <linearGradient id="dimmed-bl" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F2DBC9" />
+      <stop offset="100%" stop-color="#E2C8B3" />
+    </linearGradient>
+
+    <!-- (2,2) Bottom-Right: Soft Mauve/Lilac -->
+    <linearGradient id="dimmed-br" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E4D6E9" />
+      <stop offset="100%" stop-color="#D2C0D8" />
+    </linearGradient>
+
+    <!-- Prominent Tile Gradients (The "+" Shape) -->
+    <!-- Top-Center: Blue -->
+    <linearGradient id="blue-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A84FF" />
+      <stop offset="100%" stop-color="#0066D6" />
+    </linearGradient>
+
+    <!-- Mid-Left: Orange -->
+    <linearGradient id="orange-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF9F0A" />
+      <stop offset="100%" stop-color="#EA6C00" />
+    </linearGradient>
+
+    <!-- Center: Purple / Violet -->
+    <linearGradient id="purple-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#BF5AF2" />
+      <stop offset="100%" stop-color="#8F36C9" />
+    </linearGradient>
+
+    <!-- Mid-Right: Green -->
+    <linearGradient id="green-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#30D158" />
+      <stop offset="100%" stop-color="#1F9E3D" />
+    </linearGradient>
+
+    <!-- Bottom-Center: Coral / Red -->
+    <linearGradient id="coral-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF375F" />
+      <stop offset="100%" stop-color="#D7143D" />
+    </linearGradient>
+  </defs>
+
+  <!-- macOS App Squircle Base with Shadow -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg-grad)" filter="url(#mac-shadow)" />
+  <rect x="100" y="100" width="824" height="824" rx="185" stroke="#000000" stroke-opacity="0.07" stroke-width="1.5" />
+
+  <!-- 3x3 Grid of App Squares (Tile size: 156x156, Gap: 38px, Corner Radius: 38px) -->
+
+  <!-- ROW 1 -->
+  <!-- (0,0) Top-Left: Dimmed Soft Slate -->
+  <rect x="240" y="240" width="156" height="156" rx="38" fill="url(#dimmed-tl)" />
+
+  <!-- (0,1) Top-Center: Prominent Blue (+) -->
+  <rect x="434" y="240" width="156" height="156" rx="38" fill="url(#blue-grad)" filter="url(#tile-shadow)" />
+
+  <!-- (0,2) Top-Right: Dimmed Soft Sage -->
+  <rect x="628" y="240" width="156" height="156" rx="38" fill="url(#dimmed-tr)" />
+
+  <!-- ROW 2 -->
+  <!-- (1,0) Mid-Left: Prominent Orange (+) -->
+  <rect x="240" y="434" width="156" height="156" rx="38" fill="url(#orange-grad)" filter="url(#tile-shadow)" />
+
+  <!-- (1,1) Center: Prominent Purple (+) -->
+  <rect x="434" y="434" width="156" height="156" rx="38" fill="url(#purple-grad)" filter="url(#tile-shadow)" />
+
+  <!-- (1,2) Mid-Right: Prominent Green (+) -->
+  <rect x="628" y="434" width="156" height="156" rx="38" fill="url(#green-grad)" filter="url(#tile-shadow)" />
+
+  <!-- ROW 3 -->
+  <!-- (2,0) Bottom-Left: Dimmed Soft Peach -->
+  <rect x="240" y="628" width="156" height="156" rx="38" fill="url(#dimmed-bl)" />
+
+  <!-- (2,1) Bottom-Center: Prominent Coral/Pink (+) -->
+  <rect x="434" y="628" width="156" height="156" rx="38" fill="url(#coral-grad)" filter="url(#tile-shadow)" />
+
+  <!-- (2,2) Bottom-Right: Dimmed Soft Mauve -->
+  <rect x="628" y="628" width="156" height="156" rx="38" fill="url(#dimmed-br)" />
 </svg>

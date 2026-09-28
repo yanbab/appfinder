@@ -1,17 +1,10 @@
 <p align="center">
-  <img src="docs/assets/icon.svg" width="64" height="64" alt="App Finder Logo" /><br/>
+  <img src="docs/assets/icon.svg" width="64" height="64" alt="" /><br/>
   <strong>App Finder</strong><br/>
   <small>Applications library for macOS</small>
 </p>
 
 ### Features
-
-<div>
-  <a href="https://github.com/yanbab/appfinder/actions/workflows/release.yml"><img src="https://github.com/yanbab/appfinder/actions/workflows/release.yml/badge.svg" alt="Release"></a>
-  <a href="https://github.com/yanbab/appfinder/releases"><img src="https://img.shields.io/github/v/release/yanbab/appfinder" alt="Latest Release"></a>
-  <a href="https://github.com/yanbab/appfinder/blob/main/package.json"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
-  <img src="https://img.shields.io/badge/platform-macOS%2013%2B-blue?logo=apple" alt="Platform: macOS 13+">
-</div>
 
 - 5000+ applications and 2000+ fonts available
 - One click installs and upgrades
@@ -21,8 +14,8 @@
 
 ### How it works
 
-AppFinder aggregates official Homebrew cask formulas and installation analytics with structured categories and release dates provided by [CaskFlow](https://github.com/alielsokary/CaskFlow). 
-This catalog is indexed locally to enable fast searching and application management directly via Homebrew.
+> AppFinder aggregates official Homebrew cask formulas and installation analytics with structured categories and release dates provided by [CaskFlow](https://github.com/alielsokary/CaskFlow). 
+> This catalog is indexed locally to enable fast searching and application management directly via Homebrew.
 
 ### Installation
 
@@ -51,4 +44,6 @@ npm run clean   # Delete builds, caches and user config
 
 ### License
 
+```
 MIT License
+```
