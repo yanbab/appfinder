@@ -97,20 +97,20 @@ export function InfoDrawer() {
       direction="right"
       shouldScaleBackground={false}
     >
-      <DrawerContent className="w-[280px] max-w-[280px] h-full bg-card border-l border-border select-none flex flex-col focus:outline-none">
+      <DrawerContent className="w-[280px] max-w-[280px] h-full bg-background border-l border-border select-none flex flex-col focus:outline-none">
         {/* Header with Close Button on the Left */}
-        <div className="h-11 shrink-0 px-3 border-b border-border flex items-center justify-between bg-card [-webkit-app-region:drag]">
-          <div className="flex items-center gap-2 [-webkit-app-region:no-drag]">
+        <div className="app-header h-11 shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
+          <div className="flex items-center gap-2 min-w-0 flex-1 h-full [-webkit-app-region:drag]">
             <Button
               variant="ghost"
               size="icon-sm"
               onClick={closeAppInfo}
-              className="text-muted-foreground hover:text-foreground cursor-default rounded-sm"
+              className="text-muted-foreground hover:text-foreground cursor-default rounded-sm shrink-0 [-webkit-app-region:no-drag]"
               title="Close"
             >
-              <X className="size-4" />
+              <X className="size-[18px]" />
             </Button>
-            <DrawerTitle className="text-sm font-semibold text-foreground">
+            <DrawerTitle className="text-sm font-semibold text-foreground truncate cursor-default select-none [-webkit-app-region:drag]">
               {__('Infos')}
             </DrawerTitle>
           </div>
@@ -131,7 +131,7 @@ export function InfoDrawer() {
                 </DrawerDescription>
               )}
               {version && (
-                <div className="text-[11px] text-muted-foreground font-normal">
+                <div className="text-xs text-muted-foreground font-normal">
                   {__('Version')} {formatVersion(version)}
                 </div>
               )}
@@ -194,28 +194,15 @@ export function InfoDrawer() {
             )}
           </div>
 
-          {/* Caveats Notice */}
-          {appDetails?.caveats && (
-            <div className="p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1">
-              <div className="flex items-center gap-1.5 font-semibold text-xs">
-                <AlertTriangle className="size-3.5 shrink-0" />
-                <span>{__('Caveats')}</span>
-              </div>
-              <p className="text-xs leading-relaxed whitespace-pre-wrap text-foreground">
-                {appDetails.caveats}
-              </p>
-            </div>
-          )}
-
           {/* Metadata Section in Card: No border between lines, compact padding */}
-          <div className="border border-border rounded-lg p-2.5 bg-card shadow-2xs text-xs space-y-1.5">
+          <div className="border border-[var(--card-border)] rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
             {/* Homepage */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Homepage')}</span>
               {selectedApp.homepage ? (
                 <button
                   onClick={() => window.ipc?.openExternal?.(selectedApp.homepage)}
-                  className="text-primary hover:underline flex items-center gap-1 max-w-[150px] truncate cursor-default"
+                  className="text-primary active:underline flex items-center gap-1 max-w-[150px] truncate cursor-default"
                 >
                   <span className="truncate">{selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
                   <ExternalLink className="size-3 shrink-0" />
@@ -239,7 +226,7 @@ export function InfoDrawer() {
                   {appCategories.map((c) => (
                     <span
                       key={c.name}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[var(--radius-badge)] border border-border/80 bg-muted/90 dark:bg-white/15 dark:border-white/20 text-foreground font-semibold"
                     >
                       <CategoryIcon html={c.icon} className="size-[14px]" />
                       <span>{__(c.displayName)}</span>
@@ -252,14 +239,18 @@ export function InfoDrawer() {
             {/* Require */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Require', 'Require')}</span>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium">
-                {reqMet ? (
-                  <Check className="size-3 text-emerald-500 shrink-0" />
-                ) : (
-                  <AlertTriangle className="size-3 text-amber-500 shrink-0" />
-                )}
-                <span>{loadingAppDetails ? '...' : (reqText || 'macOS')}</span>
-              </span>
+              {loadingAppDetails ? (
+                <span className="text-muted-foreground font-mono">...</span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[var(--radius-badge)] border border-border/80 bg-muted/90 dark:bg-white/15 dark:border-white/20 text-foreground font-semibold">
+                  {reqMet ? (
+                    <Check className="size-3 text-emerald-500 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="size-3 text-amber-500 shrink-0" />
+                  )}
+                  <span>{reqText || 'macOS'}</span>
+                </span>
+              )}
             </div>
 
             {/* Latest Version */}
@@ -274,7 +265,7 @@ export function InfoDrawer() {
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Monthly Installs')}</span>
               <div className="flex items-center gap-1 text-foreground">
-                <ArrowDown className="size-3 text-muted-foreground shrink-0" />
+                <ArrowDown className="size-3 text-current shrink-0" />
                 <span>{formatCountK(selectedApp.count)}</span>
               </div>
             </div>
@@ -289,7 +280,7 @@ export function InfoDrawer() {
           </div>
 
           {/* Storage & Usage Section in Card: No border between lines, compact padding */}
-          <div className="border border-border rounded-lg p-2.5 bg-card shadow-2xs text-xs space-y-1.5">
+          <div className="border border-[var(--card-border)] rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Download Size')}</span>
               <span className="text-foreground">
@@ -315,6 +306,19 @@ export function InfoDrawer() {
               </>
             )}
           </div>
+
+          {/* Caveat Notice */}
+          {appDetails?.caveats && (
+            <div className="p-2 rounded-[var(--radius-card)] border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-xs">
+                <AlertTriangle className="size-3.5 shrink-0" />
+                <span>{__('Caveat')}</span>
+              </div>
+              <p className="text-xs font-mono leading-relaxed whitespace-pre-wrap text-foreground">
+                {appDetails.caveats}
+              </p>
+            </div>
+          )}
         </div>
       </DrawerContent>
     </Drawer>

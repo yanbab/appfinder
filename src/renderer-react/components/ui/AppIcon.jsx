@@ -39,8 +39,8 @@ export function AppIcon({ item, size = "md", className }) {
             decoding="async"
             fetchpriority="low"
             className={cn(
-              "w-full h-full object-contain rounded-[inherit] transition-opacity duration-200",
-              loaded ? "opacity-100" : "opacity-0"
+              "w-full h-full object-contain rounded-[inherit]",
+              loaded ? "block" : "invisible"
             )}
             onLoad={() => setLoaded(true)}
             onError={() => setHasError(true)}

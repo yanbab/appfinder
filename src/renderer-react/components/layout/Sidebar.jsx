@@ -1,6 +1,6 @@
 import React from 'react';
 import { useShell } from '@/store/useShell';
-import { Compass, LayoutGrid, CheckCircle2, RefreshCw, Search, X } from 'lucide-react';
+import { Star, LayoutGrid, CheckCircle2, ArrowDownToLine, Search, X } from 'lucide-react';
 import { CategoryIcon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -24,7 +24,7 @@ export function Sidebar() {
     {
       id: 'discover',
       label: __('Explore'),
-      icon: Compass,
+      icon: Star,
       badge: null,
     },
     {
@@ -42,7 +42,7 @@ export function Sidebar() {
     {
       id: 'updates',
       label: __('Updates'),
-      icon: RefreshCw,
+      icon: ArrowDownToLine,
       badge: currentTab === 'updates' && search ? filteredCount : updatesCount,
       badgeVariant: 'default',
     },
@@ -66,12 +66,12 @@ export function Sidebar() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={__('Search')}
-              className="pl-9 pr-7 h-7 bg-card border-sidebar-border focus:bg-card focus:outline-none focus-visible:ring-0 text-sm text-foreground placeholder:text-muted-foreground rounded-sm shadow-2xs cursor-text"
+              className="pl-9 pr-7 h-7 bg-card border-sidebar-border/60 focus:border-primary/50 focus:bg-card focus:outline-none focus-visible:ring-0 text-xs text-foreground placeholder:text-muted-foreground rounded-[var(--radius-btn)] shadow-2xs cursor-text"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-2 size-4 rounded-full bg-muted-foreground/20 hover:bg-muted-foreground/35 flex items-center justify-center text-foreground/70 hover:text-foreground cursor-default focus:outline-none"
+                className="absolute right-2 size-4 rounded-full bg-muted-foreground/20 active:bg-muted-foreground/35 flex items-center justify-center text-foreground/70 active:text-foreground cursor-default focus:outline-none"
                 aria-label="Clear search"
               >
                 <X className="size-2.5" />
@@ -91,9 +91,9 @@ export function Sidebar() {
                   <button
                     data-nav-id={item.id}
                     onClick={() => selectTab(item.id)}
-                    className={`sidebar-btn w-full h-7 flex items-center justify-between px-2 rounded-sm text-[13px] font-medium text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
+                    className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs font-medium text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
                         ? 'active bg-primary text-primary-foreground shadow-2xs'
-                        : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                        : 'text-sidebar-foreground'
                       }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -119,7 +119,7 @@ export function Sidebar() {
           {/* Categories Section */}
           {categories.length > 0 && (
             <div className="space-y-0.5">
-              <div className="px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+              <div className="px-2.5 py-1 text-xs font-semibold text-muted-foreground">
                 {__('Categories')}
               </div>
 
@@ -131,9 +131,9 @@ export function Sidebar() {
                       key={cat.name}
                       data-nav-id={cat.name}
                       onClick={() => selectTab(cat.name)}
-                      className={`sidebar-btn w-full h-7 flex items-center justify-between px-2 rounded-sm text-[13px] text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
+                      className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
                           ? 'active bg-primary text-primary-foreground shadow-2xs font-medium'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                          : 'text-sidebar-foreground'
                         }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">

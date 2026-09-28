@@ -2,7 +2,7 @@ import React from 'react';
 import { useShell } from '@/store/useShell';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
-import { PanelLeft, LayoutGrid, List, RefreshCw, ChevronDown } from 'lucide-react';
+import { PanelLeft, LayoutGrid, List, RefreshCw } from 'lucide-react';
 import { UpgradeIcon } from '@/components/ui/icons';
 
 export function TitleBar() {
@@ -34,39 +34,39 @@ export function TitleBar() {
   const isRefreshRunning = Boolean(runningTasks['refresh']) || isRefreshing;
 
   return (
-    <header
-      className={`h-11 shrink-0 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md select-none [-webkit-app-region:drag] z-10 gap-3 transition-[padding] duration-250 ease-out ${showSidebar ? 'pl-3 pr-3' : 'pl-20 pr-3'
-        }`}
-    >
-      {/* Left section: Sidebar toggle & Title */}
-      <div className="flex items-center gap-2.5 [-webkit-app-region:no-drag] min-w-0">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={toggleSidebar}
-          className="text-muted-foreground hover:text-foreground cursor-default rounded-sm shrink-0"
-          title={showSidebar ? "Hide Sidebar" : "Show Sidebar"}
-        >
-          <PanelLeft className="size-4" />
-        </Button>
+    <header className="app-header h-11 shrink-0 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md select-none [-webkit-app-region:drag] z-10 gap-3 px-3">
+      {/* Left section: Sidebar toggle & Title with smooth traffic-light spacer */}
+      <div className="flex items-center min-w-0 flex-1 h-full [-webkit-app-region:drag]">
+        <div className={`shrink-0 transition-[width] duration-250 ease-out overflow-hidden ${showSidebar ? 'w-0' : 'w-[68px]'}`} />
+        <div className="flex items-center gap-2.5 min-w-0 flex-1 h-full">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={toggleSidebar}
+            className="text-muted-foreground hover:text-foreground cursor-default rounded-[var(--radius-btn)] shrink-0 [-webkit-app-region:no-drag]"
+            title={showSidebar ? "Hide Sidebar" : "Show Sidebar"}
+          >
+            <PanelLeft className="size-[18px]" />
+          </Button>
 
-        <h1 className="window-title text-sm font-semibold tracking-tight text-foreground truncate transition-opacity duration-150">
-          {getPageTitle()}
-        </h1>
+          <h1 className="window-title text-sm font-semibold tracking-tight text-foreground truncate transition-opacity duration-150 [-webkit-app-region:drag] cursor-default select-none">
+            {getPageTitle()}
+          </h1>
+        </div>
       </div>
 
       {/* Right actions: Refresh, Update all, Sort select, View switch */}
-      <div className="flex items-center gap-1.5 [-webkit-app-region:no-drag]">
+      <div className="flex items-center gap-1 [-webkit-app-region:no-drag]">
         {currentTab === 'updates' && (
           <Button
             size="icon-sm"
             variant="ghost"
             disabled={isRefreshRunning}
             onClick={() => startAction('refresh', 'refresh')}
-            className="text-primary hover:text-primary hover:bg-primary/10 cursor-default rounded-sm"
+            className="text-primary hover:text-primary active:bg-primary/10 cursor-default rounded-[var(--radius-btn)]"
             title={__('Refresh')}
           >
-            <RefreshCw className={`size-4 ${isRefreshRunning ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-[18px] ${isRefreshRunning ? 'animate-spin' : ''}`} />
           </Button>
         )}
 
@@ -75,53 +75,53 @@ export function TitleBar() {
             size="sm"
             variant="secondary"
             onClick={() => startAction('upgrade-all')}
-            className="gap-1 px-2.5 text-xs rounded-sm cursor-default"
+            className="gap-1 px-2.5 text-xs rounded-[var(--radius-btn)] cursor-default mr-1"
           >
-            <UpgradeIcon className="size-3.5" />
+            <UpgradeIcon className="size-[18px]" />
             <span>{__('Update All')}</span>
           </Button>
         )}
 
         {currentTab !== 'discover' && currentTab !== 'updates' && (
-          <div className="window-select relative flex items-center mr-2 transition-opacity duration-150">
+          <div className="window-select flex items-center transition-opacity duration-150">
             <select
               value={order}
               onChange={(e) => setOrder(e.target.value)}
-              className="h-7 text-[13px] font-medium bg-transparent border-0 rounded-sm pl-1 pr-4 text-right text-foreground outline-none cursor-default appearance-none focus:outline-none"
+              className="h-7 text-xs font-medium bg-transparent border-0 rounded-[var(--radius-btn)] pl-1 pr-1.5 text-right text-foreground outline-none cursor-default focus:outline-none [text-align-last:right]"
+              style={{ textAlign: 'right', textAlignLast: 'right' }}
             >
               <option value="popularity" className="bg-popover text-popover-foreground">{__('Popular')}</option>
               <option value="date" className="bg-popover text-popover-foreground">{__('Recent')}</option>
               <option value="name" className="bg-popover text-popover-foreground">{__('A-Z')}</option>
             </select>
-            <ChevronDown className="size-3 absolute right-0.5 text-muted-foreground pointer-events-none" />
           </div>
         )}
 
         {currentTab !== 'discover' && (
-          <ButtonGroup className="rounded-sm">
+          <ButtonGroup className="bg-transparent border-0 shadow-none p-0 gap-0.5">
             <Button
-              variant={viewMode === 'list' ? 'secondary' : 'outline'}
+              variant="ghost"
               size="icon-sm"
-              className={`rounded-sm hover:bg-transparent ${viewMode === 'list'
-                ? 'bg-secondary text-secondary-foreground font-medium z-1 shadow-2xs hover:bg-secondary'
-                : 'text-muted-foreground hover:text-muted-foreground hover:bg-transparent'
+              className={`rounded-[var(--radius-btn)] border-0 shadow-none outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${viewMode === 'list'
+                ? 'text-foreground dark:text-white bg-transparent active:bg-muted/40 font-medium'
+                : 'text-muted-foreground active:text-foreground dark:active:text-white bg-transparent active:bg-muted/40'
                 }`}
               onClick={() => setViewMode('list')}
               title="List View"
             >
-              <List className="size-3.5" />
+              <List className="size-[18px]" />
             </Button>
             <Button
-              variant={viewMode === 'grid' ? 'secondary' : 'outline'}
+              variant="ghost"
               size="icon-sm"
-              className={`rounded-sm hover:bg-transparent ${viewMode === 'grid'
-                ? 'bg-secondary text-secondary-foreground font-medium z-1 shadow-2xs hover:bg-secondary'
-                : 'text-muted-foreground hover:text-muted-foreground hover:bg-transparent'
+              className={`rounded-[var(--radius-btn)] border-0 shadow-none outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${viewMode === 'grid'
+                ? 'text-foreground dark:text-white bg-transparent active:bg-muted/40 font-medium'
+                : 'text-muted-foreground active:text-foreground dark:active:text-white bg-transparent active:bg-muted/40'
                 }`}
               onClick={() => setViewMode('grid')}
               title="Grid View"
             >
-              <LayoutGrid className="size-3.5" />
+              <LayoutGrid className="size-[18px]" />
             </Button>
           </ButtonGroup>
         )}

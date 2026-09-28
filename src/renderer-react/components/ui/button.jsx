@@ -3,25 +3,27 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center rounded-md border border-transparent text-xs font-medium whitespace-nowrap transition-colors outline-none focus:outline-none focus-visible:outline-none select-none disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] cursor-default",
+  "inline-flex shrink-0 items-center justify-center rounded-[var(--radius-btn)] border border-transparent text-xs font-medium whitespace-nowrap outline-none focus:outline-none focus-visible:outline-none select-none disabled:pointer-events-none disabled:opacity-50 cursor-default",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs",
-        outline: "border-border hover:bg-accent hover:text-accent-foreground shadow-xs",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-muted hover:text-foreground",
-        destructive: "bg-destructive text-white hover:bg-destructive/90 shadow-xs",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-primary text-primary-foreground active:bg-primary/80 shadow-2xs",
+        outline: "border-border/60 text-foreground active:bg-muted/70 shadow-2xs",
+        secondary: "bg-secondary text-secondary-foreground active:bg-[var(--btn-bg-active)] shadow-2xs",
+        ghost: "text-muted-foreground active:bg-muted/60",
+        destructive: "bg-secondary text-destructive active:bg-[var(--btn-bg-active)] shadow-2xs font-medium",
+        link: "text-primary underline-offset-4 active:underline",
+        pill: "rounded-full bg-white text-primary font-semibold shadow-xs active:bg-white/80 border-0 leading-none",
       },
       size: {
-        default: "h-7 px-3 text-xs gap-1.5 rounded-sm",
-        sm: "h-7 px-2.5 text-xs rounded-sm gap-1",
-        xs: "h-6 px-2 text-[11px] rounded-sm gap-1",
-        lg: "h-8 px-4 text-xs gap-2 rounded-sm",
-        icon: "size-7 p-0 rounded-sm",
-        "icon-sm": "size-7 p-0 rounded-sm",
-        "icon-xs": "size-6 p-0 rounded-sm",
+        default: "h-7 px-3 text-xs gap-1.5 rounded-[var(--radius-btn)]",
+        sm: "h-6.5 px-2.5 text-xs rounded-[var(--radius-btn)] gap-1",
+        xs: "h-5.5 px-2 text-[11px] rounded-[var(--radius-btn)] gap-1",
+        lg: "h-8 px-4 text-xs gap-2 rounded-[var(--radius-btn)]",
+        icon: "size-7 p-0 rounded-[var(--radius-btn)]",
+        "icon-sm": "size-6.5 p-0 rounded-[var(--radius-btn)]",
+        "icon-xs": "size-5.5 p-0 rounded-[var(--radius-btn)]",
+        pill: "h-6.5 px-3.5 text-xs gap-1",
       },
     },
     defaultVariants: {

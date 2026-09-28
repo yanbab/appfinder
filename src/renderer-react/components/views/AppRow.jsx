@@ -33,21 +33,21 @@ export function AppRow({ item }) {
       data-token={item.token}
       tabIndex={0}
       onClick={() => openAppInfo(item)}
-      className={`app-card app-row group flex items-center justify-between px-3.5 py-2.5 bg-card text-card-foreground select-none cursor-default transition-none active:bg-muted/60 focus:outline-none focus-visible:bg-muted/60 ${
-        isSelected ? 'bg-muted/60' : ''
+      className={`app-card app-row group flex items-center justify-between px-3 py-2 bg-card text-card-foreground select-none cursor-default active:bg-[var(--card-active-bg)] focus:outline-none focus-visible:bg-[var(--card-active-bg)] ${
+        isSelected ? 'bg-[var(--card-active-bg)]' : ''
       }`}
     >
       {/* Icon & Details */}
       <div className="flex items-center gap-3.5 min-w-0 flex-1 mr-3">
-        <AppIcon item={item} size="row" className="size-12 rounded-xl shadow-2xs shrink-0" />
+        <AppIcon item={item} size="row" className="size-12 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm text-foreground truncate">
+            <span className="font-semibold text-[13px] text-foreground truncate leading-snug">
               {name}
             </span>
           </div>
           {desc && (
-            <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
+            <p className="text-xs text-muted-foreground line-clamp-2 leading-snug mt-0.5">
               {desc}
             </p>
           )}
@@ -75,10 +75,10 @@ export function AppRow({ item }) {
               size="icon-sm"
               variant="ghost"
               onClick={() => startAction('uninstall', item.token)}
-              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              className="text-muted-foreground active:text-destructive cursor-default"
               title="Uninstall"
             >
-              <TrashIcon className="size-4" />
+              <TrashIcon className="size-[18px]" />
             </Button>
             {item.app ? (
               <Button

@@ -3,7 +3,7 @@ import { useShell } from '@/store/useShell';
 import { Check, Loader2 } from 'lucide-react';
 import { StopCircleIcon } from '@/components/ui/icons';
 
-function TerminalPromptIcon({ className = "size-4" }) {
+function TerminalPromptIcon({ className = "size-[18px]" }) {
   return (
     <svg
       className={className}
@@ -32,8 +32,6 @@ export function StatusBar() {
     toggleTerminal,
     showDrawer,
     alwaysShowStatusBar,
-    selectTab,
-    closeAppInfo,
     __,
   } = useShell();
 
@@ -56,26 +54,16 @@ export function StatusBar() {
     return `${updateText} • ${__('Checked at %s').replace('%s', timeStr)}`;
   };
 
-  const handleMessageClick = () => {
-    if (!activeTaskId) {
-      closeAppInfo();
-      selectTab('updates');
-    }
-  };
-
   return (
-    <footer className="h-7 shrink-0 flex items-center justify-between border-t border-border bg-card text-xs font-sans text-muted-foreground select-none overflow-hidden transition-opacity duration-150">
-      {/* Left: Status message or running task indicator with live download progress */}
-      <div
-        onClick={handleMessageClick}
-        className="h-full flex items-center gap-2 px-2.5 min-w-0 mr-2 hover:bg-muted/60 active:bg-muted cursor-default transition-colors"
-      >
+    <footer className="app-footer h-7 shrink-0 flex items-center justify-between border-t border-border bg-card text-xs font-sans text-muted-foreground select-none overflow-hidden transition-opacity duration-150">
+      {/* Left: Status message or running task indicator with live download progress (non-activable) */}
+      <div className="h-full flex items-center gap-2 px-2.5 min-w-0 mr-2 select-none">
         {activeTaskId ? (
           <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
         ) : (
           <Check className="size-3.5 text-muted-foreground shrink-0" />
         )}
-        <span className="truncate font-mono text-foreground/80">{getStatusText()}</span>
+        <span className="truncate font-mono text-xs text-foreground/80">{getStatusText()}</span>
 
         {/* Live download percentage progress bar */}
         {activeTaskId && taskProgressPercent !== null && (
@@ -93,22 +81,22 @@ export function StatusBar() {
         {activeTaskId && (
           <button
             onClick={cancelAction}
-            className="h-full px-2.5 flex items-center text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-default"
+            className="h-full px-2.5 flex items-center text-destructive active:bg-foreground/10 cursor-default"
             title={__('Cancel')}
           >
-            <StopCircleIcon className="size-4 shrink-0" />
+            <StopCircleIcon className="size-[18px] shrink-0 text-destructive" />
           </button>
         )}
 
         <button
           onClick={toggleTerminal}
-          className={`h-full px-2.5 flex items-center gap-1.5 transition-colors cursor-default ${showTerminal
-              ? 'bg-muted text-foreground'
-              : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+          className={`h-full px-2.5 flex items-center gap-1.5 cursor-default ${showTerminal
+              ? 'bg-foreground/10 text-foreground font-medium'
+              : 'text-muted-foreground active:bg-foreground/10 active:text-foreground'
             }`}
           title={showTerminal ? "Hide Terminal" : "Show Terminal"}
         >
-          <TerminalPromptIcon className="size-4" />
+          <TerminalPromptIcon className="size-[18px]" />
         </button>
       </div>
     </footer>

@@ -20,6 +20,7 @@ export function DiscoverView() {
     runningTasks,
     outdatedMap,
     startAction,
+    loading,
     __,
   } = useShell();
 
@@ -35,150 +36,225 @@ export function DiscoverView() {
     return () => clearInterval(interval);
   }, [featuredItems]);
 
-  const activeFeatured = featuredItems[slideIndex] || featuredItems[0];
+
+  // Full skeleton during initial load to completely prevent layout jumping
+  if (loading || !featuredItems || featuredItems.length === 0) {
+    return (
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 select-none">
+        {/* Featured Hero Skeleton */}
+        <div className="relative overflow-hidden rounded-[var(--radius-card)] p-6 min-h-[210px] bg-card shadow-2xs flex items-center">
+          <div className="flex items-center gap-6 w-full min-w-0">
+            <div className="size-28 sm:size-32 rounded-[var(--radius-card)] bg-muted/70 animate-pulse shrink-0" />
+            <div className="min-w-0 flex-1 space-y-2.5">
+              <div className="h-7 w-48 rounded-[var(--radius-btn)] bg-muted/80 animate-pulse" />
+              <div className="space-y-1.5 max-w-xl">
+                <div className="h-4 w-full rounded bg-muted/60 animate-pulse" />
+                <div className="h-4 w-3/4 rounded bg-muted/50 animate-pulse" />
+              </div>
+              <div className="pt-1">
+                <div className="h-5.5 w-16 rounded-full bg-muted/70 animate-pulse" />
+              </div>
+            </div>
+          </div>
+          <div className="absolute top-4 right-5 flex items-center gap-1.5">
+            <div className="h-1.5 w-5 rounded-full bg-muted/40" />
+            <div className="h-1.5 w-1.5 rounded-full bg-muted/40" />
+            <div className="h-1.5 w-1.5 rounded-full bg-muted/40" />
+          </div>
+        </div>
+
+        {/* Quick Stats Skeleton */}
+        <div className="grid grid-cols-3 gap-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-[74px] flex flex-col items-start justify-center py-2 px-3 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs">
+              <div className="h-8 sm:h-9 w-20 bg-muted/70 rounded animate-pulse" />
+              <div className="h-3.5 w-14 bg-muted/50 rounded animate-pulse mt-1" />
+            </div>
+          ))}
+        </div>
+
+        {/* Popular Apps Skeleton */}
+        <div className="space-y-2.5">
+          <div className="h-4 w-20 bg-muted/60 rounded animate-pulse" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex items-center gap-3 p-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs">
+                <div className="size-12 rounded-[var(--radius-card)] bg-muted/70 animate-pulse shrink-0" />
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="h-4 w-28 bg-muted/70 rounded animate-pulse" />
+                  <div className="h-3 w-36 bg-muted/50 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Categories Grid Skeleton */}
+        <div className="space-y-2">
+          <div className="h-4 w-24 bg-muted/60 rounded animate-pulse" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs">
+                <div className="size-[18px] rounded bg-muted/70 animate-pulse shrink-0" />
+                <div className="h-3.5 w-20 bg-muted/50 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {/* Featured Carousel Banner */}
-      {activeFeatured && (
-        <div
-          onClick={() => openAppInfo(activeFeatured)}
-          className="relative overflow-hidden rounded-2xl p-6 min-h-[200px] shadow-sm transition-all cursor-pointer select-none group flex items-center"
-        >
-          {/* Ambient Zoomed-in Icon Background */}
-          <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 rounded-2xl">
-            {activeFeatured.iconUrl ? (
-              <img
-                className="absolute top-1/2 left-1/2 w-[140%] h-[140%] -translate-x-1/2 -translate-y-1/2 scale-[3.5] group-hover:scale-[3.8] object-cover blur-[48px] saturate-[240%] brightness-[0.8] opacity-90 transition-transform duration-600 ease-out"
-                src={activeFeatured.iconUrl}
-                alt=""
-                loading="eager"
-              />
-            ) : (
+      {/* Featured Carousel Banner with smooth crossfade between slides */}
+      {featuredItems && featuredItems.length > 0 && (
+        <div className="relative overflow-hidden rounded-[var(--radius-card)] h-[210px] shadow-sm select-none">
+          {featuredItems.map((item, idx) => {
+            const isActive = idx === slideIndex;
+            return (
               <div
-                className="absolute inset-0 w-full h-full blur-[50px] opacity-80"
-                style={{ backgroundColor: name2color(activeFeatured.name) }}
+                key={item.token}
+                onClick={() => openAppInfo(item)}
+                className={`absolute inset-0 p-6 flex items-center transition-opacity duration-500 ease-in-out cursor-default ${
+                  isActive ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
+                }`}
+              >
+                {/* Ambient Zoomed-in Icon Background */}
+                <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 rounded-[var(--radius-card)]">
+                  {item.iconUrl ? (
+                    <img
+                      className="absolute top-1/2 left-1/2 w-[140%] h-[140%] -translate-x-1/2 -translate-y-1/2 scale-[3.5] object-cover blur-[48px] saturate-[240%] brightness-[0.8] opacity-90"
+                      src={item.iconUrl}
+                      alt=""
+                      loading="eager"
+                    />
+                  ) : (
+                    <div
+                      className="absolute inset-0 w-full h-full blur-[50px] opacity-80"
+                      style={{ backgroundColor: name2color(item.name) }}
+                    />
+                  )}
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-black/20 via-black/35 to-black/55 backdrop-blur-md" />
+                </div>
+
+                <div className="relative z-1 flex items-center gap-6 w-full min-w-0">
+                  {/* App Icon */}
+                  <div className="size-28 sm:size-32 shrink-0 flex items-center justify-center">
+                    <AppIcon item={item} size="hero" className="size-full rounded-[var(--radius-card)]" />
+                  </div>
+
+                  {/* Details with larger name, description, and action button underneath */}
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md truncate">
+                      {getAppName(item)}
+                    </h2>
+
+                    <p className="text-sm text-white/90 drop-shadow-sm line-clamp-2 max-w-xl leading-relaxed">
+                      {item.desc || 'No description available for this package.'}
+                    </p>
+
+                    {/* Action Button underneath description */}
+                    <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+                      {runningTasks[item.token] ? (
+                        <Button size="pill" variant="pill" disabled className="bg-white/80 text-primary">
+                          <Loader2 className="size-3 animate-spin mr-1" />
+                          <span>{__('Working...')}</span>
+                        </Button>
+                      ) : outdatedMap[item.token] ? (
+                        <Button
+                          size="pill"
+                          variant="pill"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startAction('upgrade', item.token);
+                          }}
+                        >
+                          <span>{__('Upgrade')}</span>
+                        </Button>
+                      ) : installed.includes(item.token) && item.app ? (
+                        <Button
+                          size="pill"
+                          variant="pill"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startAction('open', item.token, item.app);
+                          }}
+                        >
+                          <span>{__('Open')}</span>
+                        </Button>
+                      ) : !installed.includes(item.token) ? (
+                        <Button
+                          size="pill"
+                          variant="pill"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startAction('install', item.token);
+                          }}
+                        >
+                          <span>{__('Install')}</span>
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Carousel Indicators at top right */}
+          <div className="absolute top-4 right-5 flex items-center gap-1.5 z-20" onClick={(e) => e.stopPropagation()}>
+            {featuredItems.map((item, idx) => (
+              <button
+                key={item.token}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSlideIndex(idx);
+                }}
+                className={`h-1.5 rounded-full bg-white/25 transition-all duration-300 cursor-default ${
+                  slideIndex === idx ? 'w-5 bg-white/80' : 'w-1.5'
+                }`}
+                title={item.name}
               />
-            )}
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-black/20 via-black/35 to-black/55 backdrop-blur-md" />
-          </div>
-
-          <div className="relative z-1 flex items-center gap-6 w-full min-w-0">
-            {/* App Icon with no border */}
-            <div className="size-28 sm:size-32 shrink-0 flex items-center justify-center group-hover:scale-[1.03] transition-transform duration-300">
-              <AppIcon item={activeFeatured} size="hero" className="size-full rounded-2xl" />
-            </div>
-
-            {/* Details with Carousel Dots above, larger name, description, and action button underneath */}
-            <div className="min-w-0 flex-1 space-y-2">
-              {/* Carousel Indicators at top */}
-              <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                {featuredItems.map((item, idx) => (
-                  <button
-                    key={item.token}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSlideIndex(idx);
-                    }}
-                    className={`h-1.5 rounded-full transition-all ${slideIndex === idx ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
-                      }`}
-                    title={item.name}
-                  />
-                ))}
-              </div>
-
-              <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md truncate">
-                {getAppName(activeFeatured)}
-              </h2>
-
-              <p className="text-sm text-white/90 drop-shadow-sm line-clamp-2 max-w-xl leading-relaxed">
-                {activeFeatured.desc || 'No description available for this package.'}
-              </p>
-
-              {/* Action Button underneath description with round border and no icon */}
-              <div className="pt-1" onClick={(e) => e.stopPropagation()}>
-                {runningTasks[activeFeatured.token] ? (
-                  <Button size="sm" variant="secondary" disabled className="rounded-full px-4 text-xs bg-white/90 text-primary font-semibold">
-                    <Loader2 className="size-3.5 animate-spin mr-1.5" />
-                    <span>{__('Working...')}</span>
-                  </Button>
-                ) : outdatedMap[activeFeatured.token] ? (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startAction('upgrade', activeFeatured.token);
-                    }}
-                    className="rounded-full px-4 text-xs bg-white text-primary font-bold hover:bg-white/90 shadow-sm border border-white/20"
-                  >
-                    <span>{__('Upgrade')}</span>
-                  </Button>
-                ) : installed.includes(activeFeatured.token) && activeFeatured.app ? (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startAction('open', activeFeatured.token, activeFeatured.app);
-                    }}
-                    className="rounded-full px-4 text-xs bg-white text-primary font-bold hover:bg-white/90 shadow-sm border border-white/20"
-                  >
-                    <span>{__('Open')}</span>
-                  </Button>
-                ) : !installed.includes(activeFeatured.token) ? (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startAction('install', activeFeatured.token);
-                    }}
-                    className="rounded-full px-4 text-xs bg-white text-primary font-bold hover:bg-white/90 shadow-sm border border-white/20"
-                  >
-                    <span>{__('Install')}</span>
-                  </Button>
-                ) : null}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Quick Stats Cards - Left aligned, larger font, lesser weight */}
+      {/* Quick Stats Cards */}
       <div className="grid grid-cols-3 gap-2">
         <button
           onClick={() => selectTab('all-apps')}
-          className="flex flex-col items-start justify-center py-2.5 px-3.5 rounded-lg bg-card border border-border shadow-2xs select-none cursor-default transition-none active:bg-muted/60 text-left"
+          className="h-[74px] flex flex-col items-start justify-center py-2 px-3 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] text-left group"
         >
           <span className="text-2xl sm:text-3xl font-light tracking-tight text-foreground leading-tight">
             {allAppsCount.toLocaleString()}
           </span>
-          <span className="text-xs text-muted-foreground font-normal">
+          <span className="text-xs text-muted-foreground font-medium mt-0.5">
             {__('Available')}
           </span>
         </button>
 
         <button
           onClick={() => selectTab('installed')}
-          className="flex flex-col items-start justify-center py-2.5 px-3.5 rounded-lg bg-card border border-border shadow-2xs select-none cursor-default transition-none active:bg-muted/60 text-left"
+          className="h-[74px] flex flex-col items-start justify-center py-2 px-3 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] text-left group"
         >
           <span className="text-2xl sm:text-3xl font-light tracking-tight text-foreground leading-tight">
             {installed.length.toLocaleString()}
           </span>
-          <span className="text-xs text-muted-foreground font-normal">
+          <span className="text-xs text-muted-foreground font-medium mt-0.5">
             {__('Installed')}
           </span>
         </button>
 
         <button
           onClick={() => selectTab('updates')}
-          className="flex flex-col items-start justify-center py-2.5 px-3.5 rounded-lg bg-card border border-border shadow-2xs select-none cursor-default transition-none active:bg-muted/60 text-left"
+          className="h-[74px] flex flex-col items-start justify-center py-2 px-3 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] text-left group"
         >
           <span className="text-2xl sm:text-3xl font-light tracking-tight text-foreground leading-tight">
             {updatesCount}
           </span>
-          <span className="text-xs text-muted-foreground font-normal">
+          <span className="text-xs text-muted-foreground font-medium mt-0.5">
             {updatesCount === 1 ? __('Update') : __('Updates')}
           </span>
         </button>
@@ -208,15 +284,15 @@ export function DiscoverView() {
               <div
                 key={item.token}
                 onClick={() => openAppInfo(item)}
-                className="flex items-center justify-between p-2.5 rounded-lg bg-card border border-border shadow-2xs select-none cursor-default transition-none active:bg-muted/60 group"
+                className="flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] group"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <AppIcon item={item} size="tile" className="size-12 rounded-xl shadow-2xs shrink-0" />
+                  <AppIcon item={item} size="tile" className="size-12 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
                   <div className="min-w-0">
-                    <h4 className="font-semibold text-sm text-foreground truncate">
+                    <h4 className="font-semibold text-[13px] text-foreground truncate leading-snug">
                       {getAppName(item)}
                     </h4>
-                    <p className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
+                    <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
                       {item.desc || item.category || ''}
                     </p>
                   </div>
@@ -250,13 +326,13 @@ export function DiscoverView() {
               <button
                 key={cat.name}
                 onClick={() => selectTab(cat.name)}
-                className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-card border border-border shadow-2xs active:bg-muted/60 text-left group select-none cursor-default transition-none"
+                className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs active:bg-[var(--card-active-bg)] text-left group select-none cursor-default"
               >
                 <CategoryIcon
                   html={cat.icon}
-                  className="size-[18px] shrink-0 text-muted-foreground group-hover:text-primary"
+                  className="size-[18px] shrink-0 text-muted-foreground"
                 />
-                <span className="text-sm font-medium text-foreground truncate">
+                <span className="text-xs font-medium text-foreground truncate">
                   {__(cat.displayName)}
                 </span>
               </button>

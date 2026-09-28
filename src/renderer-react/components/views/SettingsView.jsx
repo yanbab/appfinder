@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { ChevronDown } from 'lucide-react';
 
 export function SettingsView() {
   const [alwaysShowStatusBar, setAlwaysShowStatusBar] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [language, setLanguage] = useState('system');
   const [locales, setLocales] = useState([]);
   const [catalog, setCatalog] = useState({});
@@ -23,7 +23,7 @@ export function SettingsView() {
   const resizeToContent = useCallback(() => {
     requestAnimationFrame(() => {
       if (containerRef.current && window.ipc?.setContentSize) {
-        const height = Math.ceil(containerRef.current.getBoundingClientRect().height + 36);
+        const height = Math.ceil(containerRef.current.offsetHeight || containerRef.current.getBoundingClientRect().height);
         if (height > 50) {
           window.ipc.setContentSize(380, height);
         }
@@ -79,9 +79,10 @@ export function SettingsView() {
 
   // Initial load
   useEffect(() => {
-    loadTranslations();
-    loadConfig();
-    loadLocales();
+    Promise.all([loadTranslations(), loadConfig(), loadLocales()]).then(() => {
+      resizeToContent();
+      setTimeout(() => setIsReady(true), 50);
+    });
 
     let unsubCleanup = null;
     let unsubI18n = null;
@@ -147,30 +148,32 @@ export function SettingsView() {
   return (
     <div
       ref={containerRef}
-      className="p-3.5 space-y-2.5 select-none bg-background text-foreground text-sm min-h-full flex flex-col justify-center"
+      className="p-3.5 space-y-2.5 select-none bg-background text-foreground text-sm w-full h-auto"
     >
-      <div className="border border-border rounded-xl overflow-hidden bg-card divide-y divide-border shadow-2xs">
+      <div className="border border-[var(--card-border)] rounded-[var(--radius-card)] overflow-hidden bg-card divide-y divide-[var(--card-border)] shadow-2xs">
         {/* Always Show Status Bar */}
         <div className="flex items-center justify-between px-3.5 py-2.5">
-          <span className="font-medium text-sm text-foreground">
+          <span className="font-medium text-xs text-foreground">
             {__('Always Show Status Bar')}
           </span>
           <Switch
             checked={alwaysShowStatusBar}
             onCheckedChange={handleToggleStatusBar}
+            animate={isReady}
           />
         </div>
 
         {/* Language Selection */}
         <div className="flex items-center justify-between px-3.5 py-2.5 gap-2">
-          <span className="font-medium text-sm text-foreground shrink-0">
+          <span className="font-medium text-xs text-foreground shrink-0">
             {__('Language')}
           </span>
-          <div className="relative flex items-center">
+          <div className="flex items-center">
             <select
               value={language}
               onChange={handleChangeLanguage}
-              className="appearance-none bg-muted/40 hover:bg-muted/70 border border-border rounded-md pl-2.5 pr-6 py-1 text-xs font-medium text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring transition-colors max-w-[180px] truncate"
+              className="bg-transparent border-0 text-right text-xs font-medium text-foreground cursor-pointer focus:outline-none max-w-[200px] [text-align-last:right] pr-1.5"
+              style={{ textAlign: 'right', textAlignLast: 'right' }}
             >
               <option value="system" className="bg-popover text-popover-foreground">
                 {systemDefaultLabel()}
@@ -181,9 +184,6 @@ export function SettingsView() {
                 </option>
               ))}
             </select>
-            <ChevronDown
-              className="w-3.5 h-3.5 absolute right-2 text-muted-foreground pointer-events-none"
-            />
           </div>
         </div>
 
@@ -193,16 +193,16 @@ export function SettingsView() {
             <div className="font-medium text-sm text-foreground">
               {__('Clear Caches')}
             </div>
-            <div className="text-xs text-muted-foreground leading-tight">
+            <div className="text-xs text-muted-foreground leading-snug line-clamp-2">
               {__('Run brew cleanup to remove cached downloads and lock files.')}
             </div>
           </div>
           <Button
             size="sm"
-            variant="outline"
+            variant="secondary"
             disabled={isCleaning}
             onClick={handleClearCaches}
-            className="shrink-0 text-xs"
+            className="shrink-0 text-xs font-medium"
           >
             {isCleaning ? __('In Progress...') : __('Clear')}
           </Button>

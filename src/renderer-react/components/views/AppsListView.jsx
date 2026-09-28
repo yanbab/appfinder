@@ -39,18 +39,18 @@ export function AppsListView() {
     if (currentTab === 'updates' && updatesCount === 0) {
       return (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-muted-foreground select-none">
-          <CheckCircle2 className="size-12 text-primary/70 mb-3" />
+          <CheckCircle2 strokeWidth={1.25} className="size-16 text-muted-foreground/50 mb-3" />
           <h3 className="font-semibold text-base text-foreground">{__('Up to date')}</h3>
-          <p className="text-sm text-muted-foreground mt-1">All installed casks are updated to their latest versions.</p>
+          <p className="text-xs text-muted-foreground mt-1">All installed casks are updated to their latest versions.</p>
         </div>
       );
     }
 
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-muted-foreground select-none">
-        <Search className="size-12 text-muted-foreground/40 mb-3" />
+        <Search strokeWidth={1.25} className="size-16 text-muted-foreground/35 mb-3" />
         <h3 className="font-semibold text-base text-foreground">{__('No casks found')}</h3>
-        <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or category filter.</p>
+        <p className="text-xs text-muted-foreground mt-1">Try adjusting your search or category filter.</p>
       </div>
     );
   }
@@ -65,7 +65,7 @@ export function AppsListView() {
         className={
           viewMode === 'grid'
             ? "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5"
-            : "border border-border rounded-lg overflow-hidden bg-card divide-y divide-border shadow-2xs"
+            : "border border-[var(--card-border)] rounded-[var(--radius-card)] overflow-hidden bg-card divide-y divide-[var(--card-border)] shadow-2xs"
         }
       >
         {displayedItems.map((item) => (

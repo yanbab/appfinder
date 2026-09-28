@@ -1,13 +1,28 @@
 import * as React from "react";
+import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-function Card({ className, ...props }) {
+const cardVariants = cva(
+  "rounded-lg bg-card text-card-foreground select-none transition-colors duration-120",
+  {
+    variants: {
+      variant: {
+        default: "border border-border/40 shadow-2xs",
+        subtle: "border border-border/25 shadow-2xs",
+        interactive: "border border-border/40 shadow-2xs hover:bg-muted/30 hover:border-border/60 active:bg-muted/60 cursor-default",
+        flat: "border-0 shadow-none",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
+function Card({ className, variant, ...props }) {
   return (
     <div
-      className={cn(
-        "rounded-xl border border-border bg-card text-card-foreground shadow-xs transition-all",
-        className
-      )}
+      className={cn(cardVariants({ variant }), className)}
       {...props}
     />
   );
@@ -53,4 +68,4 @@ function CardFooter({ className, ...props }) {
   );
 }
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+export { Card, cardVariants, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };

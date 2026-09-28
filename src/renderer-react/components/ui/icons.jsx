@@ -1,6 +1,6 @@
 import * as React from "react";
 
-export function UpgradeIcon({ className = "size-4", ...props }) {
+export function UpgradeIcon({ className = "size-[18px]", ...props }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M21 4v6h-6" />
@@ -10,7 +10,7 @@ export function UpgradeIcon({ className = "size-4", ...props }) {
   );
 }
 
-export function OpenIcon({ className = "size-4", ...props }) {
+export function OpenIcon({ className = "size-[18px]", ...props }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <rect x="3" y="3" width="18" height="18" rx="4" />
@@ -19,7 +19,7 @@ export function OpenIcon({ className = "size-4", ...props }) {
   );
 }
 
-export function InstallIcon({ className = "size-4", ...props }) {
+export function InstallIcon({ className = "size-[18px]", ...props }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <circle cx="12" cy="12" r="10" />
@@ -28,7 +28,7 @@ export function InstallIcon({ className = "size-4", ...props }) {
   );
 }
 
-export function TrashIcon({ className = "size-4", ...props }) {
+export function TrashIcon({ className = "size-[18px]", ...props }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M3 6h18m-3 0v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6m4 0V4a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 16 4v2" />
@@ -38,7 +38,7 @@ export function TrashIcon({ className = "size-4", ...props }) {
   );
 }
 
-export function LockIcon({ className = "size-4", ...props }) {
+export function LockIcon({ className = "size-[18px]", ...props }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -47,7 +47,7 @@ export function LockIcon({ className = "size-4", ...props }) {
   );
 }
 
-export function SearchIcon({ className = "size-4", ...props }) {
+export function SearchIcon({ className = "size-[18px]", ...props }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <circle cx="11" cy="11" r="7" />
@@ -56,7 +56,7 @@ export function SearchIcon({ className = "size-4", ...props }) {
   );
 }
 
-export function CheckIcon({ className = "size-4", ...props }) {
+export function CheckIcon({ className = "size-[18px]", ...props }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <polyline points="20 6 9 17 4 12" />
@@ -64,7 +64,7 @@ export function CheckIcon({ className = "size-4", ...props }) {
   );
 }
 
-export function StopCircleIcon({ className = "size-3.5", ...props }) {
+export function StopCircleIcon({ className = "size-[18px]", ...props }) {
   return (
     <svg
       className={className}
