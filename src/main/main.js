@@ -12,7 +12,7 @@ const { createShellWindow } = require('./window-shell');
 const { checkCommand, checkCommandDialog } = require('./check');
 
 function init() {
-  if (!checkCommand('brew')) { checkCommandDialog('brew'); app.quit(); return; }
+  if (!checkCommand('brew')) { checkCommandDialog('brew'); return; }
   app.on('window-all-closed', app.quit);
   setupConfig();
   setupIpcMain();

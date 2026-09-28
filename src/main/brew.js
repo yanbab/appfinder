@@ -1,427 +1,61 @@
-const { exec, spawn, execFile } = require('child_process');
-const { promisify } = require('util');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
-const pty = require('node-pty');
+// Brew Facade - Coordinates modular services for Homebrew and App operations
+
+const brewCli = require('./services/brew-cli');
+const taskRunner = require('./services/task-runner');
+const appLocator = require('./services/app-locator');
+const cacheService = require('./services/cache-service');
 const { getCaskSizes } = require('./sizes');
 
-const execAsync = promisify(exec);
-const execFileAsync = promisify(execFile);
-const configDir = path.join(os.homedir(), '.config', 'appfinder');
-const updatesCachePath = path.join(configDir, 'updates.json');
-const dataDir = path.join(__dirname, '..', '..', 'data');
-const activeTasks = new Map();
-
-// Fix spawn-helper permissions for packaged node-pty on macOS
-try {
-  const ptyDir = path.dirname(require.resolve('node-pty/package.json'));
-  const prebuildsDir = path.join(ptyDir, 'prebuilds');
-  if (fs.existsSync(prebuildsDir)) {
-    for (const d of fs.readdirSync(prebuildsDir)) {
-      const helper = path.join(prebuildsDir, d, 'spawn-helper');
-      if (fs.existsSync(helper)) {
-        try { fs.chmodSync(helper, 0o755); } catch (_) { }
+function getAppCandidateName(cask, token) {
+  if (cask?.artifacts) {
+    for (const art of cask.artifacts) {
+      if (art.app && Array.isArray(art.app) && art.app[0]) {
+        return art.app[0];
       }
     }
   }
-  const releaseHelper = path.join(ptyDir, 'build', 'Release', 'spawn-helper');
-  if (fs.existsSync(releaseHelper)) {
-    try { fs.chmodSync(releaseHelper, 0o755); } catch (_) { }
-  }
-} catch (_) { }
-
-function getBrewPath() {
-  const paths = [
-    '/opt/homebrew/bin/brew',
-    '/usr/local/bin/brew'
-  ];
-  return paths.find(p => fs.existsSync(p)) || 'brew';
+  return (cask?.name && cask.name[0]) || token;
 }
 
-function getEnvWithBrew() {
-  const extraPaths = ['/opt/homebrew/bin', '/usr/local/bin'];
-  const currentPath = process.env.PATH || '';
-  const missing = extraPaths.filter(p => !currentPath.includes(p));
-  return {
-    ...process.env,
-    SUDO_PROMPT: 'Password: ',
-    HOMEBREW_NO_AUTO_UPDATE: '1',
-    HOMEBREW_NO_ENV_HINTS: '1',
-    PATH: missing.length ? `${missing.join(':')}:${currentPath}` : currentPath
-  };
-}
-
-function getData(file) {
-  try {
-    return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8'));
-  } catch (e) {
-    console.error(`Failed to read data file ${file}:`, e);
-    return [];
-  }
-}
-
-function getApps() {
-  return getData('apps.json');
-}
-
-function getCategories() {
-  return getData('categories.json');
-}
-
-async function getInstalled(event) {
-  const brewPath = getBrewPath();
-  try {
-    const { stdout } = await execAsync(`"${brewPath}" list --cask --versions`, { env: getEnvWithBrew() });
-    const lines = stdout.trim().split('\n').filter(Boolean);
-    const tokens = [];
-    const versions = {};
-    for (const line of lines) {
-      const parts = line.trim().split(/\s+/);
-      const token = parts[0];
-      const ver = parts.slice(1).join(' ') || null;
-      if (token) {
-        tokens.push(token);
-        if (ver) versions[token] = ver;
-      }
+async function getRawCask(sanitizedToken) {
+  let cask = cacheService.getCachedCaskInfo(sanitizedToken);
+  if (!cask) {
+    cask = await brewCli.fetchCaskJson(sanitizedToken);
+    if (cask) {
+      cacheService.setCachedCaskInfo(sanitizedToken, cask);
     }
-    return { tokens, versions };
-  } catch (err) {
-    console.error('Failed to run brew list --cask --versions:', err);
-    event?.sender?.send('status:log', `\x1b[31mFailed to check installed casks: ${err.message}\x1b[0m\r\n`);
-    return { tokens: [], versions: {} };
   }
+  return cask;
 }
 
 async function getUpdates(force = false) {
-  if (!force) {
-    try {
-      const raw = await fs.promises.readFile(updatesCachePath, 'utf8').catch(() => null);
-      if (raw && raw.trim()) {
-        const data = JSON.parse(raw);
-        const casks = Array.isArray(data) ? data : (data?.casks || []);
-        return { casks };
-      }
-    } catch (e) {
-      console.error('Failed to read cached updates:', e);
-    }
-  }
-
-  try {
-    const brewPath = getBrewPath();
-    const { stdout } = await execAsync(`"${brewPath}" outdated --cask --json`, { env: getEnvWithBrew() });
-    const match = stdout.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
-    const data = match ? JSON.parse(match[0]) : JSON.parse(stdout);
-    const casks = Array.isArray(data) ? data : (data?.casks || []);
-
-    try {
-      await fs.promises.mkdir(configDir, { recursive: true });
-      await fs.promises.writeFile(updatesCachePath, JSON.stringify(data, null, 2));
-    } catch (err) {
-      console.error('Failed to write updates cache:', err);
-    }
-
-    return { casks };
-  } catch (err) {
-    console.error('Failed to get updates:', err);
-    return { casks: [] };
-  }
+  return cacheService.getUpdates(force, brewCli.fetchOutdatedCasks);
 }
-
-function findInstalledAppPath(caskOrToken, appName) {
-  const token = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.token : caskOrToken) || '';
-  const candidate = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.app || caskOrToken.name : appName) || token;
-  if (!candidate && !token) return null;
-
-  if (typeof candidate === 'string' && path.isAbsolute(candidate) && fs.existsSync(candidate)) {
-    return candidate;
-  }
-
-  const appFile = path.basename(candidate);
-  const cleanApp = appFile && !appFile.endsWith('.app') ? `${appFile}.app` : appFile;
-  const tokenApp = token && !token.endsWith('.app') ? `${token}.app` : token;
-
-  const searchDirs = [
-    '/Applications',
-    path.join(process.env.HOME || '', 'Applications'),
-    '/Applications/Utilities',
-    '/System/Applications',
-    '/System/Applications/Utilities'
-  ];
-
-  const namesToTry = Array.from(new Set([cleanApp, tokenApp, appFile].filter(Boolean)));
-
-  for (const dir of searchDirs) {
-    for (const name of namesToTry) {
-      const fullPath = path.join(dir, name);
-      if (fs.existsSync(fullPath)) {
-        return fullPath;
-      }
-    }
-  }
-
-  return null;
-}
-
-function getAppFileDates(foundPath, token) {
-
-  const result = {
-    modified: null,
-    lastOpened: null,
-    installed: null
-  };
-
-  if (foundPath && fs.existsSync(foundPath)) {
-    try {
-      const stats = fs.statSync(foundPath);
-      if (stats.mtime) {
-        result.modified = stats.mtime.toISOString();
-      }
-      if (stats.birthtime && stats.birthtime.getTime() > 0) {
-        result.installed = stats.birthtime.toISOString();
-      }
-    } catch (_) { }
-
-    try {
-      const { execSync } = require('child_process');
-      const mdlsOut = execSync(`/usr/bin/mdls -name kMDItemLastUsedDate -name kMDItemContentModificationDate -name kMDItemDateAdded "${foundPath}"`, { encoding: 'utf8', timeout: 1500 });
-      const modMatch = mdlsOut.match(/kMDItemContentModificationDate\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
-      const usedMatch = mdlsOut.match(/kMDItemLastUsedDate\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
-      const addedMatch = mdlsOut.match(/kMDItemDateAdded\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
-
-      if (modMatch && modMatch[1]) {
-        const d = new Date(modMatch[1]);
-        if (!isNaN(d.getTime())) result.modified = d.toISOString();
-      }
-      if (usedMatch && usedMatch[1]) {
-        const d = new Date(usedMatch[1]);
-        if (!isNaN(d.getTime())) result.lastOpened = d.toISOString();
-      }
-      if (addedMatch && addedMatch[1]) {
-        const d = new Date(addedMatch[1]);
-        if (!isNaN(d.getTime())) result.installed = d.toISOString();
-      }
-    } catch (_) { }
-  }
-
-  // Fallback to Caskroom directory for installed date if needed
-  if (!result.installed && token) {
-    const caskroomBases = ['/opt/homebrew/Caskroom', '/usr/local/Caskroom'];
-    for (const base of caskroomBases) {
-      const tDir = path.join(base, token);
-      if (fs.existsSync(tDir)) {
-        try {
-          const stat = fs.statSync(tDir);
-          if (stat.birthtime && stat.birthtime.getTime() > 0) {
-            result.installed = stat.birthtime.toISOString();
-          } else if (stat.ctime) {
-            result.installed = stat.ctime.toISOString();
-          } else if (stat.mtime) {
-            result.installed = stat.mtime.toISOString();
-          }
-        } catch (_) { }
-        break;
-      }
-    }
-  }
-
-  return (result.modified || result.lastOpened || result.installed) ? result : null;
-}
-
-async function openApp(caskOrToken, appName) {
-  const foundPath = findInstalledAppPath(caskOrToken, appName);
-
-  try {
-    if (foundPath) {
-      await execFileAsync('/usr/bin/open', [foundPath]);
-      return { success: true, path: foundPath };
-    }
-
-    const token = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.token : caskOrToken) || '';
-    const appCandidate = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.app || caskOrToken.name : appName) || token;
-    const appFile = appCandidate ? path.basename(appCandidate) : '';
-    const cleanAppFile = appFile && !appFile.endsWith('.app') ? `${appFile}.app` : appFile;
-    const nameWithoutApp = cleanAppFile.endsWith('.app') ? cleanAppFile.slice(0, -4) : cleanAppFile;
-    const targets = Array.from(new Set([nameWithoutApp, cleanAppFile, appCandidate, token].filter(Boolean)));
-
-    for (const target of targets) {
-      try {
-        await execFileAsync('/usr/bin/open', ['-a', target]);
-        return { success: true };
-      } catch (_) { }
-    }
-
-    return { success: false, error: 'Application not found' };
-  } catch (e) {
-    console.error('Failed to open app:', e);
-    return { success: false, error: e.message };
-  }
-}
-
-function runAction(event, { taskId, action, token, zap }) {
-  const { BrowserWindow } = require('electron');
-
-  const actions = {
-    install: ['install', '--force', '--cask', token],
-    upgrade: ['upgrade', '--force', '--cask', token],
-    uninstall: zap ? ['uninstall', '--force', '--zap', '--cask', token] : ['uninstall', '--force', '--cask', token],
-    refresh: ['update'],
-    cleanup: ['cleanup', '--prune=all']
-  };
-
-  const args = actions[action];
-  if (!args) {
-    event.reply('task:complete', { taskId, code: 1, error: 'Invalid action' });
-    return;
-  }
-
-  const brewCmd = `"${getBrewPath()}" ${args.map(a => `"${a}"`).join(' ')}`;
-  const shellCmd = fs.existsSync('/bin/zsh') ? '/bin/zsh' : (fs.existsSync('/bin/bash') ? '/bin/bash' : '/bin/sh');
-  const shellArgs = ['-l', '-c', brewCmd];
-  const env = getEnvWithBrew();
-
-  const onTaskFinished = (exitCode) => {
-    activeTasks.delete(taskId);
-    if (exitCode === 0 && (action === 'install' || action === 'uninstall')) {
-      const { app } = require('electron');
-      if (app?.dock?.bounce) {
-        app.dock.bounce('informational');
-      }
-    }
-    if (action === 'cleanup') {
-      BrowserWindow.getAllWindows().forEach(win => {
-        if (!win.isDestroyed()) {
-          win.webContents.send('cleanup:status', 'complete');
-        }
-      });
-    }
-    if (exitCode === 0 && action === 'refresh') {
-      getUpdates(true).catch(() => { });
-    }
-    event.sender.send('task:complete', { taskId, code: exitCode });
-  };
-
-  let ptyProcess = null;
-  try {
-    ptyProcess = pty.spawn(shellCmd, shellArgs, {
-      name: 'xterm-color',
-      cols: 80,
-      rows: 15,
-      cwd: process.env.HOME || '/tmp',
-      env
-    });
-  } catch (err) {
-    console.warn('node-pty spawn failed, falling back to child_process.spawn:', err);
-  }
-
-  if (ptyProcess) {
-    activeTasks.set(taskId, ptyProcess);
-    ptyProcess.onData((data) => {
-      event.sender.send('task:log', { taskId, type: 'stdout', text: data });
-    });
-    ptyProcess.onExit(({ exitCode }) => {
-      onTaskFinished(exitCode);
-    });
-  } else {
-    const cp = spawn(shellCmd, shellArgs, {
-      cwd: process.env.HOME || '/tmp',
-      env
-    });
-    activeTasks.set(taskId, {
-      write: (data) => { try { cp.stdin.write(data); } catch (_) { } },
-      kill: () => { try { cp.kill(); } catch (_) { } }
-    });
-
-    const forward = (stream) => stream.on('data', (data) => {
-      const text = data.toString();
-      event.sender.send('task:log', { taskId, type: 'stdout', text });
-    });
-
-    forward(cp.stdout);
-    forward(cp.stderr);
-    cp.on('close', (exitCode) => {
-      onTaskFinished(exitCode || 0);
-    });
-  }
-}
-
-function cancelAction(event, taskId) {
-  const { BrowserWindow } = require('electron');
-  const task = activeTasks.get(taskId);
-  if (task) {
-    task.kill();
-    activeTasks.delete(taskId);
-    BrowserWindow.getAllWindows().forEach(win => {
-      if (!win.isDestroyed()) win.webContents.send('cleanup:status', 'complete');
-    });
-    event.reply('task:complete', { taskId, code: -1, cancelled: true });
-  }
-}
-
-function writePtyInput(taskId, text) {
-  activeTasks.get(taskId)?.write?.(text);
-}
-
-async function cleanCache() {
-  try {
-    const { stdout } = await execAsync(`"${getBrewPath()}" cleanup --prune=all`, { env: getEnvWithBrew() });
-    return { success: true, stdout: stdout ? stdout.trim() : '' };
-  } catch (err) {
-    console.error('Failed to run brew cleanup:', err);
-    return { success: false, error: err.message };
-  }
-}
-
-const infoCache = new Map();
 
 async function getCaskInfo(token) {
   if (!token || typeof token !== 'string') return null;
   const sanitized = token.replace(/[^a-zA-Z0-9_-]/g, '');
   if (!sanitized) return null;
 
-  let cask = infoCache.get(sanitized);
+  const cask = await getRawCask(sanitized);
+  if (!cask) return null;
 
-  if (!cask) {
-    const brewPath = getBrewPath();
-    const { stdout } = await execAsync(`"${brewPath}" info --json=v2 --cask "${sanitized}"`, {
-      env: getEnvWithBrew(),
-      maxBuffer: 10 * 1024 * 1024
-    }).catch(() => ({ stdout: null }));
+  const result = { ...cask };
+  const candidate = getAppCandidateName(cask, sanitized);
+  const foundPath = appLocator.findInstalledAppPath(sanitized, candidate);
 
-    if (stdout) {
-      try {
-        cask = JSON.parse(stdout)?.casks?.[0] ?? null;
-        if (cask) infoCache.set(sanitized, cask);
-      } catch { }
-    }
+  if (foundPath) {
+    result.appPath = foundPath;
   }
 
-  if (cask) {
-    const result = { ...cask };
-    let candidate = '';
-    if (cask.artifacts) {
-      for (const art of cask.artifacts) {
-        if (art.app && Array.isArray(art.app) && art.app[0]) {
-          candidate = art.app[0];
-          break;
-        }
-      }
-    }
-    const foundPath = findInstalledAppPath(sanitized, candidate || (cask.name && cask.name[0]) || sanitized);
-    if (foundPath) {
-      result.appPath = foundPath;
-    }
-    const fileDates = getAppFileDates(foundPath, sanitized);
-    if (fileDates) {
-      if (fileDates.modified) result.modifiedDate = fileDates.modified;
-      if (fileDates.lastOpened) result.lastOpenedDate = fileDates.lastOpened;
-      if (fileDates.installed) result.installedDate = fileDates.installed;
-    }
-
-    return result;
+  const fileDates = await appLocator.getAppFileDates(foundPath, sanitized);
+  if (fileDates) {
+    if (fileDates.modified) result.modifiedDate = fileDates.modified;
+    if (fileDates.lastOpened) result.lastOpenedDate = fileDates.lastOpened;
+    if (fileDates.installed) result.installedDate = fileDates.installed;
   }
 
-  return null;
+  return result;
 }
 
 async function getCaskSizesByToken(token) {
@@ -429,51 +63,39 @@ async function getCaskSizesByToken(token) {
   const sanitized = token.replace(/[^a-zA-Z0-9_-]/g, '');
   if (!sanitized) return null;
 
-  let cask = infoCache.get(sanitized);
-  if (!cask) {
-    const brewPath = getBrewPath();
-    const { stdout } = await execAsync(`"${brewPath}" info --json=v2 --cask "${sanitized}"`, {
-      env: getEnvWithBrew(),
-      maxBuffer: 10 * 1024 * 1024
-    }).catch(() => ({ stdout: null }));
-
-    if (stdout) {
-      try {
-        cask = JSON.parse(stdout)?.casks?.[0] ?? null;
-        if (cask) infoCache.set(sanitized, cask);
-      } catch { }
-    }
-  }
-
+  const cask = await getRawCask(sanitized);
   if (!cask) return null;
 
-  let candidate = '';
-  if (cask.artifacts) {
-    for (const art of cask.artifacts) {
-      if (art.app && Array.isArray(art.app) && art.app[0]) {
-        candidate = art.app[0];
-        break;
-      }
-    }
-  }
-  const foundPath = findInstalledAppPath(sanitized, candidate || (cask.name && cask.name[0]) || sanitized);
+  const candidate = getAppCandidateName(cask, sanitized);
+  const foundPath = appLocator.findInstalledAppPath(sanitized, candidate);
   return await getCaskSizes(cask, foundPath);
 }
 
+function runAction(event, data) {
+  return taskRunner.runAction(event, data, () => getUpdates(true));
+}
+
+function cancelAction(event, taskId) {
+  return taskRunner.cancelAction(event, taskId);
+}
+
+function writePtyInput(taskId, text) {
+  return taskRunner.writePtyInput(taskId, text);
+}
+
 module.exports = {
-  getApps,
-  getCategories,
-  getInstalled,
+  getApps: brewCli.getApps,
+  getCategories: brewCli.getCategories,
+  getInstalled: brewCli.getInstalled,
   getUpdates,
   getCaskInfo,
   getCaskSizesByToken,
-  openApp,
-  findInstalledAppPath,
+  openApp: appLocator.openApp,
+  findInstalledAppPath: appLocator.findInstalledAppPath,
   runAction,
   cancelAction,
   writePtyInput,
-  cleanCache,
-  getBrewPath,
-  getEnvWithBrew
+  cleanCache: brewCli.cleanCache,
+  getBrewPath: brewCli.getBrewPath,
+  getEnvWithBrew: brewCli.getEnvWithBrew
 };
-

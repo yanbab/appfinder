@@ -1,10 +1,8 @@
-// Application menu
-
 const { app, Menu, shell } = require('electron');
 const { __ } = require('./i18n');
 const { getConfig } = require('./config');
 const { createSettingsWindow } = require('./window-settings');
-const { getShellWindow } = require('./window-shell');
+const { getShellWindow, createShellWindow } = require('./window-shell');
 
 const websiteUrl = 'https://yanbab.github.io/appfinder';
 const githubUrl = 'https://github.com/yanbab/appfinder';
@@ -180,23 +178,25 @@ function setupApplicationMenu() {
           label: __('Check for Updates...'),
           accelerator: 'Option+Cmd+U',
           click: () => sendToShell('shell:check-updates')
-        },
-        ...(isDebug ? [
-          { type: 'separator' },
-          { role: 'reload' },
-          { role: 'toggleDevTools' }
-        ] : [])
+        }
       ]
     },
+    ...(isDebug ? [{
+      label: __('Debug'),
+      submenu: [
+        { role: 'reload' },
+        { role: 'toggleDevTools' }
+      ]
+    }] : []),
     { role: 'windowMenu', label: __("Window") },
     {
       role: 'help',
       label: __('Help'),
       submenu: [{
-        label: __('%s Website', app.name),
+        label: __('Website', app.name),
         click: async () => shell.openExternal(websiteUrl)
       }, {
-        label: __('%s GitHub Repository', app.name),
+        label: __('GitHub Repository', app.name),
         click: async () => shell.openExternal(githubUrl)
       }]
     }

@@ -1,15 +1,16 @@
 #!/usr/bin/env node
-
-/**
- * Release script for AppFinder
- * 
- * Usage:
- *   npm run release               # Bumps patch (e.g. 0.9.3 -> 0.9.4)
- *   npm run release minor         # Bumps minor (e.g. 0.9.3 -> 0.10.0)
- *   npm run release major         # Bumps major (e.g. 0.9.3 -> 1.0.0)
- *   npm run release 0.9.5         # Specific version
- *   npm run release patch "Notes" # With custom release notes
- */
+//
+// Release Manager
+//
+// Automates releases: bumps version in package.json, updates CHANGELOG.md,
+// creates git commit/tag, and triggers GitHub release workflow.
+//
+// Usage:
+//   npm run release               # Bumps patch (e.g. 0.9.3 -> 0.9.4)
+//   npm run release minor         # Bumps minor (e.g. 0.9.3 -> 0.10.0)
+//   npm run release major         # Bumps major (e.g. 0.9.3 -> 1.0.0)
+//   npm run release 0.9.5         # Specific version
+//   npm run release patch "Notes" # With custom release notes
 
 const fs = require('fs');
 const path = require('path');

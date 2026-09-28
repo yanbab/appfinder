@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# Fetch Casks
+#
+# Fetches latest Homebrew casks, analytics, and metadata into cache/,
+# then runs generators to update data/apps.json and data/categories.json.
 
 FETCH_DIR="../../cache"
 DATA_DIR="../../data"

@@ -4,8 +4,8 @@ const { BrowserWindow } = require('electron');
 const path = require('path');
 const { __ } = require('./i18n');
 
-const preloadPath = path.join(__dirname, '../renderer/ipc-renderer.js');
-const settingsPath = path.join(__dirname, '../renderer/settings/settings.html');
+const preloadPath = path.join(__dirname, './ipc-renderer.js');
+const reactPath = path.join(__dirname, '../renderer/dist/index.html');
 
 let settingsWindow = null;
 
@@ -18,13 +18,13 @@ function createSettingsWindow(parentWindow) {
     title: __('Settings', 'Settings'),
     name: 'settings',
     width: 380,
-    height: 340,
+    height: 200,
     acceptFirstMouse: true,
     resizable: false,
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
-    backgroundColor: '#25252500',
+    backgroundColor: '#00000000',
     parent: parentWindow || undefined,
     modal: false,
     show: false,
@@ -35,7 +35,9 @@ function createSettingsWindow(parentWindow) {
       nodeIntegration: false
     }
   });
-  settingsWindow.loadFile(settingsPath);
+
+  settingsWindow.loadFile(reactPath, { query: { view: 'settings' } });
+
   settingsWindow.once('ready-to-show', () => settingsWindow?.show());
   settingsWindow.on('closed', () => {
     settingsWindow = null;

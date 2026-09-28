@@ -92,19 +92,21 @@ async function getZapDataSize(cask) {
     }
   }
 
-  let totalBytes = 0;
   const expanded = Array.from(new Set(rawPaths.map(p => {
     if (typeof p !== 'string') return null;
     return p.startsWith('~/') ? path.join(home, p.slice(2)) : p;
   }).filter(Boolean)));
 
-  for (const p of expanded) {
-    if (fs.existsSync(p)) {
-      totalBytes += await getPathSize(p);
+  const sizes = await Promise.all(expanded.map(async (p) => {
+    try {
+      await fs.promises.access(p);
+      return await getPathSize(p);
+    } catch {
+      return 0;
     }
-  }
+  }));
 
-  return totalBytes;
+  return sizes.reduce((sum, bytes) => sum + bytes, 0);
 }
 
 async function getCaskSizes(cask, appPath) {

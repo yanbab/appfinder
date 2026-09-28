@@ -49,7 +49,7 @@ function setupIpcMain() {
     ipcMain.on('window:set-content-size', (event, width, height) => {
         const win = BrowserWindow.fromWebContents(event.sender);
         if (win && !win.isDestroyed() && typeof width === 'number' && typeof height === 'number') {
-            win.setContentSize(width, height);
+            win.setContentSize(width, height, true);
         }
     });
     ipcMain.on('shell:sidebar-changed', (_, visible) => {

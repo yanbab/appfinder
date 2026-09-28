@@ -3,12 +3,20 @@
 const { BrowserWindow, app } = require('electron');
 const path = require('path');
 
-const preloadPath = path.join(__dirname, '../renderer/ipc-renderer.js');
-const rendererPath = path.join(__dirname, '../renderer/shell/shell.html');
+const preloadPath = path.join(__dirname, './ipc-renderer.js');
+const rendererPath = path.join(__dirname, '../renderer/dist/index.html');
 
 let mainWindow = null;
 
 function createShellWindow() {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.loadFile(rendererPath);
+        if (!mainWindow.isVisible()) mainWindow.show();
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.focus();
+        return mainWindow;
+    }
+
     mainWindow = new BrowserWindow({
         title: 'AppFinder',
         name: 'shell',
