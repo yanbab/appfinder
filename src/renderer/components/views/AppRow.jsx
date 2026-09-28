@@ -46,7 +46,7 @@ export function AppRow({ item }) {
             </span>
           </div>
           {desc && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-snug mt-0.5">
+            <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
               {desc}
             </p>
           )}

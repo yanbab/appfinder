@@ -265,6 +265,14 @@ export function InfoDrawer() {
               </div>
             </div>
 
+            {/* Release Date */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Release Date')}</span>
+              <span className="text-foreground">
+                {loadingAppDetails ? '...' : (appDetails?.releaseDate ? formatDate(appDetails.releaseDate, __) : '—')}
+              </span>
+            </div>
+
             {/* Added */}
             {selectedApp.added && (
               <div className="flex items-center justify-between py-0.5">

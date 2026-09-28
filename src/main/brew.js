@@ -32,6 +32,27 @@ async function getUpdates(force = false) {
   return cacheService.getUpdates(force, brewCli.fetchOutdatedCasks);
 }
 
+async function fetchLatestReleaseDate(rubySourcePath, token) {
+  try {
+    const filePath = rubySourcePath || `Casks/${token[0].toLowerCase()}/${token}.rb`;
+    const url = `https://api.github.com/repos/Homebrew/homebrew-cask/commits?path=${encodeURIComponent(filePath)}&per_page=1`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'AppFinder-App',
+        'Accept': 'application/vnd.github.v3+json',
+      },
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (Array.isArray(data) && data[0]?.commit?.author?.date) {
+      return data[0].commit.author.date;
+    }
+  } catch {
+    // Fail gracefully if offline or rate limited
+  }
+  return null;
+}
+
 async function getCaskInfo(token) {
   if (!token || typeof token !== 'string') return null;
   const sanitized = token.replace(/[^a-zA-Z0-9_-]/g, '');
@@ -48,11 +69,19 @@ async function getCaskInfo(token) {
     result.appPath = foundPath;
   }
 
-  const fileDates = await appLocator.getAppFileDates(foundPath, sanitized);
+  const [fileDates, releaseDate] = await Promise.all([
+    appLocator.getAppFileDates(foundPath, sanitized),
+    fetchLatestReleaseDate(cask.ruby_source_path, sanitized),
+  ]);
+
   if (fileDates) {
     if (fileDates.modified) result.modifiedDate = fileDates.modified;
     if (fileDates.lastOpened) result.lastOpenedDate = fileDates.lastOpened;
     if (fileDates.installed) result.installedDate = fileDates.installed;
+  }
+
+  if (releaseDate) {
+    result.releaseDate = releaseDate;
   }
 
   return result;

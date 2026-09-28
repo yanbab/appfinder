@@ -103,6 +103,7 @@
   "Recent": "Récents",
   "Redo": "Rétablir",
   "Refresh": "Actualiser",
+  "Release Date": "Date de version",
   "Require": "Requiert",
   "Requirements": "Requiert",
   "Run brew cleanup to remove cached downloads and lock files.": "Exécuter brew cleanup pour supprimer les téléchargements mis en cache.",
