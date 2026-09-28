@@ -212,10 +212,10 @@ function setupApplicationMenu() {
       role: 'help',
       label: __('Help'),
       submenu: [{
-        label: __('%s Website', app.name),
+        label: __('Website', app.name),
         click: async () => shell.openExternal(websiteUrl)
       }, {
-        label: __('%s GitHub Repository', app.name),
+        label: __('GitHub Repository', app.name),
         click: async () => shell.openExternal(githubUrl)
       }]
     }

@@ -103,7 +103,7 @@ export function InfoDrawer() {
           <div className="flex items-center gap-2 [-webkit-app-region:no-drag]">
             <Button
               variant="ghost"
-              size="icon-xs"
+              size="icon-sm"
               onClick={closeAppInfo}
               className="text-muted-foreground hover:text-foreground cursor-default rounded-sm"
               title="Close"
@@ -141,7 +141,7 @@ export function InfoDrawer() {
           {/* Primary Actions (Equal size when multiple, no icons) */}
           <div className="flex items-center gap-2 pt-0.5">
             {isRunning ? (
-              <Button className="w-full gap-2 text-xs h-7 rounded-sm" variant="secondary" disabled>
+              <Button className="w-full gap-2" size="sm" variant="secondary" disabled>
                 <Loader2 className="size-3.5 animate-spin" />
                 <span>{__('Working...')}</span>
               </Button>
@@ -149,7 +149,8 @@ export function InfoDrawer() {
               <>
                 {isOutdated && (
                   <Button
-                    className="flex-1 text-xs h-7 rounded-sm"
+                    className="flex-1"
+                    size="sm"
                     variant="secondary"
                     onClick={() => startAction('upgrade', selectedApp.token)}
                   >
@@ -159,7 +160,8 @@ export function InfoDrawer() {
 
                 {isInstalled && selectedApp.app && !isOutdated && (
                   <Button
-                    className="flex-1 text-xs h-7 rounded-sm"
+                    className="flex-1"
+                    size="sm"
                     variant="secondary"
                     onClick={() => startAction('open', selectedApp.token, selectedApp.app)}
                   >
@@ -170,7 +172,8 @@ export function InfoDrawer() {
                 {isInstalled && (
                   <Button
                     variant="destructive"
-                    className="flex-1 text-xs h-7 rounded-sm"
+                    className="flex-1"
+                    size="sm"
                     onClick={() => startAction('uninstall', selectedApp.token)}
                   >
                     <span>{__('Delete')}</span>
@@ -179,7 +182,8 @@ export function InfoDrawer() {
 
                 {!isInstalled && (
                   <Button
-                    className="w-full text-xs h-7 rounded-sm"
+                    className="w-full"
+                    size="sm"
                     variant="default"
                     onClick={() => startAction('install', selectedApp.token)}
                   >
@@ -197,14 +201,14 @@ export function InfoDrawer() {
                 <AlertTriangle className="size-3.5 shrink-0" />
                 <span>{__('Caveats')}</span>
               </div>
-              <p className="text-xs leading-relaxed whitespace-pre-wrap font-mono text-foreground">
+              <p className="text-xs leading-relaxed whitespace-pre-wrap text-foreground">
                 {appDetails.caveats}
               </p>
             </div>
           )}
 
           {/* Metadata Section in Card: No border between lines, compact padding */}
-          <div className="border border-border rounded-lg p-2.5 bg-card/60 shadow-2xs text-xs space-y-1.5">
+          <div className="border border-border rounded-lg p-2.5 bg-card shadow-2xs text-xs space-y-1.5">
             {/* Homepage */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Homepage')}</span>
@@ -224,7 +228,7 @@ export function InfoDrawer() {
             {/* Token */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Token')}</span>
-              <span className="font-mono text-foreground select-text truncate max-w-[150px]">{selectedApp.token}</span>
+              <span className="text-foreground select-text truncate max-w-[150px]">{selectedApp.token}</span>
             </div>
 
             {/* Categories */}
@@ -261,7 +265,7 @@ export function InfoDrawer() {
             {/* Latest Version */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Latest Version')}</span>
-              <span className="font-mono text-foreground">
+              <span className="text-foreground">
                 {formatVersion(outdatedMap[selectedApp.token]?.currentVersion || appDetails?.version || selectedApp.version)}
               </span>
             </div>
@@ -285,10 +289,10 @@ export function InfoDrawer() {
           </div>
 
           {/* Storage & Usage Section in Card: No border between lines, compact padding */}
-          <div className="border border-border rounded-lg p-2.5 bg-card/60 shadow-2xs text-xs space-y-1.5">
+          <div className="border border-border rounded-lg p-2.5 bg-card shadow-2xs text-xs space-y-1.5">
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Download Size')}</span>
-              <span className="text-foreground font-mono">
+              <span className="text-foreground">
                 {loadingSizes ? '...' : (appDetails?.downloadSize || '—')}
               </span>
             </div>
@@ -297,14 +301,14 @@ export function InfoDrawer() {
               <>
                 <div className="flex items-center justify-between py-0.5">
                   <span className="text-muted-foreground">{__('Installed Size')}</span>
-                  <span className="text-foreground font-mono">
+                  <span className="text-foreground">
                     {loadingSizes ? '...' : (appDetails?.installedSize || '—')}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between py-0.5">
                   <span className="text-muted-foreground">{__('Data Size')}</span>
-                  <span className="text-foreground font-mono">
+                  <span className="text-foreground">
                     {loadingSizes ? '...' : (appDetails?.dataSize || '—')}
                   </span>
                 </div>

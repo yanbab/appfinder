@@ -35,9 +35,8 @@ export function TitleBar() {
 
   return (
     <header
-      className={`h-11 shrink-0 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md select-none [-webkit-app-region:drag] z-10 gap-3 transition-[padding] duration-250 ease-out ${
-        showSidebar ? 'pl-3 pr-3' : 'pl-20 pr-3'
-      }`}
+      className={`h-11 shrink-0 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md select-none [-webkit-app-region:drag] z-10 gap-3 transition-[padding] duration-250 ease-out ${showSidebar ? 'pl-3 pr-3' : 'pl-20 pr-3'
+        }`}
     >
       {/* Left section: Sidebar toggle & Title */}
       <div className="flex items-center gap-2.5 [-webkit-app-region:no-drag] min-w-0">
@@ -51,7 +50,7 @@ export function TitleBar() {
           <PanelLeft className="size-4" />
         </Button>
 
-        <h1 className="text-sm font-semibold tracking-tight text-foreground truncate">
+        <h1 className="window-title text-sm font-semibold tracking-tight text-foreground truncate transition-opacity duration-150">
           {getPageTitle()}
         </h1>
       </div>
@@ -60,11 +59,11 @@ export function TitleBar() {
       <div className="flex items-center gap-1.5 [-webkit-app-region:no-drag]">
         {currentTab === 'updates' && (
           <Button
-            size="icon-xs"
+            size="icon-sm"
             variant="ghost"
             disabled={isRefreshRunning}
             onClick={() => startAction('refresh', 'refresh')}
-            className="h-6.5 w-[28px] text-primary hover:text-primary hover:bg-primary/10 cursor-default rounded-sm"
+            className="text-primary hover:text-primary hover:bg-primary/10 cursor-default rounded-sm"
             title={__('Refresh')}
           >
             <RefreshCw className={`size-4 ${isRefreshRunning ? 'animate-spin' : ''}`} />
@@ -73,22 +72,22 @@ export function TitleBar() {
 
         {currentTab === 'updates' && filteredCount >= 2 && (
           <Button
-            size="xs"
+            size="sm"
             variant="secondary"
             onClick={() => startAction('upgrade-all')}
-            className="gap-1 h-6.5 px-2 text-[11px] rounded-sm cursor-default"
+            className="gap-1 px-2.5 text-xs rounded-sm cursor-default"
           >
-            <UpgradeIcon className="size-3" />
+            <UpgradeIcon className="size-3.5" />
             <span>{__('Update All')}</span>
           </Button>
         )}
 
         {currentTab !== 'discover' && currentTab !== 'updates' && (
-          <div className="relative flex items-center mr-2">
+          <div className="window-select relative flex items-center mr-2 transition-opacity duration-150">
             <select
               value={order}
               onChange={(e) => setOrder(e.target.value)}
-              className="h-6.5 text-xs font-medium bg-transparent border-0 rounded-sm pl-1 pr-4 text-right text-muted-foreground outline-none cursor-default appearance-none focus:outline-none"
+              className="h-7 text-[13px] font-medium bg-transparent border-0 rounded-sm pl-1 pr-4 text-right text-foreground outline-none cursor-default appearance-none focus:outline-none"
             >
               <option value="popularity" className="bg-popover text-popover-foreground">{__('Popular')}</option>
               <option value="date" className="bg-popover text-popover-foreground">{__('Recent')}</option>
@@ -103,11 +102,10 @@ export function TitleBar() {
             <Button
               variant={viewMode === 'list' ? 'secondary' : 'outline'}
               size="icon-sm"
-              className={`h-6.5 w-7 text-xs rounded-sm hover:bg-transparent ${
-                viewMode === 'list'
-                  ? 'bg-secondary text-secondary-foreground font-medium z-1 shadow-2xs hover:bg-secondary'
-                  : 'text-muted-foreground hover:text-muted-foreground hover:bg-transparent'
-              }`}
+              className={`rounded-sm hover:bg-transparent ${viewMode === 'list'
+                ? 'bg-secondary text-secondary-foreground font-medium z-1 shadow-2xs hover:bg-secondary'
+                : 'text-muted-foreground hover:text-muted-foreground hover:bg-transparent'
+                }`}
               onClick={() => setViewMode('list')}
               title="List View"
             >
@@ -116,11 +114,10 @@ export function TitleBar() {
             <Button
               variant={viewMode === 'grid' ? 'secondary' : 'outline'}
               size="icon-sm"
-              className={`h-6.5 w-7 text-xs rounded-sm hover:bg-transparent ${
-                viewMode === 'grid'
-                  ? 'bg-secondary text-secondary-foreground font-medium z-1 shadow-2xs hover:bg-secondary'
-                  : 'text-muted-foreground hover:text-muted-foreground hover:bg-transparent'
-              }`}
+              className={`rounded-sm hover:bg-transparent ${viewMode === 'grid'
+                ? 'bg-secondary text-secondary-foreground font-medium z-1 shadow-2xs hover:bg-secondary'
+                : 'text-muted-foreground hover:text-muted-foreground hover:bg-transparent'
+                }`}
               onClick={() => setViewMode('grid')}
               title="Grid View"
             >

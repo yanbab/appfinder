@@ -35,8 +35,8 @@ window.settings = {
       });
     }
 
-    window.addEventListener('blur', () => document.body.classList.add('blur'));
-    window.addEventListener('focus', () => document.body.classList.remove('blur'));
+    window.addEventListener('blur', () => document.body.classList.add('window-blurred'));
+    window.addEventListener('focus', () => document.body.classList.remove('window-blurred'));
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {

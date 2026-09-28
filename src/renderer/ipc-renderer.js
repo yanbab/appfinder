@@ -52,7 +52,7 @@ try {
       }
     }
   }
-} catch {}
+} catch { }
 
 ipcRenderer.on('config:updated', (_, newConfig) => {
   cachedConfig = newConfig;

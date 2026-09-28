@@ -27,33 +27,33 @@ export function TerminalDrawer() {
       scrollback: 1000,
       theme: isDark
         ? {
-            background: '#18181b',
-            foreground: '#e4e4e7',
-            cursor: '#e4e4e7',
-            selectionBackground: 'rgba(255, 255, 255, 0.2)',
-            black: '#18181b',
-            red: '#ef4444',
-            green: '#22c55e',
-            yellow: '#eab308',
-            blue: '#3b82f6',
-            magenta: '#a855f7',
-            cyan: '#06b6d4',
-            white: '#f4f4f5',
-          }
+          background: '#18181b',
+          foreground: '#e4e4e7',
+          cursor: '#e4e4e7',
+          selectionBackground: 'rgba(255, 255, 255, 0.2)',
+          black: '#18181b',
+          red: '#ef4444',
+          green: '#22c55e',
+          yellow: '#eab308',
+          blue: '#3b82f6',
+          magenta: '#a855f7',
+          cyan: '#06b6d4',
+          white: '#f4f4f5',
+        }
         : {
-            background: '#f4f4f5',
-            foreground: '#18181b',
-            cursor: '#18181b',
-            selectionBackground: 'rgba(0, 0, 0, 0.15)',
-            black: '#18181b',
-            red: '#dc2626',
-            green: '#16a34a',
-            yellow: '#ca8a04',
-            blue: '#2563eb',
-            magenta: '#9333ea',
-            cyan: '#0891b2',
-            white: '#fafafa',
-          },
+          background: '#f4f4f5',
+          foreground: '#18181b',
+          cursor: '#18181b',
+          selectionBackground: 'rgba(0, 0, 0, 0.15)',
+          black: '#18181b',
+          red: '#dc2626',
+          green: '#16a34a',
+          yellow: '#ca8a04',
+          blue: '#2563eb',
+          magenta: '#9333ea',
+          cyan: '#0891b2',
+          white: '#fafafa',
+        },
     });
 
     const fitAddon = new FitAddon();
@@ -65,7 +65,7 @@ export function TerminalDrawer() {
 
     try {
       fitAddon.fit();
-    } catch (e) {}
+    } catch (e) { }
 
     term.onData((data) => {
       if (data === '\x03') {
@@ -77,21 +77,15 @@ export function TerminalDrawer() {
       }
     });
 
-    let hasData = false;
     const unsub = registerTerminalSubscriber((text) => {
-      hasData = true;
       term.write(text);
       term.scrollToBottom();
     });
 
-    if (!hasData) {
-      term.write('> ');
-    }
-
     const handleResize = () => {
       try {
         fitAddon.fit();
-      } catch (e) {}
+      } catch (e) { }
     };
 
     window.addEventListener('resize', handleResize);
@@ -111,7 +105,7 @@ export function TerminalDrawer() {
         try {
           fitAddonRef.current?.fit();
           termRef.current?.scrollToBottom();
-        } catch (e) {}
+        } catch (e) { }
       }, 50);
     }
   }, [showTerminal]);

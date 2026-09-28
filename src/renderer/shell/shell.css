@@ -297,30 +297,30 @@ html[dir="rtl"] .updates-badge {
 }
 
 /* Blurred / Inactive Window State */
-body.blur .menu-item {
+body.window-blurred .menu-item {
     color: var(--text-primary);
 }
 
-body.blur .menu-item.active {
+body.window-blurred .menu-item.active {
     background: var(--sidebar-active-bg);
     color: var(--text-primary);
 }
 
-body.blur .menu-item-icon,
-body.blur .menu-item.active .menu-item-icon {
+body.window-blurred .menu-item-icon,
+body.window-blurred .menu-item.active .menu-item-icon {
     color: var(--text-muted);
 }
 
-body.blur .cat-badge,
-body.blur .updates-badge,
-body.blur .menu-item.active .cat-badge,
-body.blur .menu-item.active .updates-badge {
+body.window-blurred .cat-badge,
+body.window-blurred .updates-badge,
+body.window-blurred .menu-item.active .cat-badge,
+body.window-blurred .menu-item.active .updates-badge {
     background: transparent;
     color: var(--text-muted);
 }
 
-body.blur .content-header,
-body.blur .drawer-header {
+body.window-blurred .content-header,
+body.window-blurred .drawer-header {
     background: var(--bg-main);
 }
 

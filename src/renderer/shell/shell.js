@@ -7,6 +7,7 @@ window.shell = {
     currentTab: "discover",
     showLoading: true,
     showSidebar: window.innerWidth > 560,
+    showAllCategories: false,
     catalog: {},
 
     // Layout, pagination & debounce limits
@@ -365,8 +366,8 @@ window.shell = {
     },
 
     initStyles() {
-        window.addEventListener('blur', () => document.body.classList.add('blur'));
-        window.addEventListener('focus', () => document.body.classList.remove('blur'));
+        window.addEventListener('blur', () => document.body.classList.add('window-blurred'));
+        window.addEventListener('focus', () => document.body.classList.remove('window-blurred'));
         let resizeTimer = null;
         window.addEventListener('resize', () => {
             document.body.classList.add('is-resizing');

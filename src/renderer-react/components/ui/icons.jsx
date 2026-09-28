@@ -64,6 +64,24 @@ export function CheckIcon({ className = "size-4", ...props }) {
   );
 }
 
+export function StopCircleIcon({ className = "size-3.5", ...props }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <rect x="8.5" y="8.5" width="7" height="7" rx="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function CategoryIcon({ html, className = "size-4" }) {
   if (html) {
     return (

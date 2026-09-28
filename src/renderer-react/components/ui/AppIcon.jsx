@@ -6,19 +6,19 @@ export function AppIcon({ item, size = "md", className }) {
   const [hasError, setHasError] = useState(false);
 
   const sizeClasses = {
-    xs: "size-5 text-[10px] rounded-sm",
-    sm: "size-7 text-xs rounded-md",
-    md: "size-12 text-xl rounded-xl",
-    row: "size-12 text-xl rounded-xl",
-    tile: "size-12 text-xl rounded-xl",
-    "48": "size-12 text-xl rounded-xl",
-    lg: "size-16 text-2xl rounded-2xl",
-    grid: "size-16 text-2xl rounded-2xl",
-    "64": "size-16 text-2xl rounded-2xl",
-    xl: "size-32 text-5xl rounded-[28px]",
-    "2xl": "size-32 text-5xl rounded-[28px]",
-    hero: "size-32 text-5xl rounded-[28px]",
-    "128": "size-32 text-5xl rounded-[28px]",
+    xs: "size-5 rounded-sm",
+    sm: "size-7 rounded-md",
+    md: "size-12 rounded-xl",
+    row: "size-12 rounded-xl",
+    tile: "size-12 rounded-xl",
+    "48": "size-12 rounded-xl",
+    lg: "size-16 rounded-2xl",
+    grid: "size-16 rounded-2xl",
+    "64": "size-16 rounded-2xl",
+    xl: "size-32 rounded-[28px]",
+    "2xl": "size-32 rounded-[28px]",
+    hero: "size-32 rounded-[28px]",
+    "128": "size-32 rounded-[28px]",
   };
 
   const currentSizeClass = sizeClasses[size] || sizeClasses.md;
@@ -26,7 +26,7 @@ export function AppIcon({ item, size = "md", className }) {
   const hasIcon = item?.icon && !hasError;
 
   return (
-    <div className={cn("relative shrink-0 select-none overflow-hidden flex items-center justify-center", currentSizeClass, className)}>
+    <div className={cn("relative shrink-0 select-none overflow-hidden flex items-center justify-center [container-type:inline-size]", currentSizeClass, className)}>
       {hasIcon && (
         <>
           {!loaded && (
@@ -50,7 +50,7 @@ export function AppIcon({ item, size = "md", className }) {
 
       {(!hasIcon || hasError) && (
         <div
-          className="w-full h-full flex items-center justify-center text-white font-light tracking-wide shadow-xs rounded-[inherit] select-none"
+          className="w-[87.5%] h-[87.5%] flex items-center justify-center text-white font-normal tracking-tight shadow-xs rounded-[inherit] select-none text-[41cqw]"
           style={{
             backgroundColor: name2color(name),
           }}

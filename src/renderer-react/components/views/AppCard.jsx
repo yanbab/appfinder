@@ -27,12 +27,12 @@ export function AppCard({ item }) {
       data-token={item.token}
       tabIndex={0}
       onClick={() => openAppInfo(item)}
-      className={`app-card group relative flex items-start gap-3 p-2.5 rounded-lg bg-card text-card-foreground select-none cursor-default transition-none active:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+      className={`app-card group relative flex items-center gap-3 p-2.5 rounded-lg bg-card text-card-foreground select-none cursor-default transition-none active:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
         isSelected ? 'bg-muted/60' : ''
       }`}
     >
       <AppIcon item={item} size="grid" className="size-16 rounded-xl shadow-2xs shrink-0" />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 flex flex-col justify-center">
         <h3 className="font-semibold text-sm text-foreground truncate">
           {name}
         </h3>

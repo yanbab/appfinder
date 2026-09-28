@@ -1,6 +1,7 @@
 import React from 'react';
 import { useShell } from '@/store/useShell';
-import { Check, Loader2, Square } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
+import { StopCircleIcon } from '@/components/ui/icons';
 
 function TerminalPromptIcon({ className = "size-4" }) {
   return (
@@ -63,11 +64,11 @@ export function StatusBar() {
   };
 
   return (
-    <footer className="h-7 shrink-0 flex items-center justify-between border-t border-border bg-card text-xs font-sans text-muted-foreground select-none overflow-hidden">
+    <footer className="h-7 shrink-0 flex items-center justify-between border-t border-border bg-card text-xs font-sans text-muted-foreground select-none overflow-hidden transition-opacity duration-150">
       {/* Left: Status message or running task indicator with live download progress */}
       <div
         onClick={handleMessageClick}
-        className="h-full flex items-center gap-2 px-2.5 min-w-0 mr-2 hover:bg-white/5 active:bg-white/10 cursor-default transition-colors"
+        className="h-full flex items-center gap-2 px-2.5 min-w-0 mr-2 hover:bg-muted/60 active:bg-muted cursor-default transition-colors"
       >
         {activeTaskId ? (
           <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
@@ -92,20 +93,19 @@ export function StatusBar() {
         {activeTaskId && (
           <button
             onClick={cancelAction}
-            className="h-full px-2.5 flex items-center gap-1.5 text-xs text-destructive hover:bg-destructive/15 transition-colors cursor-default"
+            className="h-full px-2.5 flex items-center text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-default"
+            title={__('Cancel')}
           >
-            <Square className="size-2.5 fill-destructive text-destructive shrink-0" />
-            <span>{__('Cancel')}</span>
+            <StopCircleIcon className="size-4 shrink-0" />
           </button>
         )}
 
         <button
           onClick={toggleTerminal}
-          className={`h-full px-2.5 flex items-center gap-1.5 transition-colors cursor-default ${
-            showTerminal
-              ? 'bg-white/15 text-foreground'
-              : 'text-muted-foreground hover:bg-white/10 hover:text-foreground'
-          }`}
+          className={`h-full px-2.5 flex items-center gap-1.5 transition-colors cursor-default ${showTerminal
+              ? 'bg-muted text-foreground'
+              : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+            }`}
           title={showTerminal ? "Hide Terminal" : "Show Terminal"}
         >
           <TerminalPromptIcon className="size-4" />

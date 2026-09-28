@@ -416,10 +416,18 @@
           <div class="discover-section">
             <div class="discover-section-header">
               <h3 class="discover-section-title" data-i18n="Categories" x-text="__('Categories')">Categories</h3>
+              <a href="#" class="discover-see-all-btn" x-show="categories && categories.length > 8"
+                :style="showLoading ? 'visibility: hidden;' : ''" @click.prevent="toggleCategories()">
+                <span x-text="showAllCategories ? __('Show Less') : __('Show All')">Show All</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path :d="showAllCategories ? 'm6 9 6 6 6-6' : 'm9 6 6 6-6 6'"></path>
+                </svg>
+              </a>
             </div>
 
             <div class="categories-grid">
-              <template x-for="cat in categories" :key="cat.name">
+              <template x-for="cat in (showAllCategories ? categories : categories.slice(0, 8))" :key="cat.name">
                 <div class="category-tile" @click="selectTab(cat.name)">
                   <span class="category-tile-icon" x-html="cat.icon"></span>
                   <div class="category-tile-details">

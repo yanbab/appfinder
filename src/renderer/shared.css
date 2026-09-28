@@ -153,11 +153,11 @@ body {
   user-select: none;
 }
 
-body.blur {
+body.window-blurred {
   --text-primary: var(--text-muted);
 }
 
-body.blur #apps-container {
+body.window-blurred #apps-container {
   --text-primary: var(--text-primary-default);
 }
 

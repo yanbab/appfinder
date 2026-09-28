@@ -57,7 +57,7 @@ export function AppRow({ item }) {
       {/* Actions */}
       <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
         {isRunning ? (
-          <Button size="sm" variant="secondary" disabled className="h-7 px-3 text-xs rounded-sm">
+          <Button size="sm" variant="secondary" disabled>
             <Loader2 className="size-3.5 animate-spin mr-1.5" />
             <span>{__('Working...')}</span>
           </Button>
@@ -66,17 +66,16 @@ export function AppRow({ item }) {
             size="sm"
             variant="secondary"
             onClick={() => startAction('upgrade', item.token)}
-            className="h-7 px-3 text-xs rounded-sm font-medium"
           >
             <span>{__('Upgrade')}</span>
           </Button>
         ) : isInstalled ? (
           <>
             <Button
-              size="icon"
+              size="icon-sm"
               variant="ghost"
               onClick={() => startAction('uninstall', item.token)}
-              className="size-7 rounded-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               title="Uninstall"
             >
               <TrashIcon className="size-4" />
@@ -86,7 +85,6 @@ export function AppRow({ item }) {
                 size="sm"
                 variant="secondary"
                 onClick={() => startAction('open', item.token, item.app)}
-                className="h-7 px-3 text-xs rounded-sm font-medium"
               >
                 <span>{__('Open')}</span>
               </Button>
@@ -95,7 +93,7 @@ export function AppRow({ item }) {
                 size="sm"
                 variant="secondary"
                 disabled
-                className="h-7 px-3 text-xs rounded-sm font-medium opacity-40 cursor-not-allowed"
+                className="opacity-40 cursor-not-allowed"
               >
                 <span>{__('Open')}</span>
               </Button>
@@ -106,7 +104,6 @@ export function AppRow({ item }) {
             size="sm"
             variant="secondary"
             onClick={() => startAction('install', item.token)}
-            className="h-7 px-3 text-xs rounded-sm font-medium"
           >
             <span>{__('Install')}</span>
           </Button>

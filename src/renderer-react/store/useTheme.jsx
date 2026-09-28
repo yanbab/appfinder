@@ -3,45 +3,37 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 const ThemeContext = createContext({
   theme: 'system',
   isDark: false,
-  setTheme: () => {},
+  setTheme: () => { },
 });
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('appfinder-theme') || 'system';
-  });
-
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false;
   });
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const applyTheme = () => {
-      const systemDark = mediaQuery.matches;
-      const effectiveDark = theme === 'dark' || (theme === 'system' && systemDark);
-      setIsDark(effectiveDark);
-      
-      const root = document.documentElement;
-      if (effectiveDark) {
-        root.classList.add('dark');
+    const handleMediaChange = (e) => {
+      setIsDark(e.matches);
+      if (e.matches) {
+        document.documentElement.classList.add('dark');
       } else {
-        root.classList.remove('dark');
+        document.documentElement.classList.remove('dark');
       }
     };
 
-    applyTheme();
-    mediaQuery.addEventListener('change', applyTheme);
-    return () => mediaQuery.removeEventListener('change', applyTheme);
-  }, [theme]);
+    if (mediaQuery.matches) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
 
-  useEffect(() => {
-    localStorage.setItem('appfinder-theme', theme);
-  }, [theme]);
+    mediaQuery.addEventListener('change', handleMediaChange);
+    return () => mediaQuery.removeEventListener('change', handleMediaChange);
+  }, []);
 
-  // Apply macOS native accent color directly to ShadCN accent & primary variables
+  // Apply macOS native accent color directly to primary & ring variables
   const applyAccentColor = useCallback((color) => {
     if (!color) return;
     const clean = typeof color === 'string' ? color.trim().replace(/^#/, '') : '';
@@ -51,7 +43,6 @@ export function ThemeProvider({ children }) {
     const root = document.documentElement;
     root.style.setProperty('--primary', hex);
     root.style.setProperty('--ring', hex);
-    root.style.setProperty('--accent', hex);
     root.style.setProperty('--sidebar-primary', hex);
     root.style.setProperty('--sidebar-ring', hex);
   }, []);
@@ -72,7 +63,7 @@ export function ThemeProvider({ children }) {
   }, [applyAccentColor]);
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark, setTheme }}>
+    <ThemeContext.Provider value={{ isDark }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -73,11 +73,11 @@ html[dir="rtl"] dialog.info-panel.open {
   user-select: none;
 }
 
-body.blur dialog.info-panel {
+body.window-blurred dialog.info-panel {
   --text-primary: var(--text-primary-default);
 }
 
-body.blur .info-panel-header {
+body.window-blurred .info-panel-header {
   background: var(--bg-main);
   --text-primary: var(--text-muted);
 }
@@ -225,7 +225,6 @@ body.blur .info-panel-header {
 
 .info-caveats-text {
   font-size: var(--font-size-small);
-  font-family: monospace;
   line-height: 1.35;
   color: var(--text-primary);
   margin: 0;
