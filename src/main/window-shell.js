@@ -8,9 +8,17 @@ const rendererPath = path.join(__dirname, '../renderer/dist/index.html');
 
 let mainWindow = null;
 
+function loadContent(win) {
+    if (process.env.VITE_DEV_SERVER_URL) {
+        win.loadURL(process.env.VITE_DEV_SERVER_URL);
+    } else {
+        win.loadFile(rendererPath);
+    }
+}
+
 function createShellWindow() {
     if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.loadFile(rendererPath);
+        loadContent(mainWindow);
         if (!mainWindow.isVisible()) mainWindow.show();
         if (mainWindow.isMinimized()) mainWindow.restore();
         mainWindow.focus();
@@ -38,7 +46,7 @@ function createShellWindow() {
             scrollBounce: true
         }
     });
-    mainWindow.loadFile(rendererPath);
+    loadContent(mainWindow);
     mainWindow.on('close', () => {
         app.quit();
     });

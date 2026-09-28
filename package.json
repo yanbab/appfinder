@@ -15,13 +15,15 @@
   },
   "homepage": "https://github.com/yanbab/appfinder#readme",
   "scripts": {
+    "dev": "node src/scripts/dev.mjs",
     "start": "npm run build:react && electron .",
     "build": "npm run build:react && electron-builder build --mac",
+    "build:react": "vite build --config src/renderer/vite.config.mjs",
+    "watch:react": "vite build --watch --config src/renderer/vite.config.mjs",
+    "dev:react": "vite --config src/renderer/vite.config.mjs",
     "fetch": "cd src/scripts && bash fetch-casks.sh",
     "clean": "rm -rf ./cache ./dist $HOME/.config/appfinder \"$HOME/Library/Application Support/AppFinder\"",
-    "release": "node src/scripts/release.js",
-    "build:react": "vite build --config src/renderer/vite.config.mjs",
-    "dev:react": "vite --config src/renderer/vite.config.mjs"
+    "release": "node src/scripts/release.js"
   },
   "keywords": [
     "casks",

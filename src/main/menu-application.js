@@ -181,10 +181,11 @@ function setupApplicationMenu() {
         }
       ]
     },
-    ...(isDebug ? [{
+    ...(!app.isPackaged || isDebug ? [{
       label: __('Debug'),
       submenu: [
         { role: 'reload' },
+        { role: 'forceReload' },
         { role: 'toggleDevTools' }
       ]
     }] : []),

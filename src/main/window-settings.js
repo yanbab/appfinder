@@ -36,7 +36,11 @@ function createSettingsWindow(parentWindow) {
     }
   });
 
-  settingsWindow.loadFile(reactPath, { query: { view: 'settings' } });
+  if (process.env.VITE_DEV_SERVER_URL) {
+    settingsWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}?view=settings`);
+  } else {
+    settingsWindow.loadFile(reactPath, { query: { view: 'settings' } });
+  }
 
   settingsWindow.once('ready-to-show', () => settingsWindow?.show());
   settingsWindow.on('closed', () => {
