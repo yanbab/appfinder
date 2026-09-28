@@ -3,7 +3,6 @@ import { useShell } from '@/store/useShell';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
 import { getAppName, formatVersion } from '@/lib/utils';
-import { UpgradeIcon, OpenIcon, InstallIcon, TrashIcon } from '@/components/ui/icons';
 import { Loader2 } from 'lucide-react';
 
 export function AppCard({ item }) {

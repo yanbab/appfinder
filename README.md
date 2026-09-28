@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/icon.svg" width="64" height="64" alt="" /><br/>
+  <img src="docs/assets/icon.svg" width="128" height="128" alt="" /><br/>
   <strong>App Finder</strong><br/>
   <small>Applications library for macOS</small>
 </p>
@@ -14,8 +14,8 @@
 
 ### How it works
 
-> AppFinder aggregates official Homebrew cask formulas and installation analytics with structured categories and release dates provided by [CaskFlow](https://github.com/alielsokary/CaskFlow). 
-> This catalog is indexed locally to enable fast searching and application management directly via Homebrew.
+AppFinder aggregates official Homebrew cask formulas and installation analytics with structured categories and release dates provided by [CaskFlow](https://github.com/alielsokary/CaskFlow). 
+This catalog is indexed locally to enable fast searching and application management directly via Homebrew.
 
 ### Installation
 

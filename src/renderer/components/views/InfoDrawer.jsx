@@ -2,7 +2,7 @@ import React from 'react';
 import { useShell } from '@/store/useShell';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
-import { CategoryIcon, UpgradeIcon, OpenIcon, InstallIcon, TrashIcon } from '@/components/ui/icons';
+import { CategoryIcon } from '@/components/ui/icons';
 import {
   Drawer,
   DrawerContent,

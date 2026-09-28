@@ -3,8 +3,7 @@ import { useShell } from '@/store/useShell';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
 import { getAppName, formatVersion } from '@/lib/utils';
-import { UpgradeIcon, OpenIcon, InstallIcon, TrashIcon } from '@/components/ui/icons';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 
 export function AppRow({ item }) {
   const {
@@ -78,7 +77,7 @@ export function AppRow({ item }) {
               className="text-muted-foreground active:text-destructive cursor-default"
               title="Uninstall"
             >
-              <TrashIcon className="size-[18px]" />
+              <Trash2 className="size-4" />
             </Button>
             {item.app ? (
               <Button

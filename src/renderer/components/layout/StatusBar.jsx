@@ -1,24 +1,6 @@
 import React from 'react';
 import { useShell } from '@/store/useShell';
-import { Check, Loader2 } from 'lucide-react';
-import { StopCircleIcon } from '@/components/ui/icons';
-
-function TerminalPromptIcon({ className = "size-[18px]" }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="4 17 10 12 4 7" />
-      <line x1="12" y1="19" x2="20" y2="19" />
-    </svg>
-  );
-}
+import { Check, Loader2, CircleStop, Terminal } from 'lucide-react';
 
 export function StatusBar() {
   const {
@@ -84,7 +66,7 @@ export function StatusBar() {
             className="h-full px-2.5 flex items-center text-destructive active:bg-foreground/10 cursor-default"
             title={__('Cancel')}
           >
-            <StopCircleIcon className="size-[18px] shrink-0 text-destructive" />
+            <CircleStop className="size-4 shrink-0 text-destructive" />
           </button>
         )}
 
@@ -96,7 +78,7 @@ export function StatusBar() {
             }`}
           title={showTerminal ? "Hide Terminal" : "Show Terminal"}
         >
-          <TerminalPromptIcon className="size-[18px]" />
+          <Terminal className="size-4" />
         </button>
       </div>
     </footer>

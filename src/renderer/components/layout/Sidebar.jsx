@@ -1,6 +1,6 @@
 import React from 'react';
 import { useShell } from '@/store/useShell';
-import { Star, LayoutGrid, CheckCircle2, ArrowDownToLine, Search, X } from 'lucide-react';
+import { Star, Library, CheckCircle2, ArrowDownToLine, Search, X } from 'lucide-react';
 import { CategoryIcon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ export function Sidebar() {
     {
       id: 'all-apps',
       label: __('All Apps'),
-      icon: LayoutGrid,
+      icon: Library,
       badge: currentTab === 'all-apps' && search ? filteredCount : allAppsCount,
     },
     {
@@ -91,8 +91,8 @@ export function Sidebar() {
                     data-nav-id={item.id}
                     onClick={() => selectTab(item.id)}
                     className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs font-medium text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
-                        ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs'
-                        : 'text-sidebar-foreground'
+                      ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs'
+                      : 'text-sidebar-foreground'
                       }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -131,8 +131,8 @@ export function Sidebar() {
                       data-nav-id={cat.name}
                       onClick={() => selectTab(cat.name)}
                       className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
-                          ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs font-medium'
-                          : 'text-sidebar-foreground'
+                        ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs font-medium'
+                        : 'text-sidebar-foreground'
                         }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
