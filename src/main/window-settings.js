@@ -4,10 +4,8 @@ const { BrowserWindow } = require('electron');
 const path = require('path');
 const { __ } = require('./i18n');
 
-const preloadPath = path.join(__dirname, '../renderer/ipc-renderer.js');
-const useReact = process.env.USE_REACT === '1' || process.env.USE_REACT === 'true';
-const reactPath = path.join(__dirname, '../renderer-react/dist/index.html');
-const alpinePath = path.join(__dirname, '../renderer/settings/settings.html');
+const preloadPath = path.join(__dirname, './ipc-renderer.js');
+const reactPath = path.join(__dirname, '../renderer/dist/index.html');
 
 let settingsWindow = null;
 
@@ -38,11 +36,7 @@ function createSettingsWindow(parentWindow) {
     }
   });
 
-  if (useReact) {
-    settingsWindow.loadFile(reactPath, { query: { view: 'settings' } });
-  } else {
-    settingsWindow.loadFile(alpinePath);
-  }
+  settingsWindow.loadFile(reactPath, { query: { view: 'settings' } });
 
   settingsWindow.once('ready-to-show', () => settingsWindow?.show());
   settingsWindow.on('closed', () => {

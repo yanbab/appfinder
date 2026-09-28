@@ -2,7 +2,7 @@ const { app, Menu, shell } = require('electron');
 const { __ } = require('./i18n');
 const { getConfig } = require('./config');
 const { createSettingsWindow } = require('./window-settings');
-const { getShellWindow, createShellWindow, isReactShell } = require('./window-shell');
+const { getShellWindow, createShellWindow } = require('./window-shell');
 
 const websiteUrl = 'https://yanbab.github.io/appfinder';
 const githubUrl = 'https://github.com/yanbab/appfinder';
@@ -184,27 +184,6 @@ function setupApplicationMenu() {
     ...(isDebug ? [{
       label: __('Debug'),
       submenu: [
-        {
-          id: 'shell-alpine',
-          label: __('AlpineJS Shell'),
-          type: 'checkbox',
-          checked: !isReactShell(),
-          click: () => {
-            createShellWindow(false);
-            setupApplicationMenu();
-          }
-        },
-        {
-          id: 'shell-react',
-          label: __('React Shell'),
-          type: 'checkbox',
-          checked: isReactShell(),
-          click: () => {
-            createShellWindow(true);
-            setupApplicationMenu();
-          }
-        },
-        { type: 'separator' },
         { role: 'reload' },
         { role: 'toggleDevTools' }
       ]

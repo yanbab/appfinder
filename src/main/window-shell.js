@@ -3,24 +3,14 @@
 const { BrowserWindow, app } = require('electron');
 const path = require('path');
 
-const preloadPath = path.join(__dirname, '../renderer/ipc-renderer.js');
-let currentIsReact = process.env.USE_REACT === '1' || process.env.USE_REACT === 'true';
-
-const getRendererPath = (forceReact) => {
-    const isReact = typeof forceReact === 'boolean' ? forceReact : currentIsReact;
-    return isReact
-        ? path.join(__dirname, '../renderer-react/dist/index.html')
-        : path.join(__dirname, '../renderer/shell/shell.html');
-};
+const preloadPath = path.join(__dirname, './ipc-renderer.js');
+const rendererPath = path.join(__dirname, '../renderer/dist/index.html');
 
 let mainWindow = null;
 
-function createShellWindow(forceReact) {
-    if (typeof forceReact === 'boolean') {
-        currentIsReact = forceReact;
-    }
+function createShellWindow() {
     if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.loadFile(getRendererPath(forceReact));
+        mainWindow.loadFile(rendererPath);
         if (!mainWindow.isVisible()) mainWindow.show();
         if (mainWindow.isMinimized()) mainWindow.restore();
         mainWindow.focus();
@@ -48,7 +38,7 @@ function createShellWindow(forceReact) {
             scrollBounce: true
         }
     });
-    mainWindow.loadFile(getRendererPath(forceReact));
+    mainWindow.loadFile(rendererPath);
     mainWindow.on('close', () => {
         app.quit();
     });
@@ -60,12 +50,7 @@ function getShellWindow() {
     return mainWindow;
 }
 
-function isReactShell() {
-    return currentIsReact;
-}
-
 module.exports = {
     createShellWindow,
-    getShellWindow,
-    isReactShell
+    getShellWindow
 };

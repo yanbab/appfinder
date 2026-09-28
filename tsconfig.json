@@ -7,7 +7,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/renderer-react/*"]
+      "@/*": ["src/renderer/*"]
     },
     "lib": [
       "es2022",
