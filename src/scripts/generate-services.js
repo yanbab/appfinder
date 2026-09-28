@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+//
+// Generate Services
+//
+// Fetches Homebrew formulae data to extract background service and launchd
+// plist configurations into a standardized JSON list.
 
 const fs = require('fs');
 const path = require('path');

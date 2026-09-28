@@ -51,6 +51,18 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+@utility text-xxs {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 300;
+}
+
+.text-xxs {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 300;
+}
+
 :root {
   --background: #f5f5f7;
   --foreground: #1d1d1f;
@@ -79,7 +91,7 @@
   --chart-4: #af52de;
   --chart-5: #ff2d55;
   --radius: 0.375rem;
-  --radius-btn: 0.25rem;
+  --radius-btn: 0.375rem;
   --radius-card: 0.375rem;
   --radius-badge: 0.25rem;
   --font-mono: Menlo, Monaco, Consolas, "Courier New", monospace;
@@ -98,15 +110,19 @@
   --foreground: #f5f5f7;
   --card: #2a2a2c;
   --card-foreground: #f5f5f7;
-  --card-border: transparent; /* Cards have no borders in dark theme */
-  --card-active-bg: rgba(255, 255, 255, 0.14); /* Lighter on dark */
+  --card-border: rgba(255, 255, 255, 0.08);
+  /* Group and card borders in dark theme */
+  --card-active-bg: rgba(255, 255, 255, 0.14);
+  /* Lighter on dark */
   --popover: #2c2c2e;
   --popover-foreground: #f5f5f7;
   --primary: #98989d;
   --primary-foreground: #ffffff;
-  --secondary: #48484b; /* Lighter button bg */
+  --secondary: #48484b;
+  /* Lighter button bg */
   --secondary-foreground: #f5f5f7;
-  --btn-bg-active: #5c5c60; /* Lighter active state on dark */
+  --btn-bg-active: #5c5c60;
+  /* Lighter active state on dark */
   --muted: #323234;
   --muted-foreground: #98989d;
   --accent: rgba(255, 255, 255, 0.06);
@@ -121,7 +137,7 @@
   --chart-4: #bf5af2;
   --chart-5: #ff375f;
   --radius: 0.375rem;
-  --radius-btn: 0.25rem;
+  --radius-btn: 0.375rem;
   --radius-card: 0.375rem;
   --radius-badge: 0.25rem;
   --font-mono: Menlo, Monaco, Consolas, "Courier New", monospace;
@@ -138,13 +154,16 @@
 @layer base {
   * {
     @apply border-border;
-    outline: none !important;
     cursor: default !important;
   }
 
-  *:focus,
-  *:focus-visible {
+  *:focus:not(:focus-visible) {
     outline: none !important;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--ring) !important;
+    outline-offset: 1px !important;
   }
 
   /* No hover effects, no transitions on buttons, cards, and sidebar items */

@@ -40,7 +40,7 @@ export function InfoDrawer() {
 
   if (!selectedApp) {
     return (
-      <Drawer open={false} onOpenChange={() => {}} direction="right">
+      <Drawer open={false} onOpenChange={() => { }} direction="right">
         <DrawerContent className="w-[280px]" />
       </Drawer>
     );
@@ -204,8 +204,8 @@ export function InfoDrawer() {
                   onClick={() => window.ipc?.openExternal?.(selectedApp.homepage)}
                   className="text-primary active:underline flex items-center gap-1 max-w-[150px] truncate cursor-default"
                 >
-                  <span className="truncate">{selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
                   <ExternalLink className="size-3 shrink-0" />
+                  <span className="truncate">{selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
                 </button>
               ) : (
                 <span className="text-muted-foreground/60">—</span>
@@ -226,7 +226,7 @@ export function InfoDrawer() {
                   {appCategories.map((c) => (
                     <span
                       key={c.name}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[var(--radius-badge)] border border-border/80 bg-muted/90 dark:bg-white/15 dark:border-white/20 text-foreground font-semibold"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium"
                     >
                       <CategoryIcon html={c.icon} className="size-[14px]" />
                       <span>{__(c.displayName)}</span>
@@ -242,11 +242,11 @@ export function InfoDrawer() {
               {loadingAppDetails ? (
                 <span className="text-muted-foreground font-mono">...</span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[var(--radius-badge)] border border-border/80 bg-muted/90 dark:bg-white/15 dark:border-white/20 text-foreground font-semibold">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium">
                   {reqMet ? (
-                    <Check className="size-3 text-emerald-500 shrink-0" />
+                    <Check className="size-[14px] text-emerald-500 shrink-0" />
                   ) : (
-                    <AlertTriangle className="size-3 text-amber-500 shrink-0" />
+                    <AlertTriangle className="size-[14px] text-amber-500 shrink-0" />
                   )}
                   <span>{reqText || 'macOS'}</span>
                 </span>
@@ -309,12 +309,12 @@ export function InfoDrawer() {
 
           {/* Caveat Notice */}
           {appDetails?.caveats && (
-            <div className="p-2 rounded-[var(--radius-card)] border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1">
+            <div className="p-2 rounded-[var(--radius-card)] border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1 overflow-hidden">
               <div className="flex items-center gap-1.5 font-semibold text-xs">
                 <AlertTriangle className="size-3.5 shrink-0" />
                 <span>{__('Caveat')}</span>
               </div>
-              <p className="text-xs font-mono leading-relaxed whitespace-pre-wrap text-foreground">
+              <p className="text-xs font-mono leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] overflow-hidden text-foreground">
                 {appDetails.caveats}
               </p>
             </div>

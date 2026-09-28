@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+//
+// Generate Categories
+//
+// Generates the category definitions list (data/categories.json) with
+// SF symbols, SVG icons, and display names for sidebar and filtering.
 
 const categories = [
     {

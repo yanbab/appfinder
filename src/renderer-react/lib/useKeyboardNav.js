@@ -17,6 +17,8 @@ export function useKeyboardNav() {
     displayedItems,
     filteredCount,
     loadMore,
+    nextSlide,
+    prevSlide,
   } = useShell();
 
   useEffect(() => {
@@ -67,7 +69,18 @@ export function useKeyboardNav() {
         return;
       }
 
-      // 3. From Search input: ArrowDown jumps into first app card
+      // 3. Discover tab slide navigation
+      if (currentTab === 'discover' && !isInput) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          if (showDrawer) closeAppInfo?.();
+          e.preventDefault();
+          if (e.key === 'ArrowLeft') prevSlide?.();
+          else nextSlide?.();
+          return;
+        }
+      }
+
+      // 4. From Search input: ArrowDown jumps into first app card
       if (isSearch && e.key === 'ArrowDown' && !e.metaKey && !e.altKey && !e.ctrlKey) {
         const firstCard = document.querySelector('.app-card');
         if (firstCard) {
@@ -229,6 +242,28 @@ export function useKeyboardNav() {
           }
         }
       }
+
+      // 6. Direct type-to-search when focused outside inputs
+      const isKey = !e.metaKey && !e.ctrlKey && !e.altKey && e.key.length === 1 && e.key !== ' ';
+      if (!isInput && isKey) {
+        e.preventDefault();
+        if (showDrawer) closeAppInfo?.();
+        const newSearch = (search || '') + e.key;
+        setSearch(newSearch);
+        if (currentTab === 'discover') {
+          selectTab('all-apps');
+        }
+        setShowSidebar?.(true);
+        setTimeout(() => {
+          const searchEl = document.getElementById('search-input');
+          if (searchEl) {
+            searchEl.focus();
+            const len = searchEl.value.length;
+            searchEl.setSelectionRange?.(len, len);
+          }
+        }, 30);
+        return;
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -248,5 +283,7 @@ export function useKeyboardNav() {
     displayedItems,
     filteredCount,
     loadMore,
+    nextSlide,
+    prevSlide,
   ]);
 }

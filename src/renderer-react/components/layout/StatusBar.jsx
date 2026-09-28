@@ -91,8 +91,8 @@ export function StatusBar() {
         <button
           onClick={toggleTerminal}
           className={`h-full px-2.5 flex items-center gap-1.5 cursor-default ${showTerminal
-              ? 'bg-foreground/10 text-foreground font-medium'
-              : 'text-muted-foreground active:bg-foreground/10 active:text-foreground'
+            ? 'bg-foreground/10 text-foreground font-medium'
+            : 'text-muted-foreground active:bg-foreground/10 active:text-foreground'
             }`}
           title={showTerminal ? "Hide Terminal" : "Show Terminal"}
         >

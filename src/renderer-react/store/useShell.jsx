@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { getAppName, formatVersion, stripAnsi, extractProgress, detectPrompt } from '../lib/utils';
+import { getAppName, formatVersion, stripAnsi, extractProgress, detectPrompt, getIconDataUrl, extractTaskError } from '../lib/utils';
 
 const ShellContext = createContext(null);
 
@@ -9,6 +9,7 @@ export function ShellProvider({ children }) {
   const [search, setSearch] = useState('');
   const [order, setOrder] = useState('popularity');
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('appfinder-view-mode') || 'list');
+  const [slideIndex, setSlideIndex] = useState(0);
 
   // UI Panels
   const [showSidebar, setShowSidebar] = useState(() => window.innerWidth > 560);
@@ -26,6 +27,7 @@ export function ShellProvider({ children }) {
   // Data & Collections
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
+  const rawCategoriesRef = useRef([]);
   const [installed, setInstalled] = useState([]);
   const [installedVersions, setInstalledVersions] = useState({});
   const [outdatedMap, setOutdatedMap] = useState({});
@@ -33,6 +35,7 @@ export function ShellProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [catalog, setCatalog] = useState({});
+  const catalogRef = useRef({});
 
   // Tasks & Execution
   const [runningTasks, setRunningTasks] = useState({});
@@ -71,6 +74,36 @@ export function ShellProvider({ children }) {
     if (!catalog) return defaultValue || key;
     return catalog[key] !== undefined ? catalog[key] : (defaultValue || key);
   }, [catalog]);
+
+  // Sort categories helper taking current translations
+  const sortCategories = useCallback((cats, currentCatalog) => {
+    const translate = (key) => {
+      if (!currentCatalog) return key;
+      return currentCatalog[key] !== undefined ? currentCatalog[key] : key;
+    };
+    return [...cats].sort((a, b) => {
+      if (a.name === 'other') return 1;
+      if (b.name === 'other') return -1;
+      if (a.name === 'font') return 1;
+      if (b.name === 'font') return -1;
+      return translate(a.displayName || '').localeCompare(translate(b.displayName || ''));
+    });
+  }, []);
+
+  // Dynamic Document Title
+  const getPageTitle = useCallback(() => {
+    if (currentTab === 'discover') return __('Explore');
+    if (currentTab === 'all-apps') return __('All Apps');
+    if (currentTab === 'installed') return __('Installed');
+    if (currentTab === 'updates') return __('Updates');
+    const cat = categories.find(c => c.name === currentTab);
+    return cat ? __(cat.displayName) : __('Explore');
+  }, [currentTab, categories, __]);
+
+  useEffect(() => {
+    const categoryName = getPageTitle();
+    document.title = categoryName ? `AppFinder - ${categoryName}` : 'AppFinder';
+  }, [getPageTitle]);
 
   // Save viewMode
   useEffect(() => {
@@ -154,7 +187,7 @@ export function ShellProvider({ children }) {
   }, [currentTab]);
 
   // Execute task helper
-  const executeTask = useCallback((action, token, zap = false) => {
+  const executeTask = useCallback((action, token, zap = false, remainingCount = null) => {
     const taskId = `cask-${action}-${token}-${Date.now()}`;
     setActiveTaskId(taskId);
     setActiveTaskToken(token);
@@ -163,15 +196,34 @@ export function ShellProvider({ children }) {
 
     const cask = items.find(c => c.token === token);
     const name = cask ? getAppName(cask) : token;
-    const title = action === 'install' ? `Installing ${name}...`
+    let title = action === 'install' ? `Installing ${name}...`
       : action === 'uninstall' ? `Deleting ${name}...`
         : action === 'upgrade' ? `Updating ${name}...`
           : `${action}...`;
+
+    if (remainingCount !== null && remainingCount > 0) {
+      title = `${action === 'upgrade' ? 'Updating' : 'Installing'} ${name}... (${remainingCount} remaining)`;
+    }
+
     setDrawerTitle(title);
     setShowDrawer(true);
 
     window.ipc?.runAction?.(taskId, action, token, zap);
   }, [items]);
+
+  // Process next update in batch queue
+  const processNextQueuedUpdate = useCallback(() => {
+    if (!isUpdatingAllRef.current || updateQueueRef.current.length === 0) {
+      isUpdatingAllRef.current = false;
+      updateQueueRef.current = [];
+      setShowDrawer(false);
+      setDrawerTitle('');
+      return;
+    }
+    const nextToken = updateQueueRef.current.shift();
+    const action = batchActionRef.current || 'upgrade';
+    executeTask(action, nextToken, false, updateQueueRef.current.length + 1);
+  }, [executeTask]);
 
   // Start Action
   const startAction = useCallback(async (action, token, appName) => {
@@ -196,8 +248,8 @@ export function ShellProvider({ children }) {
       if (outdatedTokens.length === 0) return;
       isUpdatingAllRef.current = true;
       batchActionRef.current = 'upgrade';
-      updateQueueRef.current = [...outdatedTokens.slice(1)];
-      executeTask('upgrade', outdatedTokens[0]);
+      updateQueueRef.current = [...outdatedTokens];
+      processNextQueuedUpdate();
       return;
     }
 
@@ -224,6 +276,7 @@ export function ShellProvider({ children }) {
         const title = __('Confirm Delete');
         const rawMsg = __('Are you sure you want to delete %s?') || 'Are you sure you want to delete %s?';
         const message = rawMsg.includes('%s') ? rawMsg.replace('%s', name) : `Are you sure you want to delete ${name}?`;
+        const icon = cask?.iconUrl ? await getIconDataUrl(cask.iconUrl) : null;
 
         const response = await window.ipc.showMessage({
           type: 'question',
@@ -233,7 +286,7 @@ export function ShellProvider({ children }) {
           title,
           message,
           detail: '',
-          icon: null,
+          icon,
           checkboxLabel: __('Delete settings and data'),
           checkboxChecked: !!config.zap,
         });
@@ -248,7 +301,7 @@ export function ShellProvider({ children }) {
     }
 
     executeTask(action, token, zap);
-  }, [activeTaskId, items, outdatedMap, executeTask, __]);
+  }, [activeTaskId, items, outdatedMap, executeTask, processNextQueuedUpdate, __]);
 
   const cancelAction = useCallback(() => {
     if (activeTaskId) {
@@ -259,6 +312,8 @@ export function ShellProvider({ children }) {
     updateQueueRef.current = [];
     setShowPasswordModal(false);
     setIsWaitingForInput(false);
+    setShowDrawer(false);
+    setDrawerTitle('');
   }, [activeTaskId]);
 
   const submitPassword = useCallback((pass) => {
@@ -348,6 +403,16 @@ export function ShellProvider({ children }) {
     return items.filter(c => featuredTokens.includes(c.token));
   }, [items, featuredTokens]);
 
+  const nextSlide = useCallback(() => {
+    if (featuredItems.length <= 1) return;
+    setSlideIndex(prev => (prev + 1) % featuredItems.length);
+  }, [featuredItems.length]);
+
+  const prevSlide = useCallback(() => {
+    if (featuredItems.length <= 1) return;
+    setSlideIndex(prev => (prev - 1 + featuredItems.length) % featuredItems.length);
+  }, [featuredItems.length]);
+
   const topInstalledItems = useMemo(() => {
     const sorted = items
       .filter(c => c.count > 0 && (c.icon || c.iconUrl) && c.category !== 'font' && !featuredTokens.includes(c.token))
@@ -379,16 +444,35 @@ export function ShellProvider({ children }) {
     // 1. Translations
     if (window.ipc?.getTranslations) {
       window.ipc.getTranslations().then(cat => {
-        setCatalog(cat || {});
-        if (cat?._languageDirection === 'rtl') {
+        const newCat = cat || {};
+        catalogRef.current = newCat;
+        setCatalog(newCat);
+        if (newCat?._languageDirection === 'rtl') {
           document.documentElement.dir = 'rtl';
+        } else {
+          document.documentElement.dir = 'ltr';
+        }
+        if (rawCategoriesRef.current.length > 0) {
+          setCategories(sortCategories(rawCategoriesRef.current, newCat));
         }
       });
     }
 
     if (window.ipc?.onI18nChanged) {
       const unsub = window.ipc.onI18nChanged(() => {
-        window.ipc.getTranslations().then(cat => setCatalog(cat || {}));
+        window.ipc.getTranslations().then(cat => {
+          const newCat = cat || {};
+          catalogRef.current = newCat;
+          setCatalog(newCat);
+          if (newCat?._languageDirection === 'rtl') {
+            document.documentElement.dir = 'rtl';
+          } else {
+            document.documentElement.dir = 'ltr';
+          }
+          if (rawCategoriesRef.current.length > 0) {
+            setCategories(sortCategories(rawCategoriesRef.current, newCat));
+          }
+        });
       });
       // unsubscribe handled if unmounted
     }
@@ -408,14 +492,9 @@ export function ShellProvider({ children }) {
     // 3. Categories
     if (window.ipc?.getCategories) {
       window.ipc.getCategories().then(cats => {
-        const sorted = [...cats].sort((a, b) => {
-          if (a.name === 'other') return 1;
-          if (b.name === 'other') return -1;
-          if (a.name === 'font') return 1;
-          if (b.name === 'font') return -1;
-          return (a.displayName || '').localeCompare(b.displayName || '');
-        });
-        setCategories(sorted);
+        const list = cats || [];
+        rawCategoriesRef.current = list;
+        setCategories(sortCategories(list, catalogRef.current));
       });
     }
 
@@ -535,15 +614,15 @@ export function ShellProvider({ children }) {
         closeAppInfo();
         isUpdatingAllRef.current = true;
         batchActionRef.current = 'install';
-        updateQueueRef.current = [...casksToInstall.slice(1)];
-        executeTask('install', casksToInstall[0]);
+        updateQueueRef.current = [...casksToInstall];
+        processNextQueuedUpdate();
       }));
     }
 
     return () => {
       unsubs.forEach(u => typeof u === 'function' && u());
     };
-  }, [currentTab, closeAppInfo, startAction, setOrder, executeTask]);
+  }, [currentTab, closeAppInfo, startAction, setOrder, executeTask, processNextQueuedUpdate]);
 
   // Task log & complete listeners
   useEffect(() => {
@@ -632,10 +711,33 @@ export function ShellProvider({ children }) {
         if (!isSuccess && !isCancelled) {
           const cask = items.find(c => c.token === finishedToken);
           const name = cask ? getAppName(cask) : finishedToken;
-          window.ipc?.showErrorDialog?.(
-            `${name || 'Operation'} Failed`,
-            stripAnsi(errorLog).slice(-600) || `Task exited with code ${data.code}`
-          );
+          const err = extractTaskError(errorLog, finishedAction, name, catalogRef.current, __);
+          if (err.isFullDiskAccess) {
+            const res = await window.ipc?.showMessage?.({
+              type: 'warning',
+              title: err.title,
+              message: err.title,
+              detail: err.details,
+              buttons: [__('Open System Settings'), __('Cancel')],
+              defaultId: 0,
+              cancelId: 1,
+            });
+            if (res && res.response === 0) {
+              window.ipc?.openExternal?.('x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles');
+            }
+          } else {
+            window.ipc?.showErrorDialog?.(err.title, `${err.details}`);
+          }
+        }
+
+        if (finishedAction === 'cleanup' && isSuccess) {
+          const cleanLogs = stripAnsi(errorLog);
+          const lines = cleanLogs.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          const freedLine = lines.slice().reverse().find(l => /freed|disk space/i.test(l));
+          const lastLine = (freedLine || (lines.length > 0 ? lines[lines.length - 1] : ''))
+            .replace(/^==>\s*/, '').trim() || __('No files cleaned up.');
+          const title = __('Cleanup Finished');
+          window.ipc?.showMessage?.({ type: 'info', title, message: title, detail: lastLine, buttons: ['OK'] });
         }
 
         if (isUpdatingAllRef.current) {
@@ -643,18 +745,12 @@ export function ShellProvider({ children }) {
             isUpdatingAllRef.current = false;
             updateQueueRef.current = [];
             setShowDrawer(false);
+            setDrawerTitle('');
           } else {
             // Process next update in queue
-            if (updateQueueRef.current.length > 0) {
-              const nextToken = updateQueueRef.current.shift();
-              const nextAction = batchActionRef.current || 'upgrade';
-              setTimeout(() => {
-                executeTask(nextAction, nextToken);
-              }, 800);
-            } else {
-              isUpdatingAllRef.current = false;
-              setShowDrawer(false);
-            }
+            setTimeout(() => {
+              processNextQueuedUpdate();
+            }, 800);
           }
         } else {
           setShowDrawer(false);
@@ -668,7 +764,22 @@ export function ShellProvider({ children }) {
             setInstalled(Array.isArray(inst) ? inst : (inst?.tokens || inst?.list || []));
             setInstalledVersions(inst?.versions || {});
           }
-          if (isSuccess && finishedToken && (finishedAction === 'upgrade' || finishedAction === 'uninstall')) {
+          if (finishedAction === 'refresh') {
+            setLastCheckedTime(new Date());
+            if (window.ipc?.getUpdates) {
+              const upds = await window.ipc.getUpdates(false);
+              const casks = upds?.casks || (Array.isArray(upds) ? upds : []);
+              const map = {};
+              for (const item of casks) {
+                const token = item.token || item.name;
+                map[token] = {
+                  installedVersion: item.installed_versions?.[0] || item.installed_version || null,
+                  currentVersion: item.current_version || item.latest_version
+                };
+              }
+              setOutdatedMap(map);
+            }
+          } else if (isSuccess && finishedToken && (finishedAction === 'upgrade' || finishedAction === 'uninstall')) {
             setOutdatedMap(prev => {
               const next = { ...prev };
               delete next[finishedToken];
@@ -684,7 +795,7 @@ export function ShellProvider({ children }) {
     return () => {
       unsubs.forEach(u => typeof u === 'function' && u());
     };
-  }, [activeTaskId, activeTaskToken, activeTaskAction, items, executeTask]);
+  }, [activeTaskId, activeTaskToken, activeTaskAction, items, executeTask, processNextQueuedUpdate, __]);
 
   const value = {
     // Nav & Filters
@@ -733,6 +844,11 @@ export function ShellProvider({ children }) {
     // Discover data
     featuredItems,
     topInstalledItems,
+    slideIndex,
+    setSlideIndex,
+    nextSlide,
+    prevSlide,
+    getPageTitle,
 
     // Tasks
     runningTasks,

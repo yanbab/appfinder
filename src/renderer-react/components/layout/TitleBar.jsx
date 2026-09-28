@@ -3,7 +3,6 @@ import { useShell } from '@/store/useShell';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 import { PanelLeft, LayoutGrid, List, RefreshCw } from 'lucide-react';
-import { UpgradeIcon } from '@/components/ui/icons';
 
 export function TitleBar() {
   const {
@@ -63,7 +62,7 @@ export function TitleBar() {
             variant="ghost"
             disabled={isRefreshRunning}
             onClick={() => startAction('refresh', 'refresh')}
-            className="text-primary hover:text-primary active:bg-primary/10 cursor-default rounded-[var(--radius-btn)]"
+            className="text-muted-foreground hover:text-foreground active:text-foreground cursor-default rounded-[var(--radius-btn)]"
             title={__('Refresh')}
           >
             <RefreshCw className={`size-[18px] ${isRefreshRunning ? 'animate-spin' : ''}`} />
@@ -75,9 +74,8 @@ export function TitleBar() {
             size="sm"
             variant="secondary"
             onClick={() => startAction('upgrade-all')}
-            className="gap-1 px-2.5 text-xs rounded-[var(--radius-btn)] cursor-default mr-1"
+            className="px-2.5 text-xs rounded-[var(--radius-btn)] cursor-default mr-1"
           >
-            <UpgradeIcon className="size-[18px]" />
             <span>{__('Update All')}</span>
           </Button>
         )}

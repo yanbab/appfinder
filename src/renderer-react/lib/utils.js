@@ -276,3 +276,69 @@ export function extractProgress(text) {
   return null;
 }
 
+export async function getIconDataUrl(url) {
+  if (!url) return null;
+  if (url.startsWith('data:')) return url;
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    return null;
+  }
+}
+
+export function extractTaskError(logText, action, appName, catalog, __) {
+  const translate = typeof __ === 'function' ? __ : (s => s);
+  const actionKeys = {
+    install: '%s installation failed',
+    uninstall: '%s removal failed',
+    cleanup: '%s cleanup failed',
+    upgrade: '%s update failed'
+  };
+
+  const failedTitleKey = actionKeys[action] || '%s failed';
+  const rawFailedTitle = translate(failedTitleKey) || failedTitleKey;
+  const title = rawFailedTitle.includes('%s') ? rawFailedTitle.replace('%s', appName) : `${appName} failed`;
+
+  const cleanLogs = stripAnsi(logText);
+
+  const isFullDiskAccess = /Full Disk Access|Unable to remove some files/i.test(cleanLogs);
+  if (isFullDiskAccess) {
+    return {
+      title: translate('Full Disk Access Required'),
+      details: translate('Homebrew requires Full Disk Access to delete protected settings and files in ~/Library. You can grant Full Disk Access in System Settings, or delete the app without selecting "Delete settings and data".'),
+      isFullDiskAccess: true
+    };
+  }
+
+  const lines = cleanLogs.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  const defaultError = translate('No error details recorded.');
+
+  const errorLines = lines.filter(l => !l.startsWith('==>') && (
+    /error/i.test(l) || /permission denied/i.test(l) || /operation not permitted/i.test(l) ||
+    /access/i.test(l) || /sudo/i.test(l) || /failed/i.test(l)
+  ));
+
+  const nonProgressLines = lines.filter(l => !l.startsWith('==>'));
+  let rawError = errorLines.length > 0 ? errorLines.slice(-3).join('\n')
+    : nonProgressLines.length > 0 ? nonProgressLines[nonProgressLines.length - 1]
+      : lines.length > 0 ? lines[lines.length - 1] : defaultError;
+
+  let matchedKey = null;
+  if (catalog) {
+    for (const key of Object.keys(catalog)) {
+      if (key && key.length > 5 && rawError.includes(key)) {
+        matchedKey = key;
+        break;
+      }
+    }
+  }
+  return { title, details: matchedKey ? translate(matchedKey) : translate(rawError), isFullDiskAccess: false };
+}
+

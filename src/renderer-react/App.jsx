@@ -37,6 +37,23 @@ export function App() {
     };
   }, []);
 
+  // Window resize debounce to suppress layout transitions
+  useEffect(() => {
+    let resizeTimer = null;
+    const handleResize = () => {
+      document.body.classList.add('is-resizing');
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        document.body.classList.remove('is-resizing');
+      }, 100);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(resizeTimer);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   if (isSettings) {
     return <SettingsView />;
   }

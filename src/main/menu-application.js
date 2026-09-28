@@ -178,35 +178,37 @@ function setupApplicationMenu() {
           label: __('Check for Updates...'),
           accelerator: 'Option+Cmd+U',
           click: () => sendToShell('shell:check-updates')
-        },
-        ...(isDebug ? [
-          { type: 'separator' },
-          {
-            id: 'shell-alpine',
-            label: __('Alpine Shell'),
-            type: 'checkbox',
-            checked: !isReactShell(),
-            click: () => {
-              createShellWindow(false);
-              setupApplicationMenu();
-            }
-          },
-          {
-            id: 'shell-react',
-            label: __('React Shell'),
-            type: 'checkbox',
-            checked: isReactShell(),
-            click: () => {
-              createShellWindow(true);
-              setupApplicationMenu();
-            }
-          },
-          { type: 'separator' },
-          { role: 'reload' },
-          { role: 'toggleDevTools' }
-        ] : [])
+        }
       ]
     },
+    ...(isDebug ? [{
+      label: __('Debug'),
+      submenu: [
+        {
+          id: 'shell-alpine',
+          label: __('AlpineJS Shell'),
+          type: 'checkbox',
+          checked: !isReactShell(),
+          click: () => {
+            createShellWindow(false);
+            setupApplicationMenu();
+          }
+        },
+        {
+          id: 'shell-react',
+          label: __('React Shell'),
+          type: 'checkbox',
+          checked: isReactShell(),
+          click: () => {
+            createShellWindow(true);
+            setupApplicationMenu();
+          }
+        },
+        { type: 'separator' },
+        { role: 'reload' },
+        { role: 'toggleDevTools' }
+      ]
+    }] : []),
     { role: 'windowMenu', label: __("Window") },
     {
       role: 'help',

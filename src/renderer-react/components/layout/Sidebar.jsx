@@ -44,7 +44,6 @@ export function Sidebar() {
       label: __('Updates'),
       icon: ArrowDownToLine,
       badge: currentTab === 'updates' && search ? filteredCount : updatesCount,
-      badgeVariant: 'default',
     },
   ];
 

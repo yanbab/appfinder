@@ -1,4 +1,9 @@
 #!/usr/bin/env node
+//
+// Generate Apps
+//
+// Processes cached Homebrew cask data, install analytics, and categories
+// to generate the structured and optimized data/apps.json dataset.
 
 const fs = require('fs');
 const path = require('path');

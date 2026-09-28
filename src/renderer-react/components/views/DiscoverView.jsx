@@ -21,20 +21,22 @@ export function DiscoverView() {
     outdatedMap,
     startAction,
     loading,
+    slideIndex,
+    setSlideIndex,
+    nextSlide,
     __,
   } = useShell();
 
-  const [slideIndex, setSlideIndex] = useState(0);
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   // Carousel timer
   useEffect(() => {
     if (!featuredItems || featuredItems.length <= 1) return;
     const interval = setInterval(() => {
-      setSlideIndex((prev) => (prev + 1) % featuredItems.length);
+      nextSlide();
     }, 4500);
     return () => clearInterval(interval);
-  }, [featuredItems]);
+  }, [featuredItems, nextSlide]);
 
 
   // Full skeleton during initial load to completely prevent layout jumping
