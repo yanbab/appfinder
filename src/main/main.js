@@ -10,6 +10,7 @@ const { setupApplicationMenu } = require('./menu-application');
 const { setupContextMenu } = require('./menu-context');
 const { createShellWindow } = require('./window-shell');
 const { checkCommand, checkCommandDialog } = require('./check');
+const electronDragClick = require('electron-drag-click');
 
 function init() {
   if (!checkCommand('brew')) { checkCommandDialog('brew'); return; }
@@ -22,4 +23,5 @@ function init() {
   createShellWindow();
 }
 
+electronDragClick();
 app.whenReady().then(init);
