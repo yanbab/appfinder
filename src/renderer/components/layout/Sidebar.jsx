@@ -1,6 +1,6 @@
 import React from 'react';
 import { useShell } from '@/store/useShell';
-import { Star, Library, CheckCircle2, ArrowDownToLine, Search, X } from 'lucide-react';
+import { Star, Library, ArrowDownToLine, RefreshCw, Search, X } from 'lucide-react';
 import { CategoryIcon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -36,13 +36,13 @@ export function Sidebar() {
     {
       id: 'installed',
       label: __('Installed'),
-      icon: CheckCircle2,
+      icon: ArrowDownToLine,
       badge: currentTab === 'installed' && search ? filteredCount : installed.length,
     },
     {
       id: 'updates',
       label: __('Updates'),
-      icon: ArrowDownToLine,
+      icon: RefreshCw,
       badge: currentTab === 'updates' && search ? filteredCount : updatesCount,
     },
   ];
@@ -92,11 +92,11 @@ export function Sidebar() {
                     onClick={() => selectTab(item.id)}
                     className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs font-medium text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
                       ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs'
-                      : 'text-sidebar-foreground'
+                      : 'text-muted-foreground'
                       }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <Icon className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`} />
+                      <Icon className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-muted-foreground'}`} />
                       <span className="truncate">{item.label}</span>
                     </div>
                     {item.badge !== null && item.badge !== undefined && (item.id !== 'updates' || item.badge > 0) && (
@@ -132,13 +132,13 @@ export function Sidebar() {
                       onClick={() => selectTab(cat.name)}
                       className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
                         ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs font-medium'
-                        : 'text-sidebar-foreground'
+                        : 'text-muted-foreground'
                         }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <CategoryIcon
                           html={cat.icon}
-                          className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`}
+                          className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-muted-foreground'}`}
                         />
                         <span className="truncate">{__(cat.displayName)}</span>
                       </div>

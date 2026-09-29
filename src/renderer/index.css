@@ -101,7 +101,7 @@
   --radius-badge: 0.25rem;
   --font-mono: Menlo, Monaco, Consolas, "Courier New", monospace;
   --sidebar: transparent;
-  --sidebar-foreground: #1d1d1f;
+  --sidebar-foreground: var(--muted-foreground);
   --sidebar-primary: var(--accent-color-muted);
   --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: rgba(0, 0, 0, 0.06);
@@ -150,7 +150,7 @@
   --radius-badge: 0.25rem;
   --font-mono: Menlo, Monaco, Consolas, "Courier New", monospace;
   --sidebar: transparent;
-  --sidebar-foreground: #f5f5f7;
+  --sidebar-foreground: var(--muted-foreground);
   --sidebar-primary: var(--accent-color-muted);
   --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: rgba(255, 255, 255, 0.06);
@@ -188,12 +188,7 @@
     transition: none !important;
   }
 
-  .sidebar-btn:active:not(.active) {
-    background-color: var(--sidebar-accent);
-  }
-
-  .dark .app-card:active,
-  .dark .sidebar-btn:active:not(.active) {
+  .dark .app-card:active {
     background-color: var(--card-active-bg);
   }
 
@@ -244,6 +239,25 @@ body.window-blurred footer {
   background-color: #272729;
 }
 
+.sidebar-btn {
+  background-color: transparent;
+  outline: none;
+}
+
+.sidebar-btn:hover:not(.active),
+.sidebar-btn:active:not(.active) {
+  background-color: transparent !important;
+}
+
+.sidebar-btn.active {
+  background-color: var(--sidebar-primary, var(--accent-color, #007aff)) !important;
+  color: var(--sidebar-primary-foreground, #ffffff) !important;
+}
+
+.sidebar-btn.active .sidebar-btn-icon {
+  color: var(--sidebar-primary-foreground, #ffffff) !important;
+}
+
 body.window-blurred .sidebar-btn {
   color: var(--sidebar-foreground) !important;
 }
@@ -266,4 +280,21 @@ body.window-blurred .sidebar-btn.active .sidebar-btn-icon {
 [role="dialog"]:focus,
 [role="dialog"]:focus-visible {
   outline: none !important;
+}
+
+/* App List Group Pulse Feedback with Accent Color Muted Border */
+@keyframes listPulseHighlight {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  35% {
+    box-shadow: 0 0 0 2px var(--accent-color-muted, #8e8e93);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.animate-list-pulse {
+  animation: listPulseHighlight 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
