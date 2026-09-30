@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { cn } from "@/hooks/utils";
+import { cn } from "@/lib/utils";
 
 const DrawerContext = React.createContext({
   open: false,

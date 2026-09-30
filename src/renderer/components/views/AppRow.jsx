@@ -1,9 +1,10 @@
 import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShell } from '@/store/useShell';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
-import { getAppName, formatVersion } from '@/hooks/utils';
-import { Loader2, Trash2 } from 'lucide-react';
+import { getAppName, formatVersion } from '@/lib/utils';
+import { UpgradeIcon, OpenIcon, InstallIcon, TrashIcon } from '@/components/ui/icons';
+import { Loader2 } from 'lucide-react';
 
 export function AppRow({ item }) {
   const {
@@ -46,7 +47,7 @@ export function AppRow({ item }) {
             </span>
           </div>
           {desc && (
-            <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
+            <p className="text-xs text-muted-foreground line-clamp-2 leading-snug mt-0.5">
               {desc}
             </p>
           )}
@@ -77,7 +78,7 @@ export function AppRow({ item }) {
               className="text-muted-foreground active:text-destructive cursor-default"
               title="Uninstall"
             >
-              <Trash2 className="size-4" />
+              <TrashIcon className="size-[18px]" />
             </Button>
             {item.app ? (
               <Button

@@ -1,8 +1,8 @@
 import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShell } from '@/store/useShell';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
-import { PanelLeft, LayoutGrid, List, RotateCw } from 'lucide-react';
+import { PanelLeft, LayoutGrid, List, RefreshCw } from 'lucide-react';
 
 export function TitleBar() {
   const {
@@ -65,7 +65,7 @@ export function TitleBar() {
             className="text-muted-foreground hover:text-foreground active:text-foreground cursor-default rounded-[var(--radius-btn)]"
             title={__('Refresh')}
           >
-            <RotateCw className={`size-[18px] ${isRefreshRunning ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-[18px] ${isRefreshRunning ? 'animate-spin' : ''}`} />
           </Button>
         )}
 

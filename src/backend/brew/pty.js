@@ -1,6 +1,10 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
-const pty = require('node-pty');
+
+let pty = null;
+try {
+  pty = require('node-pty');
+} catch (_) { }
 
 const { ensurePtyPermissions } = require('../../main/utils/pty-permissions');
 
@@ -47,16 +51,18 @@ function runTask({ taskId, command, shell, shellArgs, cwd, env, cols = 80, rows 
   ensurePtyPermissions();
 
   let ptyProcess = null;
-  try {
-    ptyProcess = pty.spawn(resolvedShell, resolvedShellArgs, {
-      name: 'xterm-color',
-      cols,
-      rows,
-      cwd: resolvedCwd,
-      env: resolvedEnv
-    });
-  } catch (err) {
-    console.warn('node-pty spawn failed, falling back to child_process.spawn:', err);
+  if (pty && typeof pty.spawn === 'function') {
+    try {
+      ptyProcess = pty.spawn(resolvedShell, resolvedShellArgs, {
+        name: 'xterm-color',
+        cols,
+        rows,
+        cwd: resolvedCwd,
+        env: resolvedEnv
+      });
+    } catch (err) {
+      console.warn('node-pty spawn failed, falling back to child_process.spawn:', err);
+    }
   }
 
   if (ptyProcess) {
@@ -96,11 +102,6 @@ function runTask({ taskId, command, shell, shellArgs, cwd, env, cols = 80, rows 
   }
 }
 
-/**
- * Cancels a running task by taskId
- * @param {string} taskId
- * @param {Function} [onComplete]
- */
 function cancelTask(taskId, onComplete) {
   const task = activeTasks.get(taskId);
   if (task) {
@@ -110,20 +111,10 @@ function cancelTask(taskId, onComplete) {
   }
 }
 
-/**
- * Writes interactive stdin input to a running task
- * @param {string} taskId
- * @param {string} text
- */
 function writeTaskInput(taskId, text) {
   activeTasks.get(taskId)?.write?.(text);
 }
 
-/**
- * Checks if a task is currently active
- * @param {string} taskId
- * @returns {boolean}
- */
 function isTaskActive(taskId) {
   return activeTasks.has(taskId);
 }

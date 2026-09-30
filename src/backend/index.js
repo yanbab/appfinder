@@ -2,11 +2,24 @@
 
 const common = require('./common');
 const brewBackend = require('./brew');
+const flatpakBackend = require('./flatpak');
 const mockBackend = require('./mock');
 
-// Default to brew on macOS, mock on other platforms or testing
-const activeBackendName = process.platform === 'darwin' ? 'brew' : 'mock';
-const backend = activeBackendName === 'brew' ? brewBackend : mockBackend;
+// Default to brew on macOS, flatpak on Linux, mock on other platforms or testing
+let activeBackendName = 'mock';
+if (process.platform === 'darwin') {
+  activeBackendName = 'brew';
+} else if (process.platform === 'linux') {
+  activeBackendName = 'flatpak';
+}
+
+const backends = {
+  brew: brewBackend,
+  flatpak: flatpakBackend,
+  mock: mockBackend
+};
+
+const backend = backends[activeBackendName] || mockBackend;
 
 module.exports = {
   // Global data (apps.json and categories.json)
@@ -29,8 +42,5 @@ module.exports = {
   cleanCache: (...args) => backend.cleanCache(...args),
 
   // Direct backend access
-  backends: {
-    brew: brewBackend,
-    mock: mockBackend
-  }
+  backends
 };

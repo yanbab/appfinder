@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { useShell } from '@/hooks/useShell';
-import { useTheme } from '@/hooks/useTheme';
+import { useShell } from '@/store/useShell';
+import { useTheme } from '@/store/useTheme';
 import { Terminal } from 'xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import 'xterm/css/xterm.css';

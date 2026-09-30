@@ -1,96 +1,111 @@
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs');
 
-const execAsync = promisify(exec);
-
-let cachedBrewPath = null;
+const execFileAsync = promisify(execFile);
 
 function getBrewPath() {
-  if (cachedBrewPath && fs.existsSync(cachedBrewPath)) {
-    return cachedBrewPath;
-  }
-  const paths = [
+  const brewPaths = [
     '/opt/homebrew/bin/brew',
-    '/usr/local/bin/brew'
+    '/usr/local/bin/brew',
+    '/usr/bin/brew',
+    '/bin/brew'
   ];
-  cachedBrewPath = paths.find(p => fs.existsSync(p)) || 'brew';
-  return cachedBrewPath;
+  for (const p of brewPaths) {
+    if (fs.existsSync(p)) return p;
+  }
+  return 'brew';
 }
 
 function getEnvWithBrew() {
-  const extraPaths = ['/opt/homebrew/bin', '/usr/local/bin'];
-  const currentPath = process.env.PATH || '';
-  const missing = extraPaths.filter(p => !currentPath.includes(p));
+  const defaultPath = '/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin';
   return {
     ...process.env,
-    SUDO_PROMPT: 'Password: ',
+    PATH: process.env.PATH ? `${process.env.PATH}:${defaultPath}` : defaultPath,
     HOMEBREW_NO_AUTO_UPDATE: '1',
-    HOMEBREW_NO_ENV_HINTS: '1',
-    PATH: missing.length ? `${missing.join(':')}:${currentPath}` : currentPath
+    HOMEBREW_NO_EMOJI: '1',
+    HOMEBREW_NO_COLOR: '1'
   };
 }
 
-async function getInstalled(event) {
-  const brewPath = getBrewPath();
+async function runBrew(args) {
   try {
-    const { stdout } = await execAsync(`"${brewPath}" list --cask --versions`, { env: getEnvWithBrew() });
-    const lines = stdout.trim().split('\n').filter(Boolean);
+    const { stdout } = await execFileAsync(getBrewPath(), args, {
+      env: getEnvWithBrew(),
+      maxBuffer: 10 * 1024 * 1024
+    });
+    return stdout;
+  } catch (error) {
+    console.error(`Brew command failed: brew ${args.join(' ')}`, error);
+    return null;
+  }
+}
+
+async function getInstalled(onLog) {
+  try {
+    onLog?.('Checking installed casks...');
+    const stdout = await runBrew(['list', '--cask', '--versions']);
+    if (!stdout) return { tokens: [], versions: {} };
+
     const tokens = [];
     const versions = {};
+
+    const lines = stdout.trim().split('\n');
     for (const line of lines) {
       const parts = line.trim().split(/\s+/);
-      const token = parts[0];
-      const ver = parts.slice(1).join(' ') || null;
-      if (token) {
+      if (parts.length >= 1 && parts[0]) {
+        const token = parts[0];
         tokens.push(token);
-        if (ver) versions[token] = ver;
+        if (parts.length >= 2) {
+          versions[token] = parts.slice(1).join(' ');
+        }
       }
     }
+
     return { tokens, versions };
-  } catch (err) {
-    console.error('Failed to run brew list --cask --versions:', err);
-    event?.sender?.send('status:log', `\x1b[31mFailed to check installed casks: ${err.message}\x1b[0m\r\n`);
+  } catch (e) {
+    console.error('Error fetching installed casks:', e);
     return { tokens: [], versions: {} };
   }
 }
 
 async function fetchOutdatedCasks() {
-  const brewPath = getBrewPath();
-  const { stdout } = await execAsync(`"${brewPath}" outdated --cask --json`, { env: getEnvWithBrew() });
-  const match = stdout.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
-  const data = match ? JSON.parse(match[0]) : JSON.parse(stdout);
-  return Array.isArray(data) ? data : (data?.casks || []);
+  try {
+    const stdout = await runBrew(['outdated', '--cask', '--json=v2']);
+    if (!stdout) return { casks: [] };
+    const data = JSON.parse(stdout);
+    return { casks: data.casks || [] };
+  } catch (e) {
+    console.error('Error fetching outdated casks:', e);
+    return { casks: [] };
+  }
 }
 
-async function fetchCaskJson(sanitizedToken) {
-  const brewPath = getBrewPath();
-  const { stdout } = await execAsync(`"${brewPath}" info --json=v2 --cask "${sanitizedToken}"`, {
-    env: getEnvWithBrew(),
-    maxBuffer: 10 * 1024 * 1024
-  }).catch(() => ({ stdout: null }));
-
-  if (stdout) {
-    try {
-      return JSON.parse(stdout)?.casks?.[0] ?? null;
-    } catch { }
+async function fetchCaskJson(token) {
+  try {
+    const stdout = await runBrew(['info', '--cask', '--json=v2', token]);
+    if (!stdout) return null;
+    const data = JSON.parse(stdout);
+    return (data.casks && data.casks[0]) || null;
+  } catch (e) {
+    console.error(`Error fetching cask json for ${token}:`, e);
+    return null;
   }
-  return null;
 }
 
 async function cleanCache() {
   try {
-    const { stdout } = await execAsync(`"${getBrewPath()}" cleanup --prune=all`, { env: getEnvWithBrew() });
-    return { success: true, stdout: stdout ? stdout.trim() : '' };
-  } catch (err) {
-    console.error('Failed to run brew cleanup:', err);
-    return { success: false, error: err.message };
+    const stdout = await runBrew(['cleanup', '--prune=all']);
+    return { success: true, stdout: stdout || '' };
+  } catch (e) {
+    return { success: false, error: e.message };
   }
 }
 
 module.exports = {
   getBrewPath,
   getEnvWithBrew,
+  runBrew,
   getInstalled,
   fetchOutdatedCasks,
   fetchCaskJson,

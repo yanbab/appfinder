@@ -103,7 +103,6 @@
   "Recent": "최신순",
   "Redo": "실행 취소 다시 실행",
   "Refresh": "새로고침",
-  "Release Date": "출시일",
   "Require": "요구 사양",
   "Requirements": "요구 사양",
   "Run brew cleanup to remove cached downloads and lock files.": "brew cleanup을 실행하여 다운로드 캐시와 잠금 파일을 제거합니다.",

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShell } from '@/store/useShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Lock } from 'lucide-react';
+import { LockIcon } from '@/components/ui/icons';
 import { AppIcon } from '@/components/ui/AppIcon';
-import { getAppName } from '@/hooks/utils';
+import { getAppName } from '@/lib/utils';
 
 export function PasswordModal() {
   const {
@@ -54,7 +54,7 @@ export function PasswordModal() {
             <AppIcon item={cask} size="lg" className="rounded-xl shadow-xs mb-3" />
           ) : (
             <div className="size-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
-              <Lock className="size-6" />
+              <LockIcon className="size-6" />
             </div>
           )}
 

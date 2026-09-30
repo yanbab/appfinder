@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 
-export function SettingsWindow() {
+export function SettingsView() {
   const [alwaysShowStatusBar, setAlwaysShowStatusBar] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [language, setLanguage] = useState('system');
@@ -212,4 +212,4 @@ export function SettingsWindow() {
   );
 }
 
-export default SettingsWindow
+export default SettingsView;

@@ -1,8 +1,9 @@
 import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShell } from '@/store/useShell';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
-import { getAppName, formatVersion } from '@/hooks/utils';
+import { getAppName, formatVersion } from '@/lib/utils';
+import { UpgradeIcon, OpenIcon, InstallIcon, TrashIcon } from '@/components/ui/icons';
 import { Loader2 } from 'lucide-react';
 
 export function AppCard({ item }) {
@@ -26,8 +27,9 @@ export function AppCard({ item }) {
       data-token={item.token}
       tabIndex={0}
       onClick={() => openAppInfo(item)}
-      className={`app-card group relative flex items-center gap-2.5 p-2 rounded-[var(--radius-card)] bg-card text-card-foreground border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/50 ${isSelected ? 'bg-[var(--card-active-bg)]' : ''
-        }`}
+      className={`app-card group relative flex items-center gap-2.5 p-2 rounded-[var(--radius-card)] bg-card text-card-foreground border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/50 ${
+        isSelected ? 'bg-[var(--card-active-bg)]' : ''
+      }`}
     >
       <AppIcon item={item} size="grid" className="size-14 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
       <div className="min-w-0 flex-1 flex flex-col justify-center">

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cva } from "class-variance-authority";
-import { cn } from "@/hooks/utils";
+import { cn } from "@/lib/utils";
 
 const cardVariants = cva(
   "rounded-lg bg-card text-card-foreground select-none transition-colors duration-120",

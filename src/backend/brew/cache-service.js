@@ -1,77 +1,74 @@
-const path = require('path');
 const fs = require('fs');
-const os = require('os');
+const path = require('path');
 
-const configDir = path.join(os.homedir(), '.config', 'appfinder');
-const updatesCachePath = path.join(configDir, 'updates.json');
+const memoryCache = new Map();
+const caskInfoCache = new Map();
 
-// In-memory cache for cask details with TTL & capacity bounding
-const MAX_CACHE_ENTRIES = 300;
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
-const infoCache = new Map();
+const CACHE_DIR = path.join(process.env.HOME || '', '.config', 'appfinder');
+const UPDATES_CACHE_FILE = path.join(CACHE_DIR, 'updates.json');
+const UPDATES_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
+
+function ensureCacheDir() {
+  try {
+    if (!fs.existsSync(CACHE_DIR)) {
+      fs.mkdirSync(CACHE_DIR, { recursive: true });
+    }
+  } catch (e) {
+    console.error('Failed to create cache dir:', e);
+  }
+}
+
+function getCachedUpdates(force = false) {
+  if (force) return null;
+  const mem = memoryCache.get('updates');
+  if (mem && (Date.now() - mem.timestamp < UPDATES_CACHE_DURATION)) {
+    return mem.data;
+  }
+  try {
+    if (fs.existsSync(UPDATES_CACHE_FILE)) {
+      const stat = fs.statSync(UPDATES_CACHE_FILE);
+      if (Date.now() - stat.mtimeMs < UPDATES_CACHE_DURATION) {
+        const data = JSON.parse(fs.readFileSync(UPDATES_CACHE_FILE, 'utf8'));
+        memoryCache.set('updates', { data, timestamp: stat.mtimeMs });
+        return data;
+      }
+    }
+  } catch (e) {
+    console.error('Error reading updates cache:', e);
+  }
+  return null;
+}
+
+function setCachedUpdates(data) {
+  memoryCache.set('updates', { data, timestamp: Date.now() });
+  ensureCacheDir();
+  try {
+    fs.writeFileSync(UPDATES_CACHE_FILE, JSON.stringify(data));
+  } catch (e) {
+    console.error('Error writing updates cache:', e);
+  }
+}
+
+async function getUpdates(force = false, fetcher) {
+  const cached = getCachedUpdates(force);
+  if (cached) return cached;
+  const fresh = await fetcher();
+  setCachedUpdates(fresh);
+  return fresh;
+}
 
 function getCachedCaskInfo(token) {
-  if (!token || !infoCache.has(token)) return null;
-  const entry = infoCache.get(token);
-  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
-    infoCache.delete(token);
-    return null;
-  }
-  return entry.data;
+  return caskInfoCache.get(token) || null;
 }
 
 function setCachedCaskInfo(token, data) {
-  if (!token || !data) return;
-  if (infoCache.size >= MAX_CACHE_ENTRIES) {
-    const oldestKey = infoCache.keys().next().value;
-    if (oldestKey) infoCache.delete(oldestKey);
-  }
-  infoCache.set(token, {
-    data,
-    timestamp: Date.now()
-  });
-}
-
-function clearCaskInfoCache() {
-  infoCache.clear();
-}
-
-async function getUpdates(force = false, fetchOutdatedFn) {
-  if (!force) {
-    try {
-      const raw = await fs.promises.readFile(updatesCachePath, 'utf8').catch(() => null);
-      if (raw && raw.trim()) {
-        const data = JSON.parse(raw);
-        const casks = Array.isArray(data) ? data : (data?.casks || []);
-        return { casks };
-      }
-    } catch (e) {
-      console.error('Failed to read cached updates:', e);
-    }
-  }
-
-  if (typeof fetchOutdatedFn !== 'function') {
-    return { casks: [] };
-  }
-
-  try {
-    const casks = await fetchOutdatedFn();
-    try {
-      await fs.promises.mkdir(configDir, { recursive: true });
-      await fs.promises.writeFile(updatesCachePath, JSON.stringify(casks, null, 2));
-    } catch (err) {
-      console.error('Failed to write updates cache:', err);
-    }
-    return { casks };
-  } catch (err) {
-    console.error('Failed to get updates:', err);
-    return { casks: [] };
-  }
+  caskInfoCache.set(token, data);
 }
 
 module.exports = {
+  getUpdates,
+  getCachedUpdates,
+  setCachedUpdates,
   getCachedCaskInfo,
-  setCachedCaskInfo,
-  clearCaskInfoCache,
-  getUpdates
+  setCachedCaskInfo
 };

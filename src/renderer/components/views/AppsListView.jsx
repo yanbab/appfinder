@@ -1,8 +1,7 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { useShell } from '@/hooks/useShell';
+import React, { useRef, useEffect } from 'react';
+import { useShell } from '@/store/useShell';
 import { AppItem } from './AppItem';
 import { CheckCircle2, Search, Loader2 } from 'lucide-react';
-import { cn } from '@/hooks/utils';
 
 export function AppsListView() {
   const {
@@ -13,22 +12,10 @@ export function AppsListView() {
     currentTab,
     updatesCount,
     viewMode,
-    pulseListTrigger,
     __,
   } = useShell();
 
   const containerRef = useRef(null);
-  const [isPulsing, setIsPulsing] = useState(false);
-  const prevTriggerRef = useRef(pulseListTrigger);
-
-  useEffect(() => {
-    if (pulseListTrigger > 0 && pulseListTrigger !== prevTriggerRef.current) {
-      prevTriggerRef.current = pulseListTrigger;
-      setIsPulsing(true);
-      const timer = setTimeout(() => setIsPulsing(false), 550);
-      return () => clearTimeout(timer);
-    }
-  }, [pulseListTrigger]);
 
   const handleScroll = (e) => {
     const el = e.target;
@@ -75,12 +62,11 @@ export function AppsListView() {
       className="flex-1 overflow-y-auto p-4"
     >
       <div
-        className={cn(
+        className={
           viewMode === 'grid'
             ? "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5"
-            : "border border-[var(--card-border)] rounded-[var(--radius-card)] overflow-hidden bg-card divide-y divide-[var(--card-border)] shadow-2xs",
-          isPulsing && "animate-list-pulse"
-        )}
+            : "border border-[var(--card-border)] rounded-[var(--radius-card)] overflow-hidden bg-card divide-y divide-[var(--card-border)] shadow-2xs"
+        }
       >
         {displayedItems.map((item) => (
           <AppItem key={item.token} item={item} />

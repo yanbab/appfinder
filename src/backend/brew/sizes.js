@@ -1,139 +1,99 @@
+const fs = require('fs');
+const path = require('path');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
 
 const execFileAsync = promisify(execFile);
 
 function formatBytes(bytes) {
   if (!bytes || isNaN(bytes) || bytes <= 0) return null;
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(i > 1 ? 1 : 0)} ${units[i]}`;
+  let size = bytes;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+  return `${size.toFixed(1).replace(/\.0$/, '')} ${units[unitIndex]}`;
 }
 
-async function getDownloadSize(url) {
-  if (!url || typeof url !== 'string' || !url.startsWith('http')) return null;
-
+async function getDirSizeBytes(dirPath) {
   try {
-    const headRes = await fetch(url, {
-      method: 'HEAD',
-      redirect: 'follow',
-      signal: AbortSignal.timeout(10000)
-    });
-
-    const len = headRes.headers.get('content-length');
-    if (len) {
-      const num = parseInt(len, 10);
-      if (num > 0) return num;
-    }
-  } catch (_) { }
-
-  try {
-    const rangeRes = await fetch(url, {
-      method: 'GET',
-      headers: { Range: 'bytes=0-0' },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(10000)
-    });
-
-    const range = rangeRes.headers.get('content-range');
-    const match = range?.match(/\/(\d+)$/);
+    const { stdout } = await execFileAsync('/usr/bin/du', ['-sk', dirPath], { timeout: 3000 });
+    const match = stdout.trim().match(/^(\d+)/);
     if (match) {
-      const num = parseInt(match[1], 10);
-      if (num > 0) return num;
-    }
-
-    const len = rangeRes.headers.get('content-length');
-    if (len && rangeRes.status === 200) {
-      const num = parseInt(len, 10);
-      if (num > 0) return num;
+      return parseInt(match[1], 10) * 1024;
     }
   } catch (_) { }
-
   return null;
 }
 
-async function getPathSize(targetPath) {
-  if (!targetPath || !fs.existsSync(targetPath)) return 0;
+async function getDownloadSize(cask) {
+  if (!cask || !cask.url) return null;
   try {
-    const { stdout } = await execFileAsync('/usr/bin/du', ['-sk', targetPath]);
-    const kb = parseInt(stdout.trim().split(/\s+/)[0], 10);
-    return isNaN(kb) ? 0 : kb * 1024;
-  } catch (_) {
-    return 0;
-  }
+    const response = await fetch(cask.url, { method: 'HEAD', redirect: 'follow' });
+    const length = response.headers.get('content-length');
+    if (length) {
+      const bytes = parseInt(length, 10);
+      if (!isNaN(bytes) && bytes > 0) {
+        return formatBytes(bytes);
+      }
+    }
+  } catch (_) { }
+  return null;
 }
 
-async function getZapDataSize(cask) {
-  if (!cask) return 0;
-  const rawPaths = [];
-  const home = os.homedir();
+async function getInstalledSize(appPath) {
+  if (!appPath || !fs.existsSync(appPath)) return null;
+  const bytes = await getDirSizeBytes(appPath);
+  return formatBytes(bytes);
+}
 
-  const extractFromZap = (zapObj) => {
-    if (!zapObj) return;
-    if (Array.isArray(zapObj)) {
-      zapObj.forEach(extractFromZap);
-      return;
-    }
-    const keys = ['trash', 'rmdir'];
-    for (const k of keys) {
-      const val = zapObj[k];
-      if (Array.isArray(val)) rawPaths.push(...val);
-      else if (typeof val === 'string') rawPaths.push(val);
-    }
-  };
+async function getDataSize(cask) {
+  if (!cask || !cask.artifacts) return null;
+  const home = process.env.HOME || '';
+  let totalBytes = 0;
 
-  if (cask.zap) extractFromZap(cask.zap);
-  if (Array.isArray(cask.artifacts)) {
-    for (const art of cask.artifacts) {
-      if (art.zap) extractFromZap(art.zap);
+  for (const art of cask.artifacts) {
+    if (art.zap && Array.isArray(art.zap)) {
+      for (const item of art.zap) {
+        if (item.trash) {
+          const targets = Array.isArray(item.trash) ? item.trash : [item.trash];
+          for (const target of targets) {
+            if (typeof target === 'string') {
+              const fullPath = target.replace(/^~/, home);
+              if (fs.existsSync(fullPath)) {
+                const b = await getDirSizeBytes(fullPath);
+                if (b) totalBytes += b;
+              }
+            }
+          }
+        }
+      }
     }
   }
 
-  const expanded = Array.from(new Set(rawPaths.map(p => {
-    if (typeof p !== 'string') return null;
-    return p.startsWith('~/') ? path.join(home, p.slice(2)) : p;
-  }).filter(Boolean)));
-
-  const sizes = await Promise.all(expanded.map(async (p) => {
-    try {
-      await fs.promises.access(p);
-      return await getPathSize(p);
-    } catch {
-      return 0;
-    }
-  }));
-
-  return sizes.reduce((sum, bytes) => sum + bytes, 0);
+  return formatBytes(totalBytes);
 }
 
 async function getCaskSizes(cask, appPath) {
-  const result = {
-    downloadSize: null,
-    installedSize: null,
-    dataSize: null
-  };
-
-  const url = cask?.url || (Array.isArray(cask?.url_specs) ? cask.url_specs[0] : null);
-  const [dlBytes, instBytes, zapBytes] = await Promise.all([
-    getDownloadSize(url),
-    appPath ? getPathSize(appPath) : Promise.resolve(0),
-    getZapDataSize(cask)
+  const [downloadSize, installedSize, dataSize] = await Promise.all([
+    getDownloadSize(cask),
+    getInstalledSize(appPath),
+    getDataSize(cask)
   ]);
 
-  if (dlBytes) result.downloadSize = formatBytes(dlBytes);
-  if (instBytes > 0) result.installedSize = formatBytes(instBytes);
-  if (zapBytes > 0) result.dataSize = formatBytes(zapBytes);
-
-  return result;
+  return {
+    downloadSize,
+    installedSize,
+    dataSize
+  };
 }
 
 module.exports = {
+  getCaskSizes,
   formatBytes,
   getDownloadSize,
-  getPathSize,
-  getZapDataSize,
-  getCaskSizes
+  getInstalledSize,
+  getDataSize
 };

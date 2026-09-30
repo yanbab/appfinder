@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShell } from '@/store/useShell';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
 import { CategoryIcon } from '@/components/ui/icons';
-import { getAppName, name2color } from '@/hooks/utils';
+import { getAppName, name2color } from '@/lib/utils';
 import { ChevronRight, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 
 export function DiscoverView() {
@@ -118,8 +118,9 @@ export function DiscoverView() {
               <div
                 key={item.token}
                 onClick={() => openAppInfo(item)}
-                className={`absolute inset-0 p-6 flex items-center transition-opacity duration-500 ease-in-out cursor-default ${isActive ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
-                  }`}
+                className={`absolute inset-0 p-6 flex items-center transition-opacity duration-500 ease-in-out cursor-default ${
+                  isActive ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
+                }`}
               >
                 {/* Ambient Zoomed-in Icon Background */}
                 <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 rounded-[var(--radius-card)]">
@@ -212,8 +213,9 @@ export function DiscoverView() {
                   e.stopPropagation();
                   setSlideIndex(idx);
                 }}
-                className={`h-1.5 rounded-full bg-white/25 transition-all duration-300 cursor-default ${slideIndex === idx ? 'w-5 bg-white/80' : 'w-1.5'
-                  }`}
+                className={`h-1.5 rounded-full bg-white/25 transition-all duration-300 cursor-default ${
+                  slideIndex === idx ? 'w-5 bg-white/80' : 'w-1.5'
+                }`}
                 title={item.name}
               />
             ))}
@@ -293,7 +295,7 @@ export function DiscoverView() {
                       {getAppName(item)}
                     </h4>
                     <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
-                      {item.category || item.desc || ''}
+                      {item.desc || item.category || ''}
                     </p>
                   </div>
                 </div>

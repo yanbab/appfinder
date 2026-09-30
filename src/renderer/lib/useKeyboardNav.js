@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShell } from '@/store/useShell';
 
 export function useKeyboardNav() {
   const {

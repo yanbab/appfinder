@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { cn, name2initials, name2color } from '@/hooks/utils';
+import { cn, name2initials, name2color } from '@/lib/utils';
 
 export function AppIcon({ item, size = "md", className }) {
   const [loaded, setLoaded] = useState(false);

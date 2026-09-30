@@ -16,8 +16,14 @@
   "homepage": "https://github.com/yanbab/appfinder#readme",
   "scripts": {
     "dev": "node src/scripts/dev.mjs",
+    "test": "node --test src/backend/system/*.test.js",
     "start": "npm run build:react && electron .",
-    "build": "npm run build:react && electron-builder build --mac",
+    "build": "npm run build:react && electron-builder build",
+    "build:mac": "npm run build:react && electron-builder build --mac",
+    "build:linux": "npm run build:react && electron-builder build --linux",
+    "build:linux:dir": "npm run build:react && electron-builder build --linux --dir",
+    "install:electron": "node node_modules/electron/install.js",
+    "rebuild": "npx @electron/rebuild",
     "build:react": "vite build --config src/renderer/vite.config.mjs",
     "watch:react": "vite build --watch --config src/renderer/vite.config.mjs",
     "dev:react": "vite --config src/renderer/vite.config.mjs",
@@ -52,7 +58,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cn": "^0.4.0",
-    "electron-drag-click": "^1.0.6",
     "lucide-react": "^1.48.0",
     "node-pty": "^1.1.0",
     "react": "^19.3.0",
@@ -77,14 +82,26 @@
       },
       "minimumSystemVersion": "13.0.0"
     },
+    "linux": {
+      "icon": "docs/assets/icon.svg",
+      "category": "Utility",
+      "target": [
+        "AppImage",
+        "dir"
+      ]
+    },
     "directories": {
-      "output": "dist"
+      "output": "dist/electron-builder"
     },
     "files": [
       "src/**/*",
       "data/**/*",
+      "dist/vite/**/*",
       "node_modules/**/*",
       "package.json"
     ]
+  },
+  "allowScripts": {
+    "node-pty@1.1.0": true
   }
 }

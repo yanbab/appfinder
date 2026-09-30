@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { getAppName, formatVersion, stripAnsi, extractProgress, detectPrompt, parseConfirmationDetails, getIconDataUrl, extractTaskError } from './utils';
+import { getAppName, formatVersion, stripAnsi, extractProgress, detectPrompt, parseConfirmationDetails, getIconDataUrl, extractTaskError } from '../lib/utils';
 
 const ShellContext = createContext(null);
 
@@ -170,23 +170,14 @@ export function ShellProvider({ children }) {
     setAppDetails(null);
   }, []);
 
-  const [pulseListTrigger, setPulseListTrigger] = useState(0);
-  const triggerListPulse = useCallback(() => {
-    setPulseListTrigger((prev) => prev + 1);
-  }, []);
-
-  // Tab switching with search redirect & re-click pulse
+  // Tab switching with search redirect
   const selectTab = useCallback((tab) => {
-    if (tab === currentTab) {
-      triggerListPulse();
-      return;
-    }
     setCurrentTab(tab);
     setDisplayedCount(chunkSize);
     if (window.innerWidth <= 560) {
       setShowSidebar(false);
     }
-  }, [currentTab, triggerListPulse]);
+  }, []);
 
   const handleSearchChange = useCallback((val) => {
     setSearch(val);
@@ -850,8 +841,6 @@ export function ShellProvider({ children }) {
     setViewMode,
 
     // Layout
-    pulseListTrigger,
-    triggerListPulse,
     showSidebar,
     setShowSidebar,
     toggleSidebar: () => setShowSidebar(prev => !prev),

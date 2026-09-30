@@ -1,36 +1,10 @@
 import React from 'react';
-import { useShell } from '@/hooks/useShell';
-import { Star, Library, ArrowDownToLine, RefreshCw, Search, X } from 'lucide-react';
+import { useShell } from '@/store/useShell';
+import { Star, LayoutGrid, CheckCircle2, ArrowDownToLine, Search, X } from 'lucide-react';
 import { CategoryIcon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 
-export function SearchInput() {
-  const { search, setSearch, __ } = useShell();
-  return (
-    <div className="px-2.5 pb-2.5">
-      <div className="relative flex items-center">
-        <Search className="absolute left-2.5 size-4.5 text-muted-foreground pointer-events-none" />
-        <Input
-          id="search-input"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={__('Search')}
-          className="pl-9 pr-7 h-7 bg-card border-sidebar-border/60 focus:border-primary/50 focus:bg-card focus:outline-none focus-visible:ring-0 text-xs text-foreground placeholder:text-muted-foreground rounded-btn shadow-2xs cursor-text"
-        />
-        {search && (
-          <button
-            onClick={() => setSearch('')}
-            className="absolute right-2 size-4 rounded-full bg-muted-foreground/20 active:bg-muted-foreground/35 flex items-center justify-center text-foreground/70 active:text-foreground cursor-default focus:outline-none"
-            aria-label="Clear search"
-          >
-            <X className="size-2.5" />
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
 export function Sidebar() {
   const {
     currentTab,
@@ -56,19 +30,19 @@ export function Sidebar() {
     {
       id: 'all-apps',
       label: __('All Apps'),
-      icon: Library,
+      icon: LayoutGrid,
       badge: currentTab === 'all-apps' && search ? filteredCount : allAppsCount,
     },
     {
       id: 'installed',
       label: __('Installed'),
-      icon: ArrowDownToLine,
+      icon: CheckCircle2,
       badge: currentTab === 'installed' && search ? filteredCount : installed.length,
     },
     {
       id: 'updates',
       label: __('Updates'),
-      icon: RefreshCw,
+      icon: ArrowDownToLine,
       badge: currentTab === 'updates' && search ? filteredCount : updatesCount,
     },
   ];
@@ -79,11 +53,31 @@ export function Sidebar() {
         }`}
     >
       <div className="w-56 flex flex-col h-full shrink-0 overflow-hidden">
-
-        {/* Header */}
+        {/* macOS Traffic Lights Window Drag Region */}
         <div className="h-10 shrink-0 [-webkit-app-region:drag]" />
 
-        <SearchInput />
+        {/* Search Input Container */}
+        <div className="px-2.5 pb-2.5">
+          <div className="relative flex items-center">
+            <Search className="absolute left-2.5 size-[18px] text-muted-foreground pointer-events-none" />
+            <Input
+              id="search-input"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={__('Search')}
+              className="pl-9 pr-7 h-7 bg-card border-sidebar-border/60 focus:border-primary/50 focus:bg-card focus:outline-none focus-visible:ring-0 text-xs text-foreground placeholder:text-muted-foreground rounded-[var(--radius-btn)] shadow-2xs cursor-text"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-2 size-4 rounded-full bg-muted-foreground/20 active:bg-muted-foreground/35 flex items-center justify-center text-foreground/70 active:text-foreground cursor-default focus:outline-none"
+                aria-label="Clear search"
+              >
+                <X className="size-2.5" />
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Main Navigation */}
         <div className="flex-1 overflow-y-auto px-2 py-1 space-y-3.5">
@@ -96,13 +90,13 @@ export function Sidebar() {
                   <button
                     data-nav-id={item.id}
                     onClick={() => selectTab(item.id)}
-                    className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-btn text-xs font-medium text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
-                      ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs'
-                      : 'text-sidebar-foreground'
+                    className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs font-medium text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
+                        ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs'
+                        : 'text-sidebar-foreground'
                       }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <Icon className={`sidebar-btn-icon size-4.5 shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`} />
+                      <Icon className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`} />
                       <span className="truncate">{item.label}</span>
                     </div>
                     {item.badge !== null && item.badge !== undefined && (item.id !== 'updates' || item.badge > 0) && (
@@ -136,15 +130,15 @@ export function Sidebar() {
                       key={cat.name}
                       data-nav-id={cat.name}
                       onClick={() => selectTab(cat.name)}
-                      className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-btn text-xs text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
-                        ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs font-medium'
-                        : 'text-sidebar-foreground'
+                      className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
+                          ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs font-medium'
+                          : 'text-sidebar-foreground'
                         }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <CategoryIcon
                           html={cat.icon}
-                          className={`sidebar-btn-icon size-4.5 shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`}
+                          className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`}
                         />
                         <span className="truncate">{__(cat.displayName)}</span>
                       </div>

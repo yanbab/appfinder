@@ -188,7 +188,12 @@
     transition: none !important;
   }
 
-  .dark .app-card:active {
+  .sidebar-btn:active:not(.active) {
+    background-color: var(--sidebar-accent);
+  }
+
+  .dark .app-card:active,
+  .dark .sidebar-btn:active:not(.active) {
     background-color: var(--card-active-bg);
   }
 
@@ -239,27 +244,8 @@ body.window-blurred footer {
   background-color: #272729;
 }
 
-.sidebar-btn {
-  background-color: transparent;
-  outline: none;
-}
-
-.sidebar-btn:hover:not(.active),
-.sidebar-btn:active:not(.active) {
-  background-color: transparent !important;
-}
-
-.sidebar-btn.active {
-  background-color: var(--sidebar-primary, var(--accent-color, #007aff)) !important;
-  color: var(--sidebar-primary-foreground, #ffffff) !important;
-}
-
-.sidebar-btn.active .sidebar-btn-icon {
-  color: var(--sidebar-primary-foreground, #ffffff) !important;
-}
-
 body.window-blurred .sidebar-btn {
-  color: var(--muted-foreground) !important;
+  color: var(--sidebar-foreground) !important;
 }
 
 body.window-blurred .sidebar-btn-icon {
@@ -268,7 +254,7 @@ body.window-blurred .sidebar-btn-icon {
 
 body.window-blurred .sidebar-btn.active {
   background-color: var(--sidebar-accent) !important;
-  color: var(--muted-foreground) !important;
+  color: var(--sidebar-foreground) !important;
 }
 
 body.window-blurred .sidebar-btn.active .sidebar-btn-icon {
@@ -280,21 +266,4 @@ body.window-blurred .sidebar-btn.active .sidebar-btn-icon {
 [role="dialog"]:focus,
 [role="dialog"]:focus-visible {
   outline: none !important;
-}
-
-/* App List Group Pulse Feedback with Accent Color Muted Border */
-@keyframes listPulseHighlight {
-  0% {
-    box-shadow: 0 0 0 0 transparent;
-  }
-  35% {
-    box-shadow: 0 0 0 2px var(--accent-color-muted, #8e8e93);
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-
-.animate-list-pulse {
-  animation: listPulseHighlight 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
