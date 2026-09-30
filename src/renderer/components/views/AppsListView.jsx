@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { AppItem } from './AppItem';
 import { CheckCircle2, Search, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/hooks/utils';
 
 export function AppsListView() {
   const {

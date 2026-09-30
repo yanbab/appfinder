@@ -1,8 +1,8 @@
 import React from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
-import { getAppName, formatVersion } from '@/lib/utils';
+import { getAppName, formatVersion } from '@/hooks/utils';
 import { Loader2, Trash2 } from 'lucide-react';
 
 export function AppRow({ item }) {

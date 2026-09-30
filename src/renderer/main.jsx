@@ -1,9 +1,15 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { ThemeProvider } from "@/hooks/useTheme";
+import { ShellProvider } from "@/hooks/useShell";
+import { ShellWindow } from "@/components/ShellWindow";
+import { SettingsWindow } from '@/components/SettingsWindow';
+
 import "./index.css";
-import App from "./App.jsx";
-import { ThemeProvider } from "@/store/useTheme.jsx";
-import { ShellProvider } from "@/store/useShell.jsx";
+
+// Check window to load
+const params = new URLSearchParams(window.location.search);
+const isSettings = params.get('view') === 'settings' || window.location.hash === '#settings';
 
 const rootElement = document.getElementById("root");
 if (rootElement) {
@@ -11,7 +17,7 @@ if (rootElement) {
     <StrictMode>
       <ThemeProvider>
         <ShellProvider>
-          <App />
+          {isSettings ? <SettingsWindow /> : <ShellWindow />}
         </ShellProvider>
       </ThemeProvider>
     </StrictMode>

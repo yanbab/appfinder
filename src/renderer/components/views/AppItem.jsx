@@ -1,5 +1,5 @@
 import React from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { AppCard } from './AppCard';
 import { AppRow } from './AppRow';
 

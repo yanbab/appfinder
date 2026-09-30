@@ -1,5 +1,5 @@
 import React from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 import { PanelLeft, LayoutGrid, List, RotateCw } from 'lucide-react';

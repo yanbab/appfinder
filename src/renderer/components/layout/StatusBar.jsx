@@ -1,5 +1,5 @@
 import React from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { Check, Loader2, SquareX, Terminal, RefreshCw } from 'lucide-react';
 
 export function StatusBar() {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
 import { CategoryIcon } from '@/components/ui/icons';
@@ -17,7 +17,7 @@ import {
   formatDate,
   getCaskRequirements,
   isRequirementMet,
-} from '@/lib/utils';
+} from '@/hooks/utils';
 import { X, ExternalLink, AlertTriangle, Check, Loader2, ArrowDown, RefreshCw } from 'lucide-react';
 
 export function InfoDrawer() {
@@ -113,7 +113,7 @@ export function InfoDrawer() {
 
         {/* Body content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
-          {/* App Hero: Centered Icon, Name, Description before Version */}
+          {/* Hero */}
           <div className="flex flex-col items-center text-center pt-1 pb-0.5 space-y-2">
             <AppIcon item={selectedApp} size="hero" className="size-32 rounded-[28px] shrink-0" />
             <div className="space-y-1 w-full px-1">
@@ -133,7 +133,7 @@ export function InfoDrawer() {
             </div>
           </div>
 
-          {/* Primary Actions (Equal size when multiple, no icons) */}
+          {/* Actions */}
           <div className="flex items-center gap-2 pt-0.5">
             {isRunning ? (
               <Button className="w-full gap-2" size="sm" variant="secondary" disabled>
@@ -189,7 +189,7 @@ export function InfoDrawer() {
             )}
           </div>
 
-          {/* Metadata Section in Card: No border between lines, compact padding */}
+          {/* Metadata */}
           <div className="border border-[var(--card-border)] rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
             {/* Homepage */}
             <div className="flex items-center justify-between py-0.5">
@@ -207,11 +207,6 @@ export function InfoDrawer() {
               )}
             </div>
 
-            {/* Token */}
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Token')}</span>
-              <span className="text-foreground select-text truncate max-w-[150px]">{selectedApp.token}</span>
-            </div>
 
             {/* Categories */}
             {appCategories.length > 0 && (
@@ -232,29 +227,46 @@ export function InfoDrawer() {
             )}
 
             {/* Require */}
+
+
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Require', 'Require')}</span>
-              {loadingAppDetails ? (
-                <span className="text-muted-foreground font-mono">...</span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium">
+              <span className="text-foreground select-text truncate max-w-[150px]">
+                <span className="inline-flex items-center gap-1">
+
                   {reqMet ? (
-                    <Check className="size-[14px] text-emerald-500 shrink-0" />
+                    <></>
                   ) : (
                     <AlertTriangle className="size-[14px] text-amber-500 shrink-0" />
                   )}
                   <span>{reqText || 'macOS'}</span>
                 </span>
-              )}
+              </span>
+            </div>
+
+            {/* Token */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Token')}</span>
+              <span className="text-foreground select-text truncate max-w-[150px]">{selectedApp.token}</span>
             </div>
 
             {/* Auto-updates */}
+            {/*
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Auto-updates')}</span>
               <span className="text-foreground">
                 {loadingAppDetails ? '...' : (appDetails ? (appDetails.auto_updates ? __('Yes') : __('No')) : '—')}
               </span>
             </div>
+            */}
+
+            {/* Added */}
+            {selectedApp.added && (
+              <div className="flex items-center justify-between py-0.5">
+                <span className="text-muted-foreground">{__('Added date')}</span>
+                <span className="text-foreground">{formatDate(selectedApp.added, __)}</span>
+              </div>
+            )}
 
             {/* Monthly Installs */}
             <div className="flex items-center justify-between py-0.5">
@@ -265,18 +277,20 @@ export function InfoDrawer() {
               </div>
             </div>
 
-            {/* Added */}
-            {selectedApp.added && (
-              <div className="flex items-center justify-between py-0.5">
-                <span className="text-muted-foreground">{__('Added')}</span>
-                <span className="text-foreground">{formatDate(selectedApp.added, __)}</span>
-              </div>
-            )}
+            {/* Download Size */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Download Size')}</span>
+              <span className="text-foreground">
+                {loadingSizes ? '...' : (appDetails?.downloadSize || '—')}
+              </span>
+            </div>
+
           </div>
 
-          {/* Storage & Usage Section in Card: No border between lines, compact padding */}
-          <div className="border border-[var(--card-border)] rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
-            {isInstalled && (
+          {/* Installed metadata */}
+          {isInstalled && (
+            <div className="border border-[var(--card-border)] rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
+
               <div className="flex items-center justify-between py-0.5">
                 <span className="text-muted-foreground">{__('Installed Version')}</span>
                 <div className="flex items-center gap-1 text-foreground">
@@ -288,47 +302,37 @@ export function InfoDrawer() {
                   <span>{formatVersion(installedVersion)}</span>
                 </div>
               </div>
-            )}
 
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Download Size')}</span>
-              <span className="text-foreground">
-                {loadingSizes ? '...' : (appDetails?.downloadSize || '—')}
-              </span>
+              <div className="flex items-center justify-between py-0.5">
+                <span className="text-muted-foreground">{__('Installed Size')}</span>
+                <span className="text-foreground">
+                  {loadingSizes ? '...' : (appDetails?.installedSize || '—')}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-0.5">
+                <span className="text-muted-foreground">{__('Data Size')}</span>
+                <span className="text-foreground">
+                  {loadingSizes ? '...' : (appDetails?.dataSize || '—')}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-0.5">
+                <span className="text-muted-foreground">{__('Installation date')}</span>
+                <span className="text-foreground">
+                  {loadingAppDetails ? '...' : (appDetails?.installedDate ? formatDate(appDetails.installedDate, __) : '—')}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-0.5">
+                <span className="text-muted-foreground">{__('Open date')}</span>
+                <span className="text-foreground">
+                  {loadingAppDetails ? '...' : (appDetails?.lastOpenedDate ? formatDate(appDetails.lastOpenedDate, __) : '—')}
+                </span>
+              </div>
+
             </div>
-
-            {isInstalled && (
-              <>
-                <div className="flex items-center justify-between py-0.5">
-                  <span className="text-muted-foreground">{__('Installed Size')}</span>
-                  <span className="text-foreground">
-                    {loadingSizes ? '...' : (appDetails?.installedSize || '—')}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-0.5">
-                  <span className="text-muted-foreground">{__('Data Size')}</span>
-                  <span className="text-foreground">
-                    {loadingSizes ? '...' : (appDetails?.dataSize || '—')}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-0.5">
-                  <span className="text-muted-foreground">{__('Installed')}</span>
-                  <span className="text-foreground">
-                    {loadingAppDetails ? '...' : (appDetails?.installedDate ? formatDate(appDetails.installedDate, __) : '—')}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-0.5">
-                  <span className="text-muted-foreground">{__('Last Opened')}</span>
-                  <span className="text-foreground">
-                    {loadingAppDetails ? '...' : (appDetails?.lastOpenedDate ? formatDate(appDetails.lastOpenedDate, __) : '—')}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
+          )}
 
           {/* Caveat Notice */}
           {appDetails?.caveats && (

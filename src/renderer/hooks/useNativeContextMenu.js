@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useShell } from '@/store/useShell';
-import { getAppName } from '@/lib/utils';
+import { useShell } from '@/hooks/useShell';
+import { getAppName } from '@/hooks/utils';
 
 export function useNativeContextMenu() {
   const { items, installed, outdatedMap, runningTasks, startAction } = useShell();

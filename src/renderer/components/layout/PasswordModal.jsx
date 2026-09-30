@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock } from 'lucide-react';
 import { AppIcon } from '@/components/ui/AppIcon';
-import { getAppName } from '@/lib/utils';
+import { getAppName } from '@/hooks/utils';
 
 export function PasswordModal() {
   const {
