@@ -1,10 +1,8 @@
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const path = require('path');
 const fs = require('fs');
 
 const execAsync = promisify(exec);
-const dataDir = path.join(__dirname, '..', '..', '..', 'data');
 
 let cachedBrewPath = null;
 
@@ -31,23 +29,6 @@ function getEnvWithBrew() {
     HOMEBREW_NO_ENV_HINTS: '1',
     PATH: missing.length ? `${missing.join(':')}:${currentPath}` : currentPath
   };
-}
-
-function getData(file) {
-  try {
-    return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8'));
-  } catch (e) {
-    console.error(`Failed to read data file ${file}:`, e);
-    return [];
-  }
-}
-
-function getApps() {
-  return getData('apps.json');
-}
-
-function getCategories() {
-  return getData('categories.json');
 }
 
 async function getInstalled(event) {
@@ -110,9 +91,6 @@ async function cleanCache() {
 module.exports = {
   getBrewPath,
   getEnvWithBrew,
-  getData,
-  getApps,
-  getCategories,
   getInstalled,
   fetchOutdatedCasks,
   fetchCaskJson,

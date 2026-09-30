@@ -1,15 +1,15 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
-const { app } = require('electron');
 const pty = require('node-pty');
 
-const { ensurePtyPermissions } = require('../utils/pty-permissions');
-const { broadcast } = require('../utils/broadcast');
+const { ensurePtyPermissions } = require('../../main/utils/pty-permissions');
 const { getBrewPath, getEnvWithBrew } = require('./brew-cli');
 
 const activeTasks = new Map();
 
-function runAction(event, { taskId, action, token, zap }, onRefreshUpdates) {
+function runAction({ taskId, action, token, zap }, callbacks = {}) {
+  const { onLog, onComplete, onRefreshUpdates } = callbacks;
+
   const actions = {
     install: ['install', '--force', '--cask', token],
     upgrade: ['upgrade', '--force', '--cask', token],
@@ -20,9 +20,7 @@ function runAction(event, { taskId, action, token, zap }, onRefreshUpdates) {
 
   const args = actions[action];
   if (!args) {
-    if (!event.sender.isDestroyed()) {
-      event.reply('task:complete', { taskId, code: 1, error: 'Invalid action' });
-    }
+    onComplete?.({ taskId, code: 1, error: 'Invalid action' });
     return;
   }
 
@@ -34,23 +32,11 @@ function runAction(event, { taskId, action, token, zap }, onRefreshUpdates) {
   const onTaskFinished = (exitCode) => {
     activeTasks.delete(taskId);
 
-    if (exitCode === 0 && (action === 'install' || action === 'uninstall')) {
-      if (app?.dock?.bounce) {
-        app.dock.bounce('informational');
-      }
-    }
-
-    if (action === 'cleanup') {
-      broadcast('cleanup:status', 'complete');
-    }
-
     if (exitCode === 0 && action === 'refresh' && typeof onRefreshUpdates === 'function') {
       onRefreshUpdates().catch(() => { });
     }
 
-    if (!event.sender.isDestroyed()) {
-      event.sender.send('task:complete', { taskId, code: exitCode });
-    }
+    onComplete?.({ taskId, code: exitCode });
   };
 
   ensurePtyPermissions();
@@ -75,9 +61,7 @@ function runAction(event, { taskId, action, token, zap }, onRefreshUpdates) {
     });
 
     ptyProcess.onData((data) => {
-      if (!event.sender.isDestroyed()) {
-        event.sender.send('task:log', { taskId, type: 'stdout', text: data });
-      }
+      onLog?.({ taskId, type: 'stdout', text: data });
     });
 
     ptyProcess.onExit(({ exitCode }) => {
@@ -95,10 +79,7 @@ function runAction(event, { taskId, action, token, zap }, onRefreshUpdates) {
     });
 
     const forward = (stream) => stream.on('data', (data) => {
-      if (!event.sender.isDestroyed()) {
-        const text = data.toString();
-        event.sender.send('task:log', { taskId, type: 'stdout', text });
-      }
+      onLog?.({ taskId, type: 'stdout', text: data.toString() });
     });
 
     forward(cp.stdout);
@@ -110,15 +91,12 @@ function runAction(event, { taskId, action, token, zap }, onRefreshUpdates) {
   }
 }
 
-function cancelAction(event, taskId) {
+function cancelAction(taskId, onComplete) {
   const task = activeTasks.get(taskId);
   if (task) {
     task.kill();
     activeTasks.delete(taskId);
-    broadcast('cleanup:status', 'complete');
-    if (!event.sender.isDestroyed()) {
-      event.reply('task:complete', { taskId, code: -1, cancelled: true });
-    }
+    onComplete?.({ taskId, code: -1, cancelled: true });
   }
 }
 

@@ -2,7 +2,7 @@
 
 const { ipcMain, shell, dialog, systemPreferences, app, BrowserWindow, nativeImage } = require('electron');
 const i18n = require('./i18n');
-const Brew = require('./brew');
+const Backend = require('./backends');
 const { getConfig, updateConfig } = require('./config');
 const { createSettingsWindow } = require('./window-settings');
 
@@ -17,16 +17,48 @@ function broadcast(channel, ...args) {
 function setupIpcMain() {
 
     // Cask Queries & Actions
-    ipcMain.handle('cask:get-data', async () => Brew.getApps());
-    ipcMain.handle('cask:get-categories', async () => Brew.getCategories());
-    ipcMain.handle('cask:get-installed', async (event) => Brew.getInstalled(event));
-    ipcMain.handle('cask:get-updates', async (_, force) => Brew.getUpdates(force));
-    ipcMain.handle('cask:get-info', async (_, token) => Brew.getCaskInfo(token));
-    ipcMain.handle('cask:get-sizes', async (_, token) => Brew.getCaskSizesByToken(token));
-    ipcMain.handle('cask:open', async (_, token, appName) => Brew.openApp(token, appName));
-    ipcMain.on('cask:run-action', (event, data) => Brew.runAction(event, data));
-    ipcMain.on('cask:cancel-action', (event, taskId) => Brew.cancelAction(event, taskId));
-    ipcMain.on('cask:write-pty-input', (_, { taskId, text }) => Brew.writePtyInput(taskId, text));
+    ipcMain.handle('cask:get-data', async () => Backend.getApps());
+    ipcMain.handle('cask:get-categories', async () => Backend.getCategories());
+    ipcMain.handle('cask:get-installed', async (event) => Backend.getInstalled((msg) => {
+        if (!event.sender.isDestroyed()) {
+            event.sender.send('status:log', msg);
+        }
+    }));
+    ipcMain.handle('cask:get-updates', async (_, force) => Backend.getUpdates(force));
+    ipcMain.handle('cask:get-info', async (_, token) => Backend.getCaskInfo(token));
+    ipcMain.handle('cask:get-sizes', async (_, token) => Backend.getCaskSizesByToken(token));
+    ipcMain.handle('cask:open', async (_, token, appName) => Backend.openApp(token, appName));
+    ipcMain.on('cask:run-action', (event, data) => {
+        Backend.runAction(data, {
+            onLog: (logData) => {
+                if (!event.sender.isDestroyed()) {
+                    event.sender.send('task:log', logData);
+                }
+            },
+            onComplete: ({ taskId, code, error, cancelled }) => {
+                if (code === 0 && (data?.action === 'install' || data?.action === 'uninstall')) {
+                    if (app?.dock?.bounce) {
+                        app.dock.bounce('informational');
+                    }
+                }
+                if (data?.action === 'cleanup') {
+                    broadcast('cleanup:status', 'complete');
+                }
+                if (!event.sender.isDestroyed()) {
+                    event.sender.send('task:complete', { taskId, code, error, cancelled });
+                }
+            }
+        });
+    });
+    ipcMain.on('cask:cancel-action', (event, taskId) => {
+        Backend.cancelAction(taskId, (result) => {
+            broadcast('cleanup:status', 'complete');
+            if (!event.sender.isDestroyed()) {
+                event.reply('task:complete', result);
+            }
+        });
+    });
+    ipcMain.on('cask:write-pty-input', (_, { taskId, text }) => Backend.writePtyInput(taskId, text));
 
     // Localization
     ipcMain.handle('i18n:get-catalog', async () => i18n.getCatalog(i18n.getLocale()));
@@ -58,7 +90,7 @@ function setupIpcMain() {
     });
     ipcMain.handle('settings:clear-caches', async () => {
         broadcast('cleanup:status', 'start');
-        const result = await Brew.cleanCache();
+        const result = await Backend.cleanCache();
         broadcast('cleanup:status', 'complete', result);
         return result;
     });
