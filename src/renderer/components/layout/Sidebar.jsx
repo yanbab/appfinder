@@ -10,13 +10,13 @@ export function SearchInput() {
   return (
     <div className="px-2.5 pb-2.5">
       <div className="relative flex items-center">
-        <Search className="absolute left-2.5 size-[18px] text-muted-foreground pointer-events-none" />
+        <Search className="absolute left-2.5 size-4.5 text-muted-foreground pointer-events-none" />
         <Input
           id="search-input"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={__('Search')}
-          className="pl-9 pr-7 h-7 bg-card border-sidebar-border/60 focus:border-primary/50 focus:bg-card focus:outline-none focus-visible:ring-0 text-xs text-foreground placeholder:text-muted-foreground rounded-[var(--radius-btn)] shadow-2xs cursor-text"
+          className="pl-9 pr-7 h-7 bg-card border-sidebar-border/60 focus:border-primary/50 focus:bg-card focus:outline-none focus-visible:ring-0 text-xs text-foreground placeholder:text-muted-foreground rounded-btn shadow-2xs cursor-text"
         />
         {search && (
           <button
@@ -96,13 +96,13 @@ export function Sidebar() {
                   <button
                     data-nav-id={item.id}
                     onClick={() => selectTab(item.id)}
-                    className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs font-medium text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
+                    className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-btn text-xs font-medium text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
                       ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs'
                       : 'text-sidebar-foreground'
                       }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <Icon className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`} />
+                      <Icon className={`sidebar-btn-icon size-4.5 shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`} />
                       <span className="truncate">{item.label}</span>
                     </div>
                     {item.badge !== null && item.badge !== undefined && (item.id !== 'updates' || item.badge > 0) && (
@@ -136,7 +136,7 @@ export function Sidebar() {
                       key={cat.name}
                       data-nav-id={cat.name}
                       onClick={() => selectTab(cat.name)}
-                      className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-[var(--radius-btn)] text-xs text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
+                      className={`sidebar-btn w-full h-7 flex items-center justify-between px-2.5 rounded-btn text-xs text-left group cursor-default outline-none focus:outline-none focus-visible:outline-none ${isActive
                         ? 'active bg-sidebar-primary text-sidebar-primary-foreground shadow-2xs font-medium'
                         : 'text-sidebar-foreground'
                         }`}
@@ -144,7 +144,7 @@ export function Sidebar() {
                       <div className="flex items-center gap-2 min-w-0">
                         <CategoryIcon
                           html={cat.icon}
-                          className={`sidebar-btn-icon size-[18px] shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`}
+                          className={`sidebar-btn-icon size-4.5 shrink-0 ${isActive ? 'text-sidebar-primary-foreground' : 'text-primary'}`}
                         />
                         <span className="truncate">{__(cat.displayName)}</span>
                       </div>

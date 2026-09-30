@@ -1,90 +1,36 @@
-const { execFile } = require('child_process');
-const { promisify } = require('util');
 const path = require('path');
 const fs = require('fs');
+const macosApps = require('./macos');
 
-const execFileAsync = promisify(execFile);
-
+/**
+ * Finds the installed path for a Homebrew cask application
+ * @param {object|string} caskOrToken
+ * @param {string} [appName]
+ * @returns {string|null}
+ */
 function findInstalledAppPath(caskOrToken, appName) {
   const token = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.token : caskOrToken) || '';
   const candidate = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.app || caskOrToken.name : appName) || token;
   if (!candidate && !token) return null;
 
-  if (typeof candidate === 'string' && path.isAbsolute(candidate) && fs.existsSync(candidate)) {
-    return candidate;
-  }
-
-  const appFile = path.basename(candidate);
-  const cleanApp = appFile && !appFile.endsWith('.app') ? `${appFile}.app` : appFile;
-  const tokenApp = token && !token.endsWith('.app') ? `${token}.app` : token;
-
-  const searchDirs = [
-    '/Applications',
-    path.join(process.env.HOME || '', 'Applications'),
-    '/Applications/Utilities',
-    '/System/Applications',
-    '/System/Applications/Utilities'
-  ];
-
-  const namesToTry = Array.from(new Set([cleanApp, tokenApp, appFile].filter(Boolean)));
-
-  for (const dir of searchDirs) {
-    for (const name of namesToTry) {
-      const fullPath = path.join(dir, name);
-      if (fs.existsSync(fullPath)) {
-        return fullPath;
-      }
-    }
-  }
-
-  return null;
+  return macosApps.findAppBundle([candidate, token]);
 }
 
+/**
+ * Retrieves file dates for an application, falling back to Caskroom if necessary
+ * @param {string} foundPath - Installed .app path
+ * @param {string} token - Homebrew cask token
+ * @returns {Promise<{ modified: string|null, lastOpened: string|null, installed: string|null }|null>}
+ */
 async function getAppFileDates(foundPath, token) {
-  const result = {
+  let result = {
     modified: null,
     lastOpened: null,
     installed: null
   };
 
   if (foundPath) {
-    try {
-      const stats = await fs.promises.stat(foundPath).catch(() => null);
-      if (stats) {
-        if (stats.mtime) {
-          result.modified = stats.mtime.toISOString();
-        }
-        if (stats.birthtime && stats.birthtime.getTime() > 0) {
-          result.installed = stats.birthtime.toISOString();
-        }
-      }
-    } catch (_) { }
-
-    try {
-      const { stdout: mdlsOut } = await execFileAsync('/usr/bin/mdls', [
-        '-name', 'kMDItemLastUsedDate',
-        '-name', 'kMDItemContentModificationDate',
-        '-name', 'kMDItemDateAdded',
-        foundPath
-      ], { timeout: 1500 }).catch(() => ({ stdout: '' }));
-
-      const modMatch = mdlsOut.match(/kMDItemContentModificationDate\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
-      const usedMatch = mdlsOut.match(/kMDItemLastUsedDate\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
-      const addedMatch = mdlsOut.match(/kMDItemDateAdded\s*=\s*([0-9-]+\s+[0-9:]+\s+\+[0-9]+)/);
-
-      if (modMatch && modMatch[1]) {
-        const d = new Date(modMatch[1]);
-        if (!isNaN(d.getTime())) result.modified = d.toISOString();
-      }
-      if (usedMatch && usedMatch[1]) {
-        const d = new Date(usedMatch[1]);
-        if (!isNaN(d.getTime())) result.lastOpened = d.toISOString();
-      }
-      if (addedMatch && addedMatch[1]) {
-        const d = new Date(addedMatch[1]);
-        if (!isNaN(d.getTime())) result.installed = d.toISOString();
-      }
-    } catch (_) { }
+    result = await macosApps.getAppDates(foundPath);
   }
 
   // Fallback to Caskroom directory for installed date if needed
@@ -109,34 +55,22 @@ async function getAppFileDates(foundPath, token) {
   return (result.modified || result.lastOpened || result.installed) ? result : null;
 }
 
+/**
+ * Launches an application associated with a cask or token
+ * @param {object|string} caskOrToken
+ * @param {string} [appName]
+ * @returns {Promise<{ success: boolean, path?: string, error?: string }>}
+ */
 async function openApp(caskOrToken, appName) {
   const foundPath = findInstalledAppPath(caskOrToken, appName);
-
-  try {
-    if (foundPath) {
-      await execFileAsync('/usr/bin/open', [foundPath]);
-      return { success: true, path: foundPath };
-    }
-
-    const token = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.token : caskOrToken) || '';
-    const appCandidate = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.app || caskOrToken.name : appName) || token;
-    const appFile = appCandidate ? path.basename(appCandidate) : '';
-    const cleanAppFile = appFile && !appFile.endsWith('.app') ? `${appFile}.app` : appFile;
-    const nameWithoutApp = cleanAppFile.endsWith('.app') ? cleanAppFile.slice(0, -4) : cleanAppFile;
-    const targets = Array.from(new Set([nameWithoutApp, cleanAppFile, appCandidate, token].filter(Boolean)));
-
-    for (const target of targets) {
-      try {
-        await execFileAsync('/usr/bin/open', ['-a', target]);
-        return { success: true };
-      } catch (_) { }
-    }
-
-    return { success: false, error: 'Application not found' };
-  } catch (e) {
-    console.error('Failed to open app:', e);
-    return { success: false, error: e.message };
+  if (foundPath) {
+    return macosApps.launchApp(foundPath);
   }
+
+  const token = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.token : caskOrToken) || '';
+  const appCandidate = (typeof caskOrToken === 'object' && caskOrToken !== null ? caskOrToken.app || caskOrToken.name : appName) || token;
+
+  return macosApps.launchApp([appCandidate, token].filter(Boolean));
 }
 
 module.exports = {

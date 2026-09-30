@@ -2,7 +2,7 @@
 
 const { ipcMain, shell, dialog, systemPreferences, app, BrowserWindow, nativeImage } = require('electron');
 const i18n = require('./i18n');
-const Backend = require('./backends');
+const Backend = require('../backend');
 const { getConfig, updateConfig } = require('./config');
 const { createSettingsWindow } = require('./window-settings');
 

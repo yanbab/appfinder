@@ -1,7 +1,7 @@
 // Brew Backend - Coordinates services for Homebrew operations
 
-const brewCli = require('./brew-cli');
-const taskRunner = require('./task-runner');
+const brewCli = require('./brew');
+const actions = require('./actions');
 const appLocator = require('./app-locator');
 const cacheService = require('./cache-service');
 const { getCaskSizes } = require('./sizes');
@@ -74,18 +74,18 @@ async function getCaskSizesByToken(token) {
 
 function runAction(data, callbacks) {
   const cbs = typeof callbacks === 'function' ? { onComplete: callbacks } : (callbacks || {});
-  return taskRunner.runAction(data, {
+  return actions.runAction(data, {
     ...cbs,
     onRefreshUpdates: cbs.onRefreshUpdates || (() => getUpdates(true))
   });
 }
 
 function cancelAction(taskId, onComplete) {
-  return taskRunner.cancelAction(taskId, onComplete);
+  return actions.cancelAction(taskId, onComplete);
 }
 
 function writePtyInput(taskId, text) {
-  return taskRunner.writePtyInput(taskId, text);
+  return actions.writePtyInput(taskId, text);
 }
 
 module.exports = {
