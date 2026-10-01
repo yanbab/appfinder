@@ -5,7 +5,7 @@ const path = require('path');
 const { __ } = require('./i18n');
 
 const preloadPath = path.join(__dirname, './ipc-renderer.js');
-const reactPath = path.join(__dirname, '../renderer/dist/index.html');
+const reactPath = path.join(__dirname, '../../dist/vite/index.html');
 
 let settingsWindow = null;
 

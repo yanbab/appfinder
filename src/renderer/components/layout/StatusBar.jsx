@@ -1,5 +1,5 @@
 import React from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { Check, Loader2 } from 'lucide-react';
 import { StopCircleIcon } from '@/components/ui/icons';
 

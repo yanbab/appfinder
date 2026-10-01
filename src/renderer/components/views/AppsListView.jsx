@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { AppItem } from './AppItem';
 import { CheckCircle2, Search, Loader2 } from 'lucide-react';
 

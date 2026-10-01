@@ -4,7 +4,7 @@ const { BrowserWindow, app } = require('electron');
 const path = require('path');
 
 const preloadPath = path.join(__dirname, './ipc-renderer.js');
-const rendererPath = path.join(__dirname, '../renderer/dist/index.html');
+const rendererPath = path.join(__dirname, '../../dist/vite/index.html');
 
 let mainWindow = null;
 

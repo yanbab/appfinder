@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
 import { CategoryIcon } from '@/components/ui/icons';
-import { getAppName, name2color } from '@/lib/utils';
+import { getAppName, name2color } from '@/hooks/utils';
 import { ChevronRight, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 
 export function DiscoverView() {
