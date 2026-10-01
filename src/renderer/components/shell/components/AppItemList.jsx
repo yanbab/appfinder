@@ -1,12 +1,12 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
-import { AppIcon } from '@/components/ui/AppIcon';
+import { AppIcon } from './AppIcon';
 import { Button } from '@/components/ui/button';
 import { getAppName, formatVersion } from '@/hooks/utils';
-import { UpgradeIcon, OpenIcon, InstallIcon, TrashIcon } from '@/components/ui/icons';
+import { TrashIcon } from './IconSVG';
 import { Loader2 } from 'lucide-react';
 
-export function AppRow({ item }) {
+export function AppItemList({ item }) {
   const {
     openAppInfo,
     selectedApp,
@@ -112,3 +112,6 @@ export function AppRow({ item }) {
     </div>
   );
 }
+
+// Backward-compatible alias
+export const AppRow = AppItemList;

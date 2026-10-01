@@ -6,6 +6,9 @@
   "author": "yanbab",
   "license": "MIT",
   "main": "src/main/main.js",
+  "bin": {
+    "appfinder": "./src/cli/index.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/yanbab/appfinder.git"
@@ -15,6 +18,7 @@
   },
   "homepage": "https://github.com/yanbab/appfinder#readme",
   "scripts": {
+    "cli": "node src/cli/index.js",
     "dev": "node src/scripts/dev.mjs",
     "test": "node --test src/backend/system/*.test.js",
     "start": "npm run build:react && electron .",

@@ -1,14 +1,13 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
-import { AppIcon } from '@/components/ui/AppIcon';
+import { AppIcon } from '@/components/shell/components/AppIcon';
 import { Button } from '@/components/ui/button';
-import { CategoryIcon, UpgradeIcon, OpenIcon, InstallIcon, TrashIcon } from '@/components/ui/icons';
+import { CategoryIcon } from '@/components/shell/components/IconSVG';
 import {
   Drawer,
   DrawerContent,
   DrawerTitle,
   DrawerDescription,
-  DrawerClose,
 } from '@/components/ui/drawer';
 import {
   getAppName,
@@ -20,7 +19,7 @@ import {
 } from '@/hooks/utils';
 import { X, ExternalLink, AlertTriangle, Check, Loader2, ArrowDown, RefreshCw } from 'lucide-react';
 
-export function InfoDrawer() {
+export function InfoPanel() {
   const {
     selectedApp,
     closeAppInfo,
@@ -133,7 +132,7 @@ export function InfoDrawer() {
             </div>
           </div>
 
-          {/* Primary Actions (Equal size when multiple, no icons) */}
+          {/* Primary Actions */}
           <div className="flex items-center gap-2 pt-0.5">
             {isRunning ? (
               <Button className="w-full gap-2" size="sm" variant="secondary" disabled>
@@ -189,7 +188,7 @@ export function InfoDrawer() {
             )}
           </div>
 
-          {/* Metadata Section in Card: No border between lines, compact padding */}
+          {/* Metadata Section in Card */}
           <div className="border border-[var(--card-border)] rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
             {/* Homepage */}
             <div className="flex items-center justify-between py-0.5">
@@ -274,7 +273,7 @@ export function InfoDrawer() {
             )}
           </div>
 
-          {/* Storage & Usage Section in Card: No border between lines, compact padding */}
+          {/* Storage & Usage Section in Card */}
           <div className="border border-[var(--card-border)] rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
             {isInstalled && (
               <div className="flex items-center justify-between py-0.5">
@@ -347,3 +346,6 @@ export function InfoDrawer() {
     </Drawer>
   );
 }
+
+// Backward-compatible alias
+export const InfoDrawer = InfoPanel;

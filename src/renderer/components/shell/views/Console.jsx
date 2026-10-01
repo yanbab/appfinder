@@ -5,7 +5,7 @@ import { Terminal } from 'xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import 'xterm/css/xterm.css';
 
-export function TerminalDrawer() {
+export function Console() {
   const { showTerminal, registerTerminalSubscriber, activeTaskId, cancelAction } = useShell();
   const { isDark } = useTheme();
   const containerRef = useRef(null);
@@ -13,7 +13,6 @@ export function TerminalDrawer() {
   const fitAddonRef = useRef(null);
 
   const termBg = isDark ? '#18181b' : '#f4f4f5';
-  const termFg = isDark ? '#e4e4e7' : '#18181b';
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -127,3 +126,6 @@ export function TerminalDrawer() {
     </div>
   );
 }
+
+// Backward-compatible alias
+export const TerminalDrawer = Console;

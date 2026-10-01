@@ -1,7 +1,7 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
 import { Check, Loader2 } from 'lucide-react';
-import { StopCircleIcon } from '@/components/ui/icons';
+import { StopCircleIcon } from '@/components/shell/components/IconSVG';
 
 function TerminalPromptIcon({ className = "size-[18px]" }) {
   return (
@@ -56,7 +56,7 @@ export function StatusBar() {
 
   return (
     <footer className="app-footer h-7 shrink-0 flex items-center justify-between border-t border-border bg-card text-xs font-sans text-muted-foreground select-none overflow-hidden transition-opacity duration-150">
-      {/* Left: Status message or running task indicator with live download progress (non-activable) */}
+      {/* Left: Status message or running task indicator with live download progress */}
       <div className="h-full flex items-center gap-2 px-2.5 min-w-0 mr-2 select-none">
         {activeTaskId ? (
           <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
@@ -76,7 +76,7 @@ export function StatusBar() {
         )}
       </div>
 
-      {/* Right: Actions (VS Code flat full-height style) */}
+      {/* Right: Actions */}
       <div className="h-full flex items-center shrink-0">
         {activeTaskId && (
           <button
@@ -90,10 +90,11 @@ export function StatusBar() {
 
         <button
           onClick={toggleTerminal}
-          className={`h-full px-2.5 flex items-center gap-1.5 cursor-default ${showTerminal
-            ? 'bg-foreground/10 text-foreground font-medium'
-            : 'text-muted-foreground active:bg-foreground/10 active:text-foreground'
-            }`}
+          className={`h-full px-2.5 flex items-center gap-1.5 cursor-default ${
+            showTerminal
+              ? 'bg-foreground/10 text-foreground font-medium'
+              : 'text-muted-foreground active:bg-foreground/10 active:text-foreground'
+          }`}
           title={showTerminal ? "Hide Terminal" : "Show Terminal"}
         >
           <TerminalPromptIcon className="size-[18px]" />

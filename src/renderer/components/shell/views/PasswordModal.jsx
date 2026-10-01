@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useShell } from '@/hooks/useShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LockIcon } from '@/components/ui/icons';
-import { AppIcon } from '@/components/ui/AppIcon';
+import { LockIcon } from '@/components/shell/components/IconSVG';
+import { AppIcon } from '@/components/shell/components/AppIcon';
 import { getAppName } from '@/hooks/utils';
 
 export function PasswordModal() {

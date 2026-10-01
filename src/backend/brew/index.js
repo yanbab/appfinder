@@ -1,10 +1,7 @@
 // Brew Backend - Coordinates services for Homebrew operations
 
-const brewCli = require('./brew');
-const actions = require('./actions');
-const appLocator = require('./app-locator');
-const cacheService = require('./cache-service');
-const { getCaskSizes } = require('./sizes');
+const brew = require('./brew');
+const macos = require('./macos');
 
 function getAppCandidateName(cask, token) {
   if (cask?.artifacts) {
@@ -18,18 +15,14 @@ function getAppCandidateName(cask, token) {
 }
 
 async function getRawCask(sanitizedToken) {
-  let cask = cacheService.getCachedCaskInfo(sanitizedToken);
+  let cask = brew.getCachedCaskInfo(sanitizedToken);
   if (!cask) {
-    cask = await brewCli.fetchCaskJson(sanitizedToken);
+    cask = await brew.fetchCaskJson(sanitizedToken);
     if (cask) {
-      cacheService.setCachedCaskInfo(sanitizedToken, cask);
+      brew.setCachedCaskInfo(sanitizedToken, cask);
     }
   }
   return cask;
-}
-
-async function getUpdates(force = false) {
-  return cacheService.getUpdates(force, brewCli.fetchOutdatedCasks);
 }
 
 async function getCaskInfo(token) {
@@ -42,14 +35,13 @@ async function getCaskInfo(token) {
 
   const result = { ...cask };
   const candidate = getAppCandidateName(cask, sanitized);
-  const foundPath = appLocator.findInstalledAppPath(sanitized, candidate);
+  const foundPath = macos.findInstalledAppPath(sanitized, candidate);
 
   if (foundPath) {
     result.appPath = foundPath;
   }
 
-  const fileDates = await appLocator.getAppFileDates(foundPath, sanitized);
-
+  const fileDates = await macos.getAppFileDates(foundPath, sanitized);
   if (fileDates) {
     if (fileDates.modified) result.modifiedDate = fileDates.modified;
     if (fileDates.lastOpened) result.lastOpenedDate = fileDates.lastOpened;
@@ -68,37 +60,31 @@ async function getCaskSizesByToken(token) {
   if (!cask) return null;
 
   const candidate = getAppCandidateName(cask, sanitized);
-  const foundPath = appLocator.findInstalledAppPath(sanitized, candidate);
-  return await getCaskSizes(cask, foundPath);
+  const foundPath = macos.findInstalledAppPath(sanitized, candidate);
+  return await macos.getCaskSizes(cask, foundPath);
 }
 
 function runAction(data, callbacks) {
   const cbs = typeof callbacks === 'function' ? { onComplete: callbacks } : (callbacks || {});
-  return actions.runAction(data, {
+  return brew.runAction(data, {
     ...cbs,
-    onRefreshUpdates: cbs.onRefreshUpdates || (() => getUpdates(true))
+    onRefreshUpdates: cbs.onRefreshUpdates || (() => brew.getUpdates(true))
   });
 }
 
-function cancelAction(taskId, onComplete) {
-  return actions.cancelAction(taskId, onComplete);
-}
-
-function writePtyInput(taskId, text) {
-  return actions.writePtyInput(taskId, text);
-}
-
 module.exports = {
-  getInstalled: brewCli.getInstalled,
-  getUpdates,
+  getApps: brew.getApps,
+  getCategories: brew.getCategories,
+  getInstalled: brew.getInstalled,
+  getUpdates: (force) => brew.getUpdates(force),
   getCaskInfo,
   getCaskSizesByToken,
-  openApp: appLocator.openApp,
-  findInstalledAppPath: appLocator.findInstalledAppPath,
+  openApp: macos.openApp,
+  findInstalledAppPath: macos.findInstalledAppPath,
   runAction,
-  cancelAction,
-  writePtyInput,
-  cleanCache: brewCli.cleanCache,
-  getBrewPath: brewCli.getBrewPath,
-  getEnvWithBrew: brewCli.getEnvWithBrew
+  cancelAction: brew.cancelAction,
+  writePtyInput: brew.writePtyInput,
+  cleanCache: brew.cleanCache,
+  getBrewPath: brew.getBrewPath,
+  getEnvWithBrew: brew.getEnvWithBrew
 };

@@ -6,7 +6,7 @@ try {
   pty = require('node-pty');
 } catch (_) { }
 
-const { ensurePtyPermissions } = require('../../main/utils/pty-permissions');
+const { ensurePtyPermissions } = require('../main/utils/pty-permissions');
 
 const activeTasks = new Map();
 

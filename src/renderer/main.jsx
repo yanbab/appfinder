@@ -1,18 +1,26 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import App from "./App.jsx";
+import { Shell } from "./Shell.jsx";
+import { Settings } from "./Settings.jsx";
 import { ThemeProvider } from "@/hooks/useTheme.jsx";
 import { ShellProvider } from "@/hooks/useShell.jsx";
+
+const params = new URLSearchParams(window.location.search);
+const isSettings = params.get("view") === "settings" || window.location.hash === "#settings";
 
 const rootElement = document.getElementById("root");
 if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
       <ThemeProvider>
-        <ShellProvider>
-          <App />
-        </ShellProvider>
+        {isSettings ? (
+          <Settings />
+        ) : (
+          <ShellProvider>
+            <Shell />
+          </ShellProvider>
+        )}
       </ThemeProvider>
     </StrictMode>
   );

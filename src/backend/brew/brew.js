@@ -1,8 +1,46 @@
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs');
+const path = require('path');
+const ptyRunner = require('../pty');
 
 const execFileAsync = promisify(execFile);
+
+// Cache definitions
+const memoryCache = new Map();
+const caskInfoCache = new Map();
+const CACHE_DIR = path.join(process.env.HOME || '', '.config', 'appfinder');
+const UPDATES_CACHE_FILE = path.join(CACHE_DIR, 'updates.json');
+const UPDATES_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
+
+const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
+
+function getData(file) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(DATA_DIR, file), 'utf8'));
+  } catch (e) {
+    console.error(`Failed to read data file ${file}:`, e);
+    return [];
+  }
+}
+
+function getApps() {
+  return getData('apps.json');
+}
+
+function getCategories() {
+  return getData('categories.json');
+}
+
+function ensureCacheDir() {
+  try {
+    if (!fs.existsSync(CACHE_DIR)) {
+      fs.mkdirSync(CACHE_DIR, { recursive: true });
+    }
+  } catch (e) {
+    console.error('Failed to create cache dir:', e);
+  }
+}
 
 function getBrewPath() {
   const brewPaths = [
@@ -81,6 +119,42 @@ async function fetchOutdatedCasks() {
   }
 }
 
+async function getUpdates(force = false) {
+  if (!force) {
+    const mem = memoryCache.get('updates');
+    if (mem && (Date.now() - mem.timestamp < UPDATES_CACHE_DURATION)) {
+      return mem.data;
+    }
+    try {
+      if (fs.existsSync(UPDATES_CACHE_FILE)) {
+        const stat = fs.statSync(UPDATES_CACHE_FILE);
+        if (Date.now() - stat.mtimeMs < UPDATES_CACHE_DURATION) {
+          const data = JSON.parse(fs.readFileSync(UPDATES_CACHE_FILE, 'utf8'));
+          memoryCache.set('updates', { data, timestamp: stat.mtimeMs });
+          return data;
+        }
+      }
+    } catch (_) { }
+  }
+
+  const fresh = await fetchOutdatedCasks();
+  memoryCache.set('updates', { data: fresh, timestamp: Date.now() });
+  ensureCacheDir();
+  try {
+    fs.writeFileSync(UPDATES_CACHE_FILE, JSON.stringify(fresh));
+  } catch (_) { }
+
+  return fresh;
+}
+
+function getCachedCaskInfo(token) {
+  return caskInfoCache.get(token) || null;
+}
+
+function setCachedCaskInfo(token, data) {
+  caskInfoCache.set(token, data);
+}
+
 async function fetchCaskJson(token) {
   try {
     const stdout = await runBrew(['info', '--cask', '--json=v2', token]);
@@ -102,12 +176,68 @@ async function cleanCache() {
   }
 }
 
+/**
+ * Executes a Homebrew action (install, upgrade, uninstall, refresh, cleanup) via PTY runner
+ */
+function runAction({ taskId, action, token, zap }, callbacks = {}) {
+  const { onLog, onComplete, onRefreshUpdates } = callbacks;
+
+  const actions = {
+    install: ['install', '--force', '--cask', token],
+    upgrade: ['upgrade', '--force', '--cask', token],
+    uninstall: zap ? ['uninstall', '--force', '--zap', '--cask', token] : ['uninstall', '--force', '--cask', token],
+    refresh: ['update'],
+    cleanup: ['cleanup', '--prune=all']
+  };
+
+  const args = actions[action];
+  if (!args) {
+    onComplete?.({ taskId, code: 1, error: 'Invalid action' });
+    return;
+  }
+
+  const brewCmd = `"${getBrewPath()}" ${args.map((a) => `"${a}"`).join(' ')}`;
+
+  ptyRunner.runTask(
+    {
+      taskId,
+      command: brewCmd,
+      env: getEnvWithBrew()
+    },
+    {
+      onLog,
+      onComplete: ({ taskId: tid, code, error, cancelled }) => {
+        if (code === 0 && action === 'refresh' && typeof onRefreshUpdates === 'function') {
+          onRefreshUpdates().catch(() => { });
+        }
+        onComplete?.({ taskId: tid, code, error, cancelled });
+      }
+    }
+  );
+}
+
+function cancelAction(taskId, onComplete) {
+  ptyRunner.cancelTask(taskId, onComplete);
+}
+
+function writePtyInput(taskId, text) {
+  ptyRunner.writeTaskInput(taskId, text);
+}
+
 module.exports = {
+  getApps,
+  getCategories,
+  getData,
   getBrewPath,
   getEnvWithBrew,
   runBrew,
   getInstalled,
-  fetchOutdatedCasks,
+  getUpdates,
+  getCachedCaskInfo,
+  setCachedCaskInfo,
   fetchCaskJson,
-  cleanCache
+  cleanCache,
+  runAction,
+  cancelAction,
+  writePtyInput
 };

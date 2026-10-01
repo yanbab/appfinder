@@ -1,12 +1,9 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
-import { AppIcon } from '@/components/ui/AppIcon';
-import { Button } from '@/components/ui/button';
+import { AppIcon } from './AppIcon';
 import { getAppName, formatVersion } from '@/hooks/utils';
-import { UpgradeIcon, OpenIcon, InstallIcon, TrashIcon } from '@/components/ui/icons';
-import { Loader2 } from 'lucide-react';
 
-export function AppCard({ item }) {
+export function AppItemGrid({ item }) {
   const {
     openAppInfo,
     selectedApp,
@@ -45,3 +42,6 @@ export function AppCard({ item }) {
     </div>
   );
 }
+
+// Backward-compatible alias
+export const AppCard = AppItemGrid;

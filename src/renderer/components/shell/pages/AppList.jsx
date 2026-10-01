@@ -1,9 +1,10 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { useShell } from '@/hooks/useShell';
-import { AppItem } from './AppItem';
+import { AppItemGrid } from '@/components/shell/components/AppItemGrid';
+import { AppItemList } from '@/components/shell/components/AppItemList';
 import { CheckCircle2, Search, Loader2 } from 'lucide-react';
 
-export function AppsListView() {
+export function AppList() {
   const {
     displayedItems,
     filteredCount,
@@ -68,10 +69,17 @@ export function AppsListView() {
             : "border border-[var(--card-border)] rounded-[var(--radius-card)] overflow-hidden bg-card divide-y divide-[var(--card-border)] shadow-2xs"
         }
       >
-        {displayedItems.map((item) => (
-          <AppItem key={item.token} item={item} />
-        ))}
+        {displayedItems.map((item) =>
+          viewMode === 'grid' ? (
+            <AppItemGrid key={item.token} item={item} />
+          ) : (
+            <AppItemList key={item.token} item={item} />
+          )
+        )}
       </div>
     </div>
   );
 }
+
+// Backward-compatible alias
+export const AppsListView = AppList;
