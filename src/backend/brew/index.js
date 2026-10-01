@@ -1,9 +1,9 @@
-// Brew Facade - Coordinates modular services for Homebrew and App operations
+// Brew Backend - Coordinates services for Homebrew operations
 
-const brewCli = require('./services/brew-cli');
-const taskRunner = require('./services/task-runner');
-const appLocator = require('./services/app-locator');
-const cacheService = require('./services/cache-service');
+const brewCli = require('./brew');
+const actions = require('./actions');
+const appLocator = require('./app-locator');
+const cacheService = require('./cache-service');
 const { getCaskSizes } = require('./sizes');
 
 function getAppCandidateName(cask, token) {
@@ -49,6 +49,7 @@ async function getCaskInfo(token) {
   }
 
   const fileDates = await appLocator.getAppFileDates(foundPath, sanitized);
+
   if (fileDates) {
     if (fileDates.modified) result.modifiedDate = fileDates.modified;
     if (fileDates.lastOpened) result.lastOpenedDate = fileDates.lastOpened;
@@ -71,21 +72,23 @@ async function getCaskSizesByToken(token) {
   return await getCaskSizes(cask, foundPath);
 }
 
-function runAction(event, data) {
-  return taskRunner.runAction(event, data, () => getUpdates(true));
+function runAction(data, callbacks) {
+  const cbs = typeof callbacks === 'function' ? { onComplete: callbacks } : (callbacks || {});
+  return actions.runAction(data, {
+    ...cbs,
+    onRefreshUpdates: cbs.onRefreshUpdates || (() => getUpdates(true))
+  });
 }
 
-function cancelAction(event, taskId) {
-  return taskRunner.cancelAction(event, taskId);
+function cancelAction(taskId, onComplete) {
+  return actions.cancelAction(taskId, onComplete);
 }
 
 function writePtyInput(taskId, text) {
-  return taskRunner.writePtyInput(taskId, text);
+  return actions.writePtyInput(taskId, text);
 }
 
 module.exports = {
-  getApps: brewCli.getApps,
-  getCategories: brewCli.getCategories,
   getInstalled: brewCli.getInstalled,
   getUpdates,
   getCaskInfo,

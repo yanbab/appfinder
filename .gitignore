@@ -1,9 +1,10 @@
 bin/
 cache/
 dist/
-src/renderer-react/dist/
+renderer/dist/
 node_modules/
 .DS_Store
 *.dmg
 *.log
 .tmp/
+_*

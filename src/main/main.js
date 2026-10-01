@@ -12,8 +12,14 @@ const { createShellWindow } = require('./window-shell');
 const { checkCommand, checkCommandDialog } = require('./check');
 
 function init() {
-  if (!checkCommand('brew')) { checkCommandDialog('brew'); return; }
-  app.on('window-all-closed', app.quit);
+  const reqCmd = process.platform === 'darwin' ? 'brew' : (process.platform === 'linux' ? 'flatpak' : null);
+  if (reqCmd && !checkCommand(reqCmd)) {
+    checkCommandDialog(reqCmd);
+    return;
+  }
+  app.on('window-all-closed', () => {
+    app.quit();
+  });
   setupConfig();
   setupIpcMain();
   setupI18n();

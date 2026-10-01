@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { useShell } from '@/store/useShell';
+import React from 'react';
+import { useShell } from '@/hooks/useShell';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TitleBar } from '@/components/layout/TitleBar';
 import { StatusBar } from '@/components/layout/StatusBar';
@@ -10,8 +10,10 @@ import { InfoDrawer } from '@/components/views/InfoDrawer';
 import { PasswordModal } from '@/components/modals/PasswordModal';
 import { SettingsView } from '@/components/views/SettingsView';
 
-import { useNativeContextMenu } from '@/lib/useNativeContextMenu';
-import { useKeyboardNav } from '@/lib/useKeyboardNav';
+import { useNativeContextMenu } from '@/hooks/useNativeContextMenu';
+import { useKeyboardNav } from '@/hooks/useKeyboardNav';
+import { useWindowBlur } from '@/hooks/useWindowBlur';
+import { useWindowResize } from '@/hooks/useWindowResize';
 
 export function App() {
   const { currentTab, search } = useShell();
@@ -20,39 +22,11 @@ export function App() {
   const params = new URLSearchParams(window.location.search);
   const isSettings = params.get('view') === 'settings' || window.location.hash === '#settings';
 
-  // Keyboard navigation & Native context menus
+  // Keyboard navigation, Native context menus, Focus & Resize handlers
   useKeyboardNav();
   useNativeContextMenu();
-
-  // Window focus & blur class on body
-  useEffect(() => {
-    const handleFocus = () => document.body.classList.remove('window-blurred');
-    const handleBlur = () => document.body.classList.add('window-blurred');
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('blur', handleBlur);
-    if (!document.hasFocus()) document.body.classList.add('window-blurred');
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('blur', handleBlur);
-    };
-  }, []);
-
-  // Window resize debounce to suppress layout transitions
-  useEffect(() => {
-    let resizeTimer = null;
-    const handleResize = () => {
-      document.body.classList.add('is-resizing');
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        document.body.classList.remove('is-resizing');
-      }, 100);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => {
-      clearTimeout(resizeTimer);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+  useWindowBlur();
+  useWindowResize();
 
   if (isSettings) {
     return <SettingsView />;

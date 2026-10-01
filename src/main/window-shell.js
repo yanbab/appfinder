@@ -4,13 +4,21 @@ const { BrowserWindow, app } = require('electron');
 const path = require('path');
 
 const preloadPath = path.join(__dirname, './ipc-renderer.js');
-const rendererPath = path.join(__dirname, '../renderer/dist/index.html');
+const rendererPath = path.join(__dirname, '../../dist/vite/index.html');
 
 let mainWindow = null;
 
+function loadContent(win) {
+    if (process.env.VITE_DEV_SERVER_URL) {
+        win.loadURL(process.env.VITE_DEV_SERVER_URL);
+    } else {
+        win.loadFile(rendererPath);
+    }
+}
+
 function createShellWindow() {
     if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.loadFile(rendererPath);
+        loadContent(mainWindow);
         if (!mainWindow.isVisible()) mainWindow.show();
         if (mainWindow.isMinimized()) mainWindow.restore();
         mainWindow.focus();
@@ -25,11 +33,13 @@ function createShellWindow() {
         minWidth: 360,
         minHeight: 260,
         acceptFirstMouse: true,
+        autoHideMenuBar: true,
+        backgroundColor: '#00000000',
         titleBarStyle: 'hidden',
         trafficLightPosition: { x: 15, y: 15 },
-        backgroundColor: '#00000000',
         vibrancy: 'sidebar',
         show: false,
+        frame: false,
         windowStatePersistence: true,
         webPreferences: {
             preload: preloadPath,
@@ -38,7 +48,7 @@ function createShellWindow() {
             scrollBounce: true
         }
     });
-    mainWindow.loadFile(rendererPath);
+    loadContent(mainWindow);
     mainWindow.on('close', () => {
         app.quit();
     });

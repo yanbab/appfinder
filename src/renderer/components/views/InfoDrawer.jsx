@@ -1,5 +1,5 @@
 import React from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { AppIcon } from '@/components/ui/AppIcon';
 import { Button } from '@/components/ui/button';
 import { CategoryIcon, UpgradeIcon, OpenIcon, InstallIcon, TrashIcon } from '@/components/ui/icons';
@@ -17,7 +17,7 @@ import {
   formatDate,
   getCaskRequirements,
   isRequirementMet,
-} from '@/lib/utils';
+} from '@/hooks/utils';
 import { X, ExternalLink, AlertTriangle, Check, Loader2, ArrowDown, RefreshCw } from 'lucide-react';
 
 export function InfoDrawer() {

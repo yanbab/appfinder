@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/hooks/utils';
 
 export const Switch = React.forwardRef(
   ({ className, checked = false, onCheckedChange, disabled = false, animate = true, ...props }, ref) => {

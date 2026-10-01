@@ -15,13 +15,21 @@
   },
   "homepage": "https://github.com/yanbab/appfinder#readme",
   "scripts": {
+    "dev": "node src/scripts/dev.mjs",
+    "test": "node --test src/backend/system/*.test.js",
     "start": "npm run build:react && electron .",
-    "build": "npm run build:react && electron-builder build --mac",
+    "build": "npm run build:react && electron-builder build",
+    "build:mac": "npm run build:react && electron-builder build --mac",
+    "build:linux": "npm run build:react && electron-builder build --linux",
+    "build:linux:dir": "npm run build:react && electron-builder build --linux --dir",
+    "install:electron": "node node_modules/electron/install.js",
+    "rebuild": "npx @electron/rebuild",
+    "build:react": "vite build --config src/renderer/vite.config.mjs",
+    "watch:react": "vite build --watch --config src/renderer/vite.config.mjs",
+    "dev:react": "vite --config src/renderer/vite.config.mjs",
     "fetch": "cd src/scripts && bash fetch-casks.sh",
     "clean": "rm -rf ./cache ./dist $HOME/.config/appfinder \"$HOME/Library/Application Support/AppFinder\"",
-    "release": "node src/scripts/release.js",
-    "build:react": "vite build --config src/renderer/vite.config.mjs",
-    "dev:react": "vite --config src/renderer/vite.config.mjs"
+    "release": "node src/scripts/release.js"
   },
   "keywords": [
     "casks",
@@ -74,14 +82,26 @@
       },
       "minimumSystemVersion": "13.0.0"
     },
+    "linux": {
+      "icon": "docs/assets/icon.svg",
+      "category": "Utility",
+      "target": [
+        "AppImage",
+        "dir"
+      ]
+    },
     "directories": {
-      "output": "dist"
+      "output": "dist/electron-builder"
     },
     "files": [
       "src/**/*",
       "data/**/*",
+      "dist/vite/**/*",
       "node_modules/**/*",
       "package.json"
     ]
+  },
+  "allowScripts": {
+    "node-pty@1.1.0": true
   }
 }

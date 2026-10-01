@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { getAppName, formatVersion, stripAnsi, extractProgress, detectPrompt, parseConfirmationDetails, getIconDataUrl, extractTaskError } from '../lib/utils';
+import { getAppName, formatVersion, stripAnsi, extractProgress, detectPrompt, parseConfirmationDetails, getIconDataUrl, extractTaskError } from './utils';
 
 const ShellContext = createContext(null);
 

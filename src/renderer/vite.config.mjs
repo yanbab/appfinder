@@ -11,7 +11,7 @@ export default defineConfig({
   root: __dirname,
   base: './',
   build: {
-    outDir: path.resolve(__dirname, 'dist'),
+    outDir: path.resolve(__dirname, '../../dist/vite'),
     emptyOutDir: true,
   },
   resolve: {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useShell } from '@/store/useShell';
+import { useShell } from '@/hooks/useShell';
 import { Star, LayoutGrid, CheckCircle2, ArrowDownToLine, Search, X } from 'lucide-react';
 import { CategoryIcon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
