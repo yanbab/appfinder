@@ -588,6 +588,12 @@ export function ShellProvider({ children }) {
       }));
     }
 
+    if (window.ipc?.onSetViewMode) {
+      unsubs.push(window.ipc.onSetViewMode(newMode => {
+        setViewMode(newMode);
+      }));
+    }
+
     if (window.ipc?.onToggleSidebar) {
       unsubs.push(window.ipc.onToggleSidebar(show => {
         setShowSidebar(prev => (typeof show === 'boolean' ? show : !prev));

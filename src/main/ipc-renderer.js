@@ -119,6 +119,7 @@ contextBridge.exposeInMainWorld('ipc', {
   onFocusSearch: (cb) => on('shell:focus-search', cb),
   onCheckUpdates: (cb) => on('shell:check-updates', cb),
   onSetOrder: (cb) => on('shell:set-order', cb),
+  onSetViewMode: (cb) => on('shell:set-view-mode', cb),
   onToggleSidebar: (cb) => on('shell:toggle-sidebar', cb),
   sidebarChanged: (visible) => ipcRenderer.send('shell:sidebar-changed', visible),
 });

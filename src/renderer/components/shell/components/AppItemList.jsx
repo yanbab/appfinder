@@ -1,9 +1,11 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
 import { AppIcon } from './AppIcon';
-import { Button } from '@/components/ui/button';
+import { ShellButton } from './ShellButton';
+import { ShellIcon } from './ShellIcon';
 import { getAppName, formatVersion } from '@/hooks/utils';
-import { TrashIcon } from './IconSVG';
+
+
 import { Loader2 } from 'lucide-react';
 
 export function AppItemList({ item }) {
@@ -32,10 +34,16 @@ export function AppItemList({ item }) {
     <div
       data-token={item.token}
       tabIndex={0}
+      role="button"
       onClick={() => openAppInfo(item)}
-      className={`app-card app-row group flex items-center justify-between px-3 py-2 bg-card text-card-foreground select-none cursor-default active:bg-[var(--card-active-bg)] focus:outline-none focus-visible:bg-[var(--card-active-bg)] ${
-        isSelected ? 'bg-[var(--card-active-bg)]' : ''
-      }`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openAppInfo(item);
+        }
+      }}
+      className={`app-card app-row group flex items-center justify-between pl-2 pr-4 py-2 bg-card text-card-foreground select-none cursor-default active:bg-[var(--card-active-bg)] focus:outline-none focus-visible:bg-[var(--card-active-bg)] ${isSelected ? 'bg-[var(--card-active-bg)]' : ''
+        }`}
     >
       {/* Icon & Details */}
       <div className="flex items-center gap-3.5 min-w-0 flex-1 mr-3">
@@ -55,58 +63,50 @@ export function AppItemList({ item }) {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
         {isRunning ? (
-          <Button size="sm" variant="secondary" disabled>
-            <Loader2 className="size-3.5 animate-spin mr-1.5" />
-            <span>{__('Working...')}</span>
-          </Button>
+          <ShellButton variant="secondary" disabled icon={<Loader2 className="size-3.5 animate-spin mr-1.5" />}>
+            {__('Working...')}
+          </ShellButton>
         ) : isOutdated ? (
-          <Button
-            size="sm"
+          <ShellButton
             variant="secondary"
             onClick={() => startAction('upgrade', item.token)}
           >
-            <span>{__('Upgrade')}</span>
-          </Button>
+            {__('Upgrade')}
+          </ShellButton>
         ) : isInstalled ? (
           <>
-            <Button
-              size="icon-sm"
-              variant="ghost"
+            <ShellButton
+              icon={<ShellIcon name="trash" className="size-[18px]" />}
               onClick={() => startAction('uninstall', item.token)}
-              className="text-muted-foreground active:text-destructive cursor-default"
+              className="hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20"
               title="Uninstall"
-            >
-              <TrashIcon className="size-[18px]" />
-            </Button>
+            />
             {item.app ? (
-              <Button
-                size="sm"
+              <ShellButton
                 variant="secondary"
                 onClick={() => startAction('open', item.token, item.app)}
               >
-                <span>{__('Open')}</span>
-              </Button>
+                {__('Open')}
+              </ShellButton>
             ) : (
-              <Button
-                size="sm"
+              <ShellButton
                 variant="secondary"
                 disabled
                 className="opacity-40 cursor-not-allowed"
               >
-                <span>{__('Open')}</span>
-              </Button>
+                {__('Open')}
+              </ShellButton>
             )}
           </>
         ) : (
-          <Button
-            size="sm"
+          <ShellButton
             variant="secondary"
             onClick={() => startAction('install', item.token)}
           >
-            <span>{__('Install')}</span>
-          </Button>
+            {__('Install')}
+          </ShellButton>
         )}
       </div>
     </div>

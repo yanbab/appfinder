@@ -48,8 +48,9 @@ function updateStatusbarChecked(visible) {
 
 function setupApplicationMenu() {
   const config = getConfig();
-  const isDebug = !!config.debug;
+  const isDebug = !!config.debug || process.env.NODE_ENV === 'development' || !app.isPackaged;
   isStatusbarVisible = !!config.alwaysShowStatusBar;
+
 
   const template = [
     {
@@ -121,6 +122,17 @@ function setupApplicationMenu() {
           label: __('Updates'),
           accelerator: 'CmdOrCtrl+4',
           click: () => sendToShell('shell:select-tab', 'updates')
+        },
+        { type: 'separator' },
+        {
+          label: __('By list'),
+          accelerator: 'CmdOrCtrl+9',
+          click: () => sendToShell('shell:set-view-mode', 'list')
+        },
+        {
+          label: __('By grid'),
+          accelerator: 'CmdOrCtrl+0',
+          click: () => sendToShell('shell:set-view-mode', 'grid')
         },
         { type: 'separator' },
         {

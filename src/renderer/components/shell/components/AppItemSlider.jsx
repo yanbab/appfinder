@@ -18,19 +18,25 @@ export function AppItemSlider() {
     __,
   } = useShell();
 
-  // Carousel timer
+  const [isPaused, setIsPaused] = React.useState(false);
+
+  // Carousel timer with pause on hover
   useEffect(() => {
-    if (!featuredItems || featuredItems.length <= 1) return;
+    if (!featuredItems || featuredItems.length <= 1 || isPaused) return;
     const interval = setInterval(() => {
       nextSlide();
     }, 4500);
     return () => clearInterval(interval);
-  }, [featuredItems, nextSlide]);
+  }, [featuredItems, nextSlide, isPaused]);
 
   if (!featuredItems || featuredItems.length === 0) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-[var(--radius-card)] h-[210px] shadow-sm select-none">
+    <div
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      className="relative overflow-hidden rounded-[var(--radius-card)] h-[210px] shadow-sm select-none"
+    >
       {featuredItems.map((item, idx) => {
         const isActive = idx === slideIndex;
         return (

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useShell } from '@/hooks/useShell';
-import { Button } from '@/components/ui/button';
+import { ShellButton, ShellIcon } from '@/components/shell/components';
 import { Input } from '@/components/ui/input';
-import { LockIcon } from '@/components/shell/components/IconSVG';
 import { AppIcon } from '@/components/shell/components/AppIcon';
+
 import { getAppName } from '@/hooks/utils';
 
 export function PasswordModal() {
@@ -54,7 +54,7 @@ export function PasswordModal() {
             <AppIcon item={cask} size="lg" className="rounded-xl shadow-xs mb-3" />
           ) : (
             <div className="size-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
-              <LockIcon className="size-6" />
+              <ShellIcon name="lock" className="size-6" />
             </div>
           )}
 
@@ -77,17 +77,16 @@ export function PasswordModal() {
           />
 
           <div className="flex items-center justify-end gap-2 pt-1">
-            <Button
+            <ShellButton
               type="button"
               variant="secondary"
-              size="sm"
               onClick={cancelPassword}
             >
               {__('Cancel')}
-            </Button>
-            <Button type="submit" variant="default" size="sm">
+            </ShellButton>
+            <ShellButton type="submit" variant="default">
               OK
-            </Button>
+            </ShellButton>
           </div>
         </form>
       </div>

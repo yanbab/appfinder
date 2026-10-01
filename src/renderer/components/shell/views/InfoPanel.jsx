@@ -1,8 +1,8 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
-import { AppIcon } from '@/components/shell/components/AppIcon';
-import { Button } from '@/components/ui/button';
-import { CategoryIcon } from '@/components/shell/components/IconSVG';
+import { AppIcon, ShellButton, ShellIcon } from '@/components/shell/components';
+
+
 import {
   Drawer,
   DrawerContent,
@@ -95,15 +95,12 @@ export function InfoPanel() {
         {/* Header with Close Button on the Left */}
         <div className="app-header h-11 shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
           <div className="flex items-center gap-2 min-w-0 flex-1 h-full [-webkit-app-region:drag]">
-            <Button
-              variant="ghost"
-              size="icon-sm"
+            <ShellButton
+              icon={<X className="size-[18px]" />}
               onClick={closeAppInfo}
-              className="text-muted-foreground hover:text-foreground cursor-default rounded-sm shrink-0 [-webkit-app-region:no-drag]"
+              className="rounded-sm shrink-0 [-webkit-app-region:no-drag]"
               title="Close"
-            >
-              <X className="size-[18px]" />
-            </Button>
+            />
             <DrawerTitle className="text-sm font-semibold text-foreground truncate cursor-default select-none [-webkit-app-region:drag]">
               {__('Infos')}
             </DrawerTitle>
@@ -135,54 +132,49 @@ export function InfoPanel() {
           {/* Primary Actions */}
           <div className="flex items-center gap-2 pt-0.5">
             {isRunning ? (
-              <Button className="w-full gap-2" size="sm" variant="secondary" disabled>
-                <Loader2 className="size-3.5 animate-spin" />
-                <span>{__('Working...')}</span>
-              </Button>
+              <ShellButton className="w-full gap-2" variant="secondary" disabled icon={<Loader2 className="size-3.5 animate-spin" />}>
+                {__('Working...')}
+              </ShellButton>
             ) : (
               <>
                 {isOutdated && (
-                  <Button
+                  <ShellButton
                     className="flex-1"
-                    size="sm"
                     variant="secondary"
                     onClick={() => startAction('upgrade', selectedApp.token)}
                   >
-                    <span>{__('Upgrade')}</span>
-                  </Button>
+                    {__('Upgrade')}
+                  </ShellButton>
                 )}
 
                 {isInstalled && selectedApp.app && !isOutdated && (
-                  <Button
+                  <ShellButton
                     className="flex-1"
-                    size="sm"
                     variant="secondary"
                     onClick={() => startAction('open', selectedApp.token, selectedApp.app)}
                   >
-                    <span>{__('Open')}</span>
-                  </Button>
+                    {__('Open')}
+                  </ShellButton>
                 )}
 
                 {isInstalled && (
-                  <Button
+                  <ShellButton
                     variant="destructive"
                     className="flex-1"
-                    size="sm"
                     onClick={() => startAction('uninstall', selectedApp.token)}
                   >
-                    <span>{__('Delete')}</span>
-                  </Button>
+                    {__('Delete')}
+                  </ShellButton>
                 )}
 
                 {!isInstalled && (
-                  <Button
+                  <ShellButton
                     className="w-full"
-                    size="sm"
                     variant="default"
                     onClick={() => startAction('install', selectedApp.token)}
                   >
-                    <span>{__('Install')}</span>
-                  </Button>
+                    {__('Install')}
+                  </ShellButton>
                 )}
               </>
             )}
@@ -222,7 +214,7 @@ export function InfoPanel() {
                       key={c.name}
                       className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium"
                     >
-                      <CategoryIcon html={c.icon} className="size-[14px]" />
+                      <ShellIcon name={c.symbolName} className="size-[14px]" />
                       <span>{__(c.displayName)}</span>
                     </span>
                   ))}

@@ -1,24 +1,8 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
+import { ShellButton, ShellIcon } from '@/components/shell/components';
 import { Check, Loader2 } from 'lucide-react';
-import { StopCircleIcon } from '@/components/shell/components/IconSVG';
 
-function TerminalPromptIcon({ className = "size-[18px]" }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="4 17 10 12 4 7" />
-      <line x1="12" y1="19" x2="20" y2="19" />
-    </svg>
-  );
-}
 
 export function StatusBar() {
   const {
@@ -61,9 +45,9 @@ export function StatusBar() {
         {activeTaskId ? (
           <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
         ) : (
-          <Check className="size-3.5 text-muted-foreground shrink-0" />
+          <>{/*<Check className="size-3.5 text-muted-foreground shrink-0" />*/}</>
         )}
-        <span className="truncate font-mono text-xs text-foreground/80">{getStatusText()}</span>
+        <span className="truncate font-mono text-xs text-foreground/80">{/*getStatusText()*/}</span>
 
         {/* Live download percentage progress bar */}
         {activeTaskId && taskProgressPercent !== null && (
@@ -79,26 +63,21 @@ export function StatusBar() {
       {/* Right: Actions */}
       <div className="h-full flex items-center shrink-0">
         {activeTaskId && (
-          <button
+          <ShellButton
+            icon={<ShellIcon name="stop.circle" className="size-[18px] shrink-0 text-destructive" />}
+            title="Cancel"
             onClick={cancelAction}
-            className="h-full px-2.5 flex items-center text-destructive active:bg-foreground/10 cursor-default"
-            title={__('Cancel')}
-          >
-            <StopCircleIcon className="size-[18px] shrink-0 text-destructive" />
-          </button>
+            className="h-full w-auto px-2.5 rounded-none text-destructive hover:bg-foreground/5 active:bg-foreground/10"
+          />
         )}
 
-        <button
-          onClick={toggleTerminal}
-          className={`h-full px-2.5 flex items-center gap-1.5 cursor-default ${
-            showTerminal
-              ? 'bg-foreground/10 text-foreground font-medium'
-              : 'text-muted-foreground active:bg-foreground/10 active:text-foreground'
-          }`}
+        <ShellButton
+          icon={<ShellIcon name="chevron.left.forwardslash.chevron.right" className="size-[18px] shrink-0" />}
           title={showTerminal ? "Hide Terminal" : "Show Terminal"}
-        >
-          <TerminalPromptIcon className="size-[18px]" />
-        </button>
+          active={showTerminal}
+          onClick={toggleTerminal}
+          className="h-full w-auto px-2.5 rounded-none hover:bg-foreground/5 hover:text-foreground active:bg-foreground/10 active:text-foreground"
+        />
       </div>
     </footer>
   );

@@ -19,8 +19,8 @@ export function SearchInput({ className = '' }) {
       {search && (
         <button
           onClick={() => setSearch('')}
-          className="absolute right-2 text-muted-foreground hover:text-foreground cursor-default"
-          title="Clear search"
+          className="absolute right-2 p-0.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted/80 rounded-[var(--radius-badge)] cursor-default transition-colors"
+          title={__('Clear search')}
         >
           <X className="size-3.5" />
         </button>

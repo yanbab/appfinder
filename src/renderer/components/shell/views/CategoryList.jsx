@@ -1,8 +1,10 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
 import { Star, LayoutGrid, CheckCircle2, ArrowDownToLine } from 'lucide-react';
-import { CategoryIcon } from '@/components/shell/components/IconSVG';
+import { ShellIcon } from '@/components/shell/components';
 import { Badge } from '@/components/ui/badge';
+
+
 import { SearchInput } from './SearchInput';
 
 export function CategoryList() {
@@ -117,8 +119,8 @@ export function CategoryList() {
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <CategoryIcon
-                          html={cat.icon}
+                        <ShellIcon
+                          name={cat.symbolName}
                           className={`size-4 shrink-0 [&>svg]:size-4 ${
                             isActive ? 'text-primary' : 'text-muted-foreground'
                           }`}

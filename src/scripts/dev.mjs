@@ -20,7 +20,7 @@ async function startDev() {
   const port = typeof address === 'object' && address ? address.port : 5173;
   const devUrl = `http://localhost:${port}`;
   console.log(`\x1b[36m[Vite HMR]\x1b[0m Dev server active at \x1b[4m${devUrl}\x1b[0m`);
-  console.log(`\x1b[36m[Electron]\x1b[0m Starting electron in development mode...`);
+  console.log(`\x1b[36m[Electron]\x1b[0m Starting electron in development mode`);
 
   const child = spawn(electron, ['.'], {
     stdio: 'inherit',

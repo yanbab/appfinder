@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useShell } from '@/hooks/useShell';
 import { AppIcon } from '@/components/shell/components/AppIcon';
-import { CategoryIcon } from '@/components/shell/components/IconSVG';
+import { ShellIcon } from '@/components/shell/components';
 import { AppItemSlider } from '@/components/shell/components/AppItemSlider';
+
+
 import { getAppName } from '@/hooks/utils';
 import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -26,7 +28,7 @@ export function Discover() {
   // Full skeleton during initial load to completely prevent layout jumping
   if (loading || !featuredItems || featuredItems.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 select-none">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 select-none max-w-[var(--content-max-width)] mx-auto w-full">
         {/* Featured Hero Skeleton */}
         <div className="relative overflow-hidden rounded-[var(--radius-card)] p-6 min-h-[210px] bg-card shadow-2xs flex items-center">
           <div className="flex items-center gap-6 w-full min-w-0">
@@ -87,7 +89,7 @@ export function Discover() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto p-4 space-y-4 max-w-[var(--content-max-width)] mx-auto w-full">
       {/* Featured Carousel Banner */}
       <AppItemSlider />
 
@@ -198,8 +200,8 @@ export function Discover() {
                 onClick={() => selectTab(cat.name)}
                 className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs active:bg-[var(--card-active-bg)] text-left group select-none cursor-default"
               >
-                <CategoryIcon
-                  html={cat.icon}
+                <ShellIcon
+                  name={cat.symbolName}
                   className="size-[18px] shrink-0 text-muted-foreground"
                 />
                 <span className="text-xs font-medium text-foreground truncate">

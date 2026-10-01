@@ -23,7 +23,14 @@ export function AppItemGrid({ item }) {
     <div
       data-token={item.token}
       tabIndex={0}
+      role="button"
       onClick={() => openAppInfo(item)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openAppInfo(item);
+        }
+      }}
       className={`app-card group relative flex items-center gap-2.5 p-2 rounded-[var(--radius-card)] bg-card text-card-foreground border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/50 ${
         isSelected ? 'bg-[var(--card-active-bg)]' : ''
       }`}

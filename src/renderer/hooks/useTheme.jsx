@@ -5,6 +5,8 @@ const ThemeContext = createContext({
   isDark: false,
   accentColor: null,
   isLightAccent: false,
+  isWindowBlurred: false,
+  isResizing: false,
   setTheme: () => { },
 });
 
@@ -27,7 +29,10 @@ export function ThemeProvider({ children }) {
     return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false;
   });
   const [accentColor, setAccentColor] = useState(null);
+  const [isWindowBlurred, setIsWindowBlurred] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
 
+  // System Dark / Light Theme listener
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleMediaChange = (e) => {
@@ -47,6 +52,51 @@ export function ThemeProvider({ children }) {
 
     mediaQuery.addEventListener('change', handleMediaChange);
     return () => mediaQuery.removeEventListener('change', handleMediaChange);
+  }, []);
+
+  // Window focus & blur class on body (macOS vibrancy & active state styling)
+  useEffect(() => {
+    const handleFocus = () => {
+      document.body.classList.remove('window-blurred');
+      setIsWindowBlurred(false);
+    };
+    const handleBlur = () => {
+      document.body.classList.add('window-blurred');
+      setIsWindowBlurred(true);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
+
+    if (!document.hasFocus()) {
+      document.body.classList.add('window-blurred');
+      setIsWindowBlurred(true);
+    }
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, []);
+
+  // Window resize debounce to suppress layout transitions during resize
+  useEffect(() => {
+    let resizeTimer = null;
+    const handleResize = () => {
+      document.body.classList.add('is-resizing');
+      setIsResizing(true);
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        document.body.classList.remove('is-resizing');
+        setIsResizing(false);
+      }, 100);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(resizeTimer);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   // Apply macOS native accent color directly to primary & ring variables
@@ -93,7 +143,7 @@ export function ThemeProvider({ children }) {
   const isLightAccent = accentColor ? getLuminance(accentColor) > 0.40 : false;
 
   return (
-    <ThemeContext.Provider value={{ isDark, accentColor, isLightAccent }}>
+    <ThemeContext.Provider value={{ isDark, accentColor, isLightAccent, isWindowBlurred, isResizing }}>
       {children}
     </ThemeContext.Provider>
   );

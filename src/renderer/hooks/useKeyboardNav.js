@@ -19,6 +19,7 @@ export function useKeyboardNav() {
     loadMore,
     nextSlide,
     prevSlide,
+    setViewMode,
   } = useShell();
 
   useEffect(() => {
@@ -31,6 +32,20 @@ export function useKeyboardNav() {
         document.activeElement?.tagName === 'TEXTAREA' ||
         document.activeElement?.isContentEditable;
       const isSearch = document.activeElement === searchInput;
+
+      // Cmd+9 -> By list, Cmd+0 -> By grid
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) {
+        if (e.key === '9') {
+          e.preventDefault();
+          setViewMode?.('list');
+          return;
+        }
+        if (e.key === '0') {
+          e.preventDefault();
+          setViewMode?.('grid');
+          return;
+        }
+      }
 
       // 1. Cmd+F or Ctrl+F -> Focus search
       if ((e.metaKey || e.ctrlKey) && e.key === 'f') {

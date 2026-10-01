@@ -1,0 +1,53 @@
+import React from 'react';
+import { ShellIcon } from '@/components/shell/components/ShellIcon';
+import { Loader2 } from 'lucide-react';
+
+export function Empty({
+  icon = 'magnifyingglass',
+  title,
+  subtitle,
+  children,
+  className = '',
+  loading = false,
+  ...props
+}) {
+  const isSpinner = loading || icon === 'loader-2' || icon === 'loader' || icon === 'loading';
+
+  return (
+    <div
+      className={`flex-1 flex flex-col items-center justify-center p-8 text-center select-none ${className}`}
+      {...props}
+    >
+      {isSpinner ? (
+        <Loader2 className="size-8 text-primary animate-spin mb-3" />
+      ) : typeof icon === 'string' ? (
+        <ShellIcon
+          name={icon}
+          className="size-16 stroke-[1.25] text-muted-foreground/40 mb-3"
+        />
+      ) : React.isValidElement(icon) ? (
+        <div className="mb-3 text-muted-foreground/40 flex items-center justify-center">
+          {icon}
+        </div>
+      ) : null}
+
+      {title && (
+        <h3 className="font-semibold text-base text-foreground leading-snug">
+          {title}
+        </h3>
+      )}
+
+      {subtitle && (
+        <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
+          {subtitle}
+        </p>
+      )}
+
+      {children && (
+        <div className="mt-4 flex items-center justify-center gap-2">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}

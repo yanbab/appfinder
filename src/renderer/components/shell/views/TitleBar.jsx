@@ -1,8 +1,8 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
-import { Button } from '@/components/ui/button';
+import { ShellButton } from '@/components/shell/components';
 import { ButtonGroup } from '@/components/ui/button-group';
-import { PanelLeft, LayoutGrid, List, RefreshCw } from 'lucide-react';
+import { PanelLeft, LayoutGrid, List } from 'lucide-react';
 
 export function TitleBar() {
   const {
@@ -14,10 +14,6 @@ export function TitleBar() {
     setViewMode,
     toggleSidebar,
     showSidebar,
-    filteredCount,
-    startAction,
-    runningTasks,
-    isRefreshing,
     __,
   } = useShell();
 
@@ -30,23 +26,18 @@ export function TitleBar() {
     return cat ? __(cat.displayName) : __('Explore');
   };
 
-  const isRefreshRunning = Boolean(runningTasks['refresh']) || isRefreshing;
-
   return (
     <header className="app-header h-11 shrink-0 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md select-none [-webkit-app-region:drag] z-10 gap-3 px-3">
       {/* Left section: Sidebar toggle & Title with smooth traffic-light spacer */}
       <div className="flex items-center min-w-0 flex-1 h-full [-webkit-app-region:drag]">
         <div className={`shrink-0 transition-[width] duration-250 ease-out overflow-hidden ${showSidebar ? 'w-0' : 'w-[68px]'}`} />
-        <div className="flex items-center gap-2.5 min-w-0 flex-1 h-full">
-          <Button
-            variant="ghost"
-            size="icon-sm"
+        <div className="flex items-center gap-2 min-w-0 flex-1 h-full">
+          <ShellButton
+            icon={<PanelLeft className="size-[18px]" />}
             onClick={toggleSidebar}
-            className="text-muted-foreground hover:text-foreground cursor-default rounded-[var(--radius-btn)] shrink-0 [-webkit-app-region:no-drag]"
+            className="shrink-0 [-webkit-app-region:no-drag]"
             title={showSidebar ? "Hide Sidebar" : "Show Sidebar"}
-          >
-            <PanelLeft className="size-[18px]" />
-          </Button>
+          />
 
           <h1 className="window-title text-sm font-semibold tracking-tight text-foreground truncate transition-opacity duration-150 [-webkit-app-region:drag] cursor-default select-none">
             {getPageTitle()}
@@ -54,31 +45,8 @@ export function TitleBar() {
         </div>
       </div>
 
-      {/* Right actions: Refresh, Update all, Sort select, View switch */}
-      <div className="flex items-center gap-1 [-webkit-app-region:no-drag]">
-        {currentTab === 'updates' && (
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            disabled={isRefreshRunning}
-            onClick={() => startAction('refresh', 'refresh')}
-            className="text-muted-foreground hover:text-foreground active:text-foreground cursor-default rounded-[var(--radius-btn)]"
-            title={__('Refresh')}
-          >
-            <RefreshCw className={`size-[18px] ${isRefreshRunning ? 'animate-spin' : ''}`} />
-          </Button>
-        )}
-
-        {currentTab === 'updates' && filteredCount >= 2 && (
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => startAction('upgrade-all')}
-            className="px-2.5 text-xs rounded-[var(--radius-btn)] cursor-default mr-1"
-          >
-            <span>{__('Update All')}</span>
-          </Button>
-        )}
+      {/* Right actions: Sort select, View switch */}
+      <div className="flex items-center gap-4 [-webkit-app-region:no-drag]">
 
         {currentTab !== 'discover' && currentTab !== 'updates' && (
           <div className="window-select flex items-center transition-opacity duration-150">
@@ -97,30 +65,18 @@ export function TitleBar() {
 
         {currentTab !== 'discover' && (
           <ButtonGroup className="bg-transparent border-0 shadow-none p-0 gap-0.5">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className={`rounded-[var(--radius-btn)] border-0 shadow-none outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${viewMode === 'list'
-                ? 'text-foreground dark:text-white bg-transparent active:bg-muted/40 font-medium'
-                : 'text-muted-foreground active:text-foreground dark:active:text-white bg-transparent active:bg-muted/40'
-                }`}
+            <ShellButton
+              icon={<List className="size-[18px]" />}
+              active={viewMode === 'list'}
               onClick={() => setViewMode('list')}
               title="List View"
-            >
-              <List className="size-[18px]" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className={`rounded-[var(--radius-btn)] border-0 shadow-none outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${viewMode === 'grid'
-                ? 'text-foreground dark:text-white bg-transparent active:bg-muted/40 font-medium'
-                : 'text-muted-foreground active:text-foreground dark:active:text-white bg-transparent active:bg-muted/40'
-                }`}
+            />
+            <ShellButton
+              icon={<LayoutGrid className="size-[18px]" />}
+              active={viewMode === 'grid'}
               onClick={() => setViewMode('grid')}
               title="Grid View"
-            >
-              <LayoutGrid className="size-[18px]" />
-            </Button>
+            />
           </ButtonGroup>
         )}
       </div>

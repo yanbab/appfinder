@@ -1,27 +1,28 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { useShell } from '@/hooks/useShell';
-import { CategoryList } from '@/components/shell/views/CategoryList';
-import { TitleBar } from '@/components/shell/views/TitleBar';
-import { StatusBar } from '@/components/shell/views/StatusBar';
-import { Console } from '@/components/shell/views/Console';
-import { Discover } from '@/components/shell/pages/Discover';
-import { AppList } from '@/components/shell/pages/AppList';
-import { InfoPanel } from '@/components/shell/views/InfoPanel';
-import { PasswordModal } from '@/components/shell/views/PasswordModal';
+import {
+  CategoryList,
+  TitleBar,
+  StatusBar,
+  InfoPanel,
+  PasswordModal,
+} from '@/components/shell/views';
+import { Discover, AppList, AppListUpdates } from '@/components/shell/pages';
 
 import { useNativeContextMenu } from '@/hooks/useNativeContextMenu';
 import { useKeyboardNav } from '@/hooks/useKeyboardNav';
-import { useWindowBlur } from '@/hooks/useWindowBlur';
-import { useWindowResize } from '@/hooks/useWindowResize';
+
+// Lazy-load terminal drawer with heavy xterm modules
+const Console = lazy(() =>
+  import('@/components/shell/views/Console').then((m) => ({ default: m.Console }))
+);
 
 export function Shell() {
-  const { currentTab, search } = useShell();
+  const { currentTab, search, showTerminal } = useShell();
 
-  // Keyboard navigation, Native context menus, Focus & Resize handlers
+  // Keyboard navigation & Native context menus
   useKeyboardNav();
   useNativeContextMenu();
-  useWindowBlur();
-  useWindowResize();
 
   const isDiscover = currentTab === 'discover' && (!search || !search.trim());
 
@@ -34,12 +35,22 @@ export function Shell() {
       <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative bg-background">
         <TitleBar />
 
-        {/* View Switcher: Discover vs List/Grid */}
-        {isDiscover ? <Discover /> : <AppList />}
+        {/* View Switcher: Discover vs Updates vs List/Grid */}
+        {isDiscover ? (
+          <Discover />
+        ) : currentTab === 'updates' ? (
+          <AppListUpdates />
+        ) : (
+          <AppList />
+        )}
 
         {/* Status Bar acting as Terminal Titlebar & Collapsible Terminal Drawer underneath */}
         <StatusBar />
-        <Console />
+        {showTerminal && (
+          <Suspense fallback={null}>
+            <Console />
+          </Suspense>
+        )}
       </main>
 
       {/* Slide-over Info Drawer */}
