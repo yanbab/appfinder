@@ -25,6 +25,8 @@ const ICON_ALIASES = {
   terminal: 'chevron.left.forwardslash.chevron.right',
   upgrade: 'arrow.triangle.2.circlepath',
   refresh: 'arrow.triangle.2.circlepath',
+  updates: 'arrow.triangle.2.circlepath',
+  'arrow.trianglehead.2.clockwise.rotate.90': 'arrow.triangle.2.circlepath',
   install: 'arrow.down.circle',
   open: 'arrow.up.right.square',
   delete: 'trash',

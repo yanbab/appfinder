@@ -1,8 +1,8 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
 import { AppList } from './AppList';
-import { ShellButton } from '@/components/shell/components';
-import { RefreshCw } from 'lucide-react';
+import { Empty } from './Empty';
+import { ShellButton, ShellIcon } from '@/components/shell/components';
 
 function formatLastChecked(date, __) {
   if (!date) return __('Never');
@@ -45,22 +45,48 @@ export function AppListUpdates() {
   const isRefreshRunning = Boolean(runningTasks['refresh']) || isRefreshing;
   const formattedLastChecked = formatLastChecked(lastCheckedTime, __);
 
+  // If empty and refreshing, show loading spinner state
+  if (filteredCount === 0 && isRefreshRunning) {
+    return <Empty loading />;
+  }
+
+  // If no updates available, show Empty state with refresh button and last check date
+  if (filteredCount === 0) {
+    return (
+      <Empty
+        icon="checkmark"
+        title={__('Up to date')}
+        subtitle={__('All installed casks are updated to their latest versions.')}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <ShellButton
+            disabled={isRefreshRunning}
+            onClick={() => startAction('refresh', 'refresh')}
+            icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className={`size-3.5 ${isRefreshRunning ? 'animate-spin' : ''}`} />}
+          >
+            {__('Refresh')}
+          </ShellButton>
+          <div className="text-xs text-muted-foreground mt-1">
+            {__('Last check :')} <span className="font-medium text-muted-foreground">{formattedLastChecked}</span>
+          </div>
+        </div>
+      </Empty>
+    );
+  }
+
   const header = (
     <div className="flex items-center justify-between select-none">
-      <h2 className="text-base font-semibold text-foreground tracking-tight">
-        {filteredCount > 0
-          ? (filteredCount === 1
-              ? __('1 update available')
-              : (__('%d updates available') || '%d updates available').replace('%d', filteredCount))
-          : __('Updates')}
-      </h2>
+      <h3 className="text-xs font-semibold text-muted-foreground">
+        {filteredCount === 1
+          ? __('1 update available')
+          : (__('%d updates available') || '%d updates available').replace('%d', filteredCount)}
+      </h3>
 
       <div className="flex items-center gap-2">
         <ShellButton
-          variant="outline"
           disabled={isRefreshRunning}
           onClick={() => startAction('refresh', 'refresh')}
-          icon={<RefreshCw className={`size-3.5 ${isRefreshRunning ? 'animate-spin' : ''}`} />}
+          icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className={`size-3.5 ${isRefreshRunning ? 'animate-spin' : ''}`} />}
         >
           {__('Refresh')}
         </ShellButton>
@@ -79,7 +105,7 @@ export function AppListUpdates() {
 
   const footer = (
     <div className="text-center pt-2 pb-3 text-xs text-muted-foreground select-none">
-      {__('Last check :')} <span className="font-medium text-foreground/80">{formattedLastChecked}</span>
+      {__('Last check :')} {formattedLastChecked}
     </div>
   );
 
@@ -88,3 +114,4 @@ export function AppListUpdates() {
 
 // Backward-compatible alias
 export const AppListUpdatesView = AppListUpdates;
+export default AppListUpdates;

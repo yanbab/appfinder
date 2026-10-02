@@ -36,7 +36,7 @@ function createShellWindow() {
         autoHideMenuBar: true,
         backgroundColor: '#00000000',
         titleBarStyle: 'hidden',
-        trafficLightPosition: { x: 15, y: 15 },
+        trafficLightPosition: { x: 16, y: 16 },
         vibrancy: 'sidebar',
         show: false,
         frame: false,

@@ -66,8 +66,8 @@ contextBridge.exposeInMainWorld('ipc', {
   getCasks: () => invoke('cask:get-data'),
   getCategories: () => invoke('cask:get-categories'),
   getCaskInfo: (token) => invoke('cask:get-info', token),
-  getCaskSizes: (token) => invoke('cask:get-sizes', token),
   getInstalled: () => invoke('cask:get-installed'),
+
   getUpdates: (force = false) => invoke('cask:get-updates', force),
   getTranslations: () => invoke('i18n:get-catalog'),
   getAvailableLocales: () => invoke('i18n:get-locales'),

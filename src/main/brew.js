@@ -2,7 +2,7 @@ const { execFile } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs');
 const path = require('path');
-const ptyRunner = require('../pty');
+const ptyRunner = require('./pty');
 
 const execFileAsync = promisify(execFile);
 
@@ -13,7 +13,7 @@ const CACHE_DIR = path.join(process.env.HOME || '', '.config', 'appfinder');
 const UPDATES_CACHE_FILE = path.join(CACHE_DIR, 'updates.json');
 const UPDATES_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
+const DATA_DIR = path.join(__dirname, '..', '..', 'data');
 
 function getData(file) {
   try {
@@ -167,6 +167,31 @@ async function fetchCaskJson(token) {
   }
 }
 
+async function getCaskInfo(token) {
+  if (!token || typeof token !== 'string') return null;
+  const sanitized = token.replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!sanitized) return null;
+
+  let cask = getCachedCaskInfo(sanitized);
+  if (!cask) {
+    cask = await fetchCaskJson(sanitized);
+    if (cask) {
+      setCachedCaskInfo(sanitized, cask);
+    }
+  }
+  return cask;
+}
+
+async function launchApp(appName) {
+  try {
+    await execFileAsync('/usr/bin/open', ['-a', appName]);
+    return { success: true };
+  } catch (err) {
+    console.error(`Failed to launch app "${appName}":`, err.message);
+    return { success: false, error: err.message };
+  }
+}
+
 async function cleanCache() {
   try {
     const stdout = await runBrew(['cleanup', '--prune=all']);
@@ -179,8 +204,10 @@ async function cleanCache() {
 /**
  * Executes a Homebrew action (install, upgrade, uninstall, refresh, cleanup) via PTY runner
  */
-function runAction({ taskId, action, token, zap }, callbacks = {}) {
-  const { onLog, onComplete, onRefreshUpdates } = callbacks;
+function runAction(data, callbacks = {}) {
+  const cbs = typeof callbacks === 'function' ? { onComplete: callbacks } : (callbacks || {});
+  const { onLog, onComplete, onRefreshUpdates } = cbs;
+  const { taskId, action, token, zap } = data || {};
 
   const actions = {
     install: ['install', '--force', '--cask', token],
@@ -207,8 +234,12 @@ function runAction({ taskId, action, token, zap }, callbacks = {}) {
     {
       onLog,
       onComplete: ({ taskId: tid, code, error, cancelled }) => {
-        if (code === 0 && action === 'refresh' && typeof onRefreshUpdates === 'function') {
-          onRefreshUpdates().catch(() => { });
+        if (code === 0 && action === 'refresh') {
+          if (typeof onRefreshUpdates === 'function') {
+            onRefreshUpdates().catch(() => { });
+          } else {
+            getUpdates(true).catch(() => { });
+          }
         }
         onComplete?.({ taskId: tid, code, error, cancelled });
       }
@@ -236,6 +267,8 @@ module.exports = {
   getCachedCaskInfo,
   setCachedCaskInfo,
   fetchCaskJson,
+  getCaskInfo,
+  launchApp,
   cleanCache,
   runAction,
   cancelAction,

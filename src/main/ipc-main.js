@@ -1,8 +1,6 @@
-// Main IPC
-
 const { ipcMain, shell, dialog, systemPreferences, app, BrowserWindow, nativeImage } = require('electron');
 const i18n = require('./i18n');
-const Backend = require('../backend');
+const Backend = require('./brew');
 const { getConfig, updateConfig } = require('./config');
 const { createSettingsWindow } = require('./window-settings');
 
@@ -25,8 +23,9 @@ function setupIpcMain() {
   }));
   ipcMain.handle('cask:get-updates', async (_, force) => Backend.getUpdates(force));
   ipcMain.handle('cask:get-info', async (_, token) => Backend.getCaskInfo(token));
-  ipcMain.handle('cask:get-sizes', async (_, token) => Backend.getCaskSizesByToken(token));
-  ipcMain.handle('cask:open', async (_, token, appName) => Backend.openApp(token, appName));
+  ipcMain.handle('cask:open', async (_, token, appName) => Backend.launchApp(appName || token));
+
+
 
   ipcMain.on('cask:run-action', (event, data) => {
     Backend.runAction(data, {

@@ -1,6 +1,6 @@
 import React, { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import "./index.css";
+import "./styles/index.css";
 import { ThemeProvider } from "@/hooks/useTheme.jsx";
 import { ShellProvider } from "@/hooks/useShell.jsx";
 

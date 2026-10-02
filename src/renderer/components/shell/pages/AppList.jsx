@@ -33,13 +33,7 @@ export function AppList({ header, footer }) {
   }
 
   if (filteredCount === 0) {
-    return currentTab === 'updates' && updatesCount === 0 ? (
-      <Empty
-        icon="checkmark"
-        title={__('Up to date')}
-        subtitle={__('All installed casks are updated to their latest versions.')}
-      />
-    ) : (
+    return (
       <Empty
         icon="magnifyingglass"
         title={__('No casks found')}

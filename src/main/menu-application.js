@@ -57,7 +57,6 @@ function setupApplicationMenu() {
       label: app.name,
       submenu: [
         { role: 'about', label: __('About %s', app.name) },
-
         { type: 'separator' },
         {
           label: __('Settings...'),
@@ -75,12 +74,14 @@ function setupApplicationMenu() {
       ]
     },
     {
-      role: 'fileMenu', label: __("File"),
+      role: 'fileMenu',
+      label: __('File'),
       submenu: [
         { role: 'close', label: __('Close Window') }
       ]
     },
     {
+      role: 'editMenu',
       label: __('Edit'),
       submenu: [
         { role: 'undo', label: __('Undo') },
@@ -89,14 +90,31 @@ function setupApplicationMenu() {
         { role: 'cut', label: __('Cut') },
         { role: 'copy', label: __('Copy') },
         { role: 'paste', label: __('Paste') },
-        { type: 'separator' },
-        { role: 'selectAll', label: __('Select All') },
+        { role: 'pasteAndMatchStyle', label: __('Paste and Match Style') },
+        { role: 'delete', label: __('Delete') },
+        { role: 'selectAll', label: __('Select All') }
       ]
     },
     {
+      role: 'viewMenu',
       label: __('View'),
-
       submenu: [
+        {
+          label: __('as Icons'),
+          accelerator: 'CmdOrCtrl+1',
+          click: () => sendToShell('shell:set-view-mode', 'grid')
+        },
+        {
+          label: __('as List'),
+          accelerator: 'CmdOrCtrl+2',
+          click: () => sendToShell('shell:set-view-mode', 'list')
+        },
+        {
+          label: __('as Gallery'),
+          accelerator: 'CmdOrCtrl+3',
+          click: () => sendToShell('shell:set-view-mode', 'gallery')
+        },
+        { type: 'separator' },
         {
           label: __('Search'),
           accelerator: 'CmdOrCtrl+F',
@@ -105,34 +123,23 @@ function setupApplicationMenu() {
         { type: 'separator' },
         {
           label: __('Explore'),
-          accelerator: 'Cmd+1',
+          accelerator: 'Option+Cmd+1',
           click: () => sendToShell('shell:select-tab', 'discover')
         },
         {
           label: __('All Apps'),
-          accelerator: 'CmdOrCtrl+2',
+          accelerator: 'Option+Cmd+2',
           click: () => sendToShell('shell:select-tab', 'all-apps')
         },
         {
           label: __('Installed'),
-          accelerator: 'CmdOrCtrl+3',
+          accelerator: 'Option+Cmd+3',
           click: () => sendToShell('shell:select-tab', 'installed')
         },
         {
           label: __('Updates'),
-          accelerator: 'CmdOrCtrl+4',
+          accelerator: 'Option+Cmd+4',
           click: () => sendToShell('shell:select-tab', 'updates')
-        },
-        { type: 'separator' },
-        {
-          label: __('By list'),
-          accelerator: 'CmdOrCtrl+9',
-          click: () => sendToShell('shell:set-view-mode', 'list')
-        },
-        {
-          label: __('By grid'),
-          accelerator: 'CmdOrCtrl+0',
-          click: () => sendToShell('shell:set-view-mode', 'grid')
         },
         { type: 'separator' },
         {
@@ -141,17 +148,17 @@ function setupApplicationMenu() {
             {
               label: __('Popular'),
               click: () => sendToShell('shell:set-order', 'popularity'),
-              accelerator: 'Option+CmdOrCtrl+1'
+              accelerator: 'Control+Option+1'
             },
             {
               label: __('Recent'),
               click: () => sendToShell('shell:set-order', 'date'),
-              accelerator: 'Option+CmdOrCtrl+2'
+              accelerator: 'Control+Option+2'
             },
             {
               label: __('A-Z'),
               click: () => sendToShell('shell:set-order', 'name'),
-              accelerator: 'Option+CmdOrCtrl+3'
+              accelerator: 'Control+Option+3'
             }
           ]
         },
@@ -190,17 +197,20 @@ function setupApplicationMenu() {
           label: __('Check for Updates...'),
           accelerator: 'Option+Cmd+U',
           click: () => sendToShell('shell:check-updates')
-        }
+        },
+        { type: 'separator' },
+        { role: 'reload', label: __('Reload') },
+        { role: 'forceReload', label: __('Force Reload') },
+        { role: 'toggleDevTools', label: __('Toggle Developer Tools') },
+        { type: 'separator' },
+        { role: 'resetZoom', label: __('Actual Size') },
+        { role: 'zoomIn', label: __('Zoom In') },
+        { role: 'zoomOut', label: __('Zoom Out') },
+        { type: 'separator' },
+        { role: 'togglefullscreen', label: __('Toggle Full Screen') }
       ]
     },
-    ...(isDebug ? [{
-      label: __('Debug'),
-      submenu: [
-        { role: 'reload' },
-        { role: 'toggleDevTools' }
-      ]
-    }] : []),
-    { role: 'windowMenu', label: __("Window") },
+    { role: 'windowMenu', label: __('Window') },
     {
       role: 'help',
       label: __('Help'),

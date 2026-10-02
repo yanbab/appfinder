@@ -1,7 +1,6 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
 import { ShellButton } from '@/components/shell/components';
-import { ButtonGroup } from '@/components/ui/button-group';
 import { PanelLeft, LayoutGrid, List } from 'lucide-react';
 
 export function TitleBar() {
@@ -46,7 +45,7 @@ export function TitleBar() {
       </div>
 
       {/* Right actions: Sort select, View switch */}
-      <div className="flex items-center gap-4 [-webkit-app-region:no-drag]">
+      <div className="flex items-center gap-3 [-webkit-app-region:no-drag]">
 
         {currentTab !== 'discover' && currentTab !== 'updates' && (
           <div className="window-select flex items-center transition-opacity duration-150">
@@ -64,7 +63,7 @@ export function TitleBar() {
         )}
 
         {currentTab !== 'discover' && (
-          <ButtonGroup className="bg-transparent border-0 shadow-none p-0 gap-0.5">
+          <div className="flex items-center gap-0.5">
             <ShellButton
               icon={<List className="size-[18px]" />}
               active={viewMode === 'list'}
@@ -77,7 +76,7 @@ export function TitleBar() {
               onClick={() => setViewMode('grid')}
               title="Grid View"
             />
-          </ButtonGroup>
+          </div>
         )}
       </div>
     </header>

@@ -28,6 +28,20 @@ function setupContextMenu() {
                     click: () => clipboard.writeText(selectedText)
                 });
             }
+            if (linkUrl) {
+                template.push({
+                    label: __('Copy Link'),
+                    click: () => clipboard.writeText(linkUrl)
+                });
+                if (process.platform === 'darwin') {
+                    template.push({
+                        role: 'shareMenu',
+                        sharingItem: {
+                            urls: [linkUrl]
+                        }
+                    });
+                }
+            }
         } else if (type === 'text') {
             template.push({
                 label: __('Copy'),
@@ -41,7 +55,7 @@ function setupContextMenu() {
                 }
             });
         } else if (type === 'app' && appInfo) {
-            const { token, app, homepage, isInstalled, isOutdated, isRunning } = appInfo;
+            const { token, app, homepage, isInstalled, isOutdated, isRunning, name } = appInfo;
 
             if (isRunning) {
                 template.push({
@@ -80,6 +94,15 @@ function setupContextMenu() {
                         label: __('Website'),
                         click: () => shell.openExternal(homepage)
                     });
+                    if (process.platform === 'darwin') {
+                        template.push({
+                            role: 'shareMenu',
+                            sharingItem: {
+                                urls: [homepage],
+                                texts: [name || app || token]
+                            }
+                        });
+                    }
                 }
             }
         } else {

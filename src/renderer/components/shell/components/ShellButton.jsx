@@ -12,6 +12,7 @@ export function ShellButton({
   tooltip,
   variant,
   size,
+  badge,
   className,
   active,
   selected,
@@ -26,14 +27,51 @@ export function ShellButton({
   }
 
   const content = children || text;
-  const isIconOnly = Boolean(icon && !content);
-  const isBoth = Boolean(icon && content);
-  const isTextOnly = Boolean(!icon && content);
+  const isSelected = Boolean(active || selected);
 
   const rawTitle = title || tooltip;
   const resolvedTitle = rawTitle
     ? (typeof rawTitle === 'string' ? __(rawTitle) : rawTitle)
     : undefined;
+
+  // Dedicated sidebar button implementation
+  if (variant === 'sidebar') {
+    const hasBadge = badge !== null && badge !== undefined && badge !== false && badge !== 0;
+    return (
+      <button
+        type="button"
+        title={resolvedTitle}
+        className={cn(
+          "sidebar-nav-button",
+          isSelected && "active",
+          className
+        )}
+        {...props}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          {icon && (
+            <span className="sidebar-icon inline-flex items-center justify-center shrink-0">
+              {icon}
+            </span>
+          )}
+          {content && (
+            <span className="truncate">
+              {typeof content === 'string' ? __(content) : content}
+            </span>
+          )}
+        </div>
+        {hasBadge && (
+          <span className="sidebar-badge shrink-0">
+            {badge}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  const isIconOnly = Boolean(icon && !content);
+  const isBoth = Boolean(icon && content);
+  const isTextOnly = Boolean(!icon && content);
 
   let resolvedVariant = variant;
   let resolvedSize = size;
@@ -53,7 +91,7 @@ export function ShellButton({
     ? "text-muted-foreground hover:text-foreground active:text-foreground dark:hover:text-white dark:active:text-white hover:bg-black/[0.08] active:bg-black/[0.14] dark:hover:bg-white/[0.14] dark:active:bg-white/[0.22] transition-colors"
     : "";
 
-  const activeStyles = (active || selected)
+  const activeStyles = isSelected
     ? "bg-black/[0.09] dark:bg-white/[0.18] text-foreground dark:text-white font-medium shadow-none"
     : "";
 

@@ -1,17 +1,14 @@
 #!/usr/bin/env node
 
 const path = require('path');
-const backend = require('../backend');
+const backend = require('../main/brew');
 
 function printHelp() {
   console.log(`
 AppFinder CLI - Command Line Interface for AppFinder Backend
 
 Usage:
-  appfinder [backend] <command> [arguments]
-
-Backends:
-  brew (default: ${backend.name})
+  appfinder <command> [arguments]
 
 Queries (Outputs JSON):
   apps, getApps                   List all catalog applications
@@ -19,9 +16,8 @@ Queries (Outputs JSON):
   installed, getInstalled         List installed applications & versions
   updates, getUpdates [--force]   List available application updates
   info, getInfo <token>           Get metadata for a specific application
-  sizes, getSizes <token>         Get size information (download, installed, data)
-  find, findPath <token>          Find installed application path on disk
-  open <token>                    Launch an application
+  open <appName>                  Launch an application
+
   cleanCache                      Clean package manager caches
 
 Actions (Direct terminal I/O & interactive PTY):
@@ -46,16 +42,7 @@ async function main() {
     process.exit(0);
   }
 
-  let backendName = backend.name;
   let args = [...rawArgs];
-
-  const availableBackends = Object.keys(backend.backends || {});
-  if (availableBackends.includes(args[0].toLowerCase())) {
-    backendName = args[0].toLowerCase();
-    args = args.slice(1);
-  }
-
-  const selectedBackend = backend.backends[backendName] || backend;
   const command = (args[0] || '').toLowerCase();
   const cmdArgs = args.slice(1);
 
@@ -81,7 +68,7 @@ async function main() {
 
     case 'installed':
     case 'getinstalled': {
-      const installed = await selectedBackend.getInstalled((msg) => {
+      const installed = await backend.getInstalled((msg) => {
         if (process.stderr.isTTY) {
           process.stderr.write(`${msg}\n`);
         }
@@ -93,7 +80,7 @@ async function main() {
     case 'updates':
     case 'getupdates': {
       const force = cmdArgs.includes('--force') || cmdArgs.includes('-f');
-      const updates = await selectedBackend.getUpdates(force);
+      const updates = await backend.getUpdates(force);
       console.log(JSON.stringify(updates, null, 2));
       break;
     }
@@ -106,49 +93,25 @@ async function main() {
         console.error(JSON.stringify({ error: 'Token required. Example: appfinder info <token>' }, null, 2));
         process.exit(1);
       }
-      const info = await selectedBackend.getCaskInfo(token);
+      const info = await backend.getCaskInfo(token);
       console.log(JSON.stringify(info, null, 2));
       break;
     }
 
-    case 'sizes':
-    case 'getsizes':
-    case 'getcasksizes': {
-      const token = cmdArgs[0];
-      if (!token) {
-        console.error(JSON.stringify({ error: 'Token required. Example: appfinder sizes <token>' }, null, 2));
-        process.exit(1);
-      }
-      const sizes = await selectedBackend.getCaskSizesByToken(token);
-      console.log(JSON.stringify(sizes, null, 2));
-      break;
-    }
-
-    case 'find':
-    case 'findpath': {
-      const token = cmdArgs[0];
-      if (!token) {
-        console.error(JSON.stringify({ error: 'Token required. Example: appfinder find <token>' }, null, 2));
-        process.exit(1);
-      }
-      const foundPath = selectedBackend.findInstalledAppPath(token);
-      console.log(JSON.stringify({ token, path: foundPath }, null, 2));
-      break;
-    }
-
     case 'open': {
-      const token = cmdArgs[0];
-      if (!token) {
-        console.error(JSON.stringify({ error: 'Token required. Example: appfinder open <token>' }, null, 2));
+      const appName = cmdArgs[0];
+      if (!appName) {
+        console.error(JSON.stringify({ error: 'App name required. Example: appfinder open <appName>' }, null, 2));
         process.exit(1);
       }
-      const result = await selectedBackend.openApp(token);
+      const result = await backend.launchApp(appName);
       console.log(JSON.stringify(result, null, 2));
       break;
     }
 
+
     case 'cleancache': {
-      const result = await selectedBackend.cleanCache();
+      const result = await backend.cleanCache();
       console.log(JSON.stringify(result, null, 2));
       break;
     }
@@ -174,16 +137,16 @@ async function main() {
         process.stdin.on('data', (chunk) => {
           const str = chunk.toString();
           if (str === '\u0003') { // Handle Ctrl+C gracefully
-            selectedBackend.cancelAction(taskId, () => {
+            backend.cancelAction(taskId, () => {
               process.exit(130);
             });
           } else {
-            selectedBackend.writePtyInput(taskId, str);
+            backend.writePtyInput(taskId, str);
           }
         });
       }
 
-      selectedBackend.runAction(
+      backend.runAction(
         { taskId, action: command, token, zap },
         {
           onLog: ({ text }) => {

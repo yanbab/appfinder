@@ -2,7 +2,6 @@ import React from 'react';
 import { useShell } from '@/hooks/useShell';
 import { AppIcon, ShellButton, ShellIcon } from '@/components/shell/components';
 
-
 import {
   Drawer,
   DrawerContent,
@@ -17,7 +16,7 @@ import {
   getCaskRequirements,
   isRequirementMet,
 } from '@/hooks/utils';
-import { X, ExternalLink, AlertTriangle, Check, Loader2, ArrowDown, RefreshCw } from 'lucide-react';
+import { X, ExternalLink, AlertTriangle, Check, Loader2, ArrowDown } from 'lucide-react';
 
 export function InfoPanel() {
   const {
@@ -25,7 +24,6 @@ export function InfoPanel() {
     closeAppInfo,
     appDetails,
     loadingAppDetails,
-    loadingSizes,
     installed,
     installedVersions,
     outdatedMap,
@@ -121,11 +119,15 @@ export function InfoPanel() {
                   {selectedApp.desc}
                 </DrawerDescription>
               )}
-              {latestVersion && (
+              {isOutdated && installedVersion && latestVersion && installedVersion !== latestVersion ? (
+                <div className="text-xs text-muted-foreground font-normal">
+                  {__('Version')} {formatVersion(installedVersion)} → {formatVersion(latestVersion)}
+                </div>
+              ) : latestVersion ? (
                 <div className="text-xs text-muted-foreground font-normal">
                   {__('Version')} {formatVersion(latestVersion)}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -262,62 +264,6 @@ export function InfoPanel() {
                 <span className="text-muted-foreground">{__('Added')}</span>
                 <span className="text-foreground">{formatDate(selectedApp.added, __)}</span>
               </div>
-            )}
-          </div>
-
-          {/* Storage & Usage Section in Card */}
-          <div className="border border-[var(--card-border)] rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
-            {isInstalled && (
-              <div className="flex items-center justify-between py-0.5">
-                <span className="text-muted-foreground">{__('Installed Version')}</span>
-                <div className="flex items-center gap-1 text-foreground">
-                  {isOutdated ? (
-                    <RefreshCw className="size-3 text-amber-500 shrink-0" />
-                  ) : (
-                    <Check className="size-3 text-emerald-500 shrink-0" />
-                  )}
-                  <span>{formatVersion(installedVersion)}</span>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Download Size')}</span>
-              <span className="text-foreground">
-                {loadingSizes ? '...' : (appDetails?.downloadSize || '—')}
-              </span>
-            </div>
-
-            {isInstalled && (
-              <>
-                <div className="flex items-center justify-between py-0.5">
-                  <span className="text-muted-foreground">{__('Installed Size')}</span>
-                  <span className="text-foreground">
-                    {loadingSizes ? '...' : (appDetails?.installedSize || '—')}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-0.5">
-                  <span className="text-muted-foreground">{__('Data Size')}</span>
-                  <span className="text-foreground">
-                    {loadingSizes ? '...' : (appDetails?.dataSize || '—')}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-0.5">
-                  <span className="text-muted-foreground">{__('Installed')}</span>
-                  <span className="text-foreground">
-                    {loadingAppDetails ? '...' : (appDetails?.installedDate ? formatDate(appDetails.installedDate, __) : '—')}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-0.5">
-                  <span className="text-muted-foreground">{__('Last Opened')}</span>
-                  <span className="text-foreground">
-                    {loadingAppDetails ? '...' : (appDetails?.lastOpenedDate ? formatDate(appDetails.lastOpenedDate, __) : '—')}
-                  </span>
-                </div>
-              </>
             )}
           </div>
 

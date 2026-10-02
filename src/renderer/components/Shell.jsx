@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { useShell } from '@/hooks/useShell';
 import {
-  CategoryList,
+  Sidebar,
   TitleBar,
   StatusBar,
   InfoPanel,
@@ -29,7 +29,7 @@ export function Shell() {
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-transparent text-foreground font-sans select-none antialiased">
       {/* Full-height Sidebar with macOS Vibrancy */}
-      <CategoryList />
+      <Sidebar />
 
       {/* Main Content Column */}
       <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative bg-background">

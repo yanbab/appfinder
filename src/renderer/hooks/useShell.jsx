@@ -17,12 +17,11 @@ export function ShellProvider({ children }) {
   const [showDrawer, setShowDrawer] = useState(false);
   const [alwaysShowStatusBar, setAlwaysShowStatusBar] = useState(false);
 
-  // App Selection & Details
   const [selectedApp, setSelectedApp] = useState(null);
   const [appDetails, setAppDetails] = useState(null);
   const [loadingAppDetails, setLoadingAppDetails] = useState(false);
-  const [loadingSizes, setLoadingSizes] = useState(false);
   const infoCache = useRef(new Map());
+
 
   // Data & Collections
   const [items, setItems] = useState([]);
@@ -137,33 +136,21 @@ export function ShellProvider({ children }) {
     if (cached) {
       setAppDetails(cached);
       setLoadingAppDetails(false);
-      setLoadingSizes(cached.downloadSize === undefined);
     } else {
       setAppDetails(null);
       setLoadingAppDetails(true);
-      setLoadingSizes(true);
 
       window.ipc?.getCaskInfo?.(token).then(details => {
-        const current = infoCache.current.get(token) || {};
-        const merged = { ...current, ...details };
-        infoCache.current.set(token, merged);
-        setAppDetails(prev => (item.token === token ? merged : prev));
+        if (details) {
+          infoCache.current.set(token, details);
+          setAppDetails(prev => (item.token === token ? details : prev));
+        }
       }).finally(() => {
         setLoadingAppDetails(false);
       });
     }
-
-    window.ipc?.getCaskSizes?.(token).then(sizes => {
-      if (sizes) {
-        const current = infoCache.current.get(token) || {};
-        const merged = { ...current, ...sizes };
-        infoCache.current.set(token, merged);
-        setAppDetails(prev => (item.token === token ? merged : prev));
-      }
-    }).finally(() => {
-      setLoadingSizes(false);
-    });
   }, []);
+
 
   const closeAppInfo = useCallback(() => {
     setSelectedApp(null);
@@ -860,9 +847,9 @@ export function ShellProvider({ children }) {
     selectedApp,
     appDetails,
     loadingAppDetails,
-    loadingSizes,
     openAppInfo,
     closeAppInfo,
+
 
     // Collections
     items,
