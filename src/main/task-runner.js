@@ -1,22 +1,10 @@
-const { spawn } = require('child_process');
-const fs = require('fs');
+const pty = require('./pseudo-pty');
 const { TerminalBuffer } = require('./terminal-buffer');
 
 const activeTasks = new Map();
 
 /**
- * Resolves default shell available on macOS / Linux
- * @returns {string}
- */
-function getDefaultShell() {
-  if (fs.existsSync('/bin/zsh')) return '/bin/zsh';
-  if (fs.existsSync('/bin/bash')) return '/bin/bash';
-  return '/bin/sh';
-}
-
-/**
- * Runs a command using macOS /usr/bin/script (allocates pseudo-terminal for authentic TTY progress)
- * with direct streaming output.
+ * Runs a command using pseudo-terminal wrapper with streaming output into TerminalBuffer.
  *
  * @param {object} options
  * @param {string} options.taskId - Unique task identifier
@@ -25,57 +13,33 @@ function getDefaultShell() {
  * @param {string} [options.cwd] - Working directory
  * @param {object} [options.env] - Environment variables
  * @param {object} [callbacks]
- * @param {Function} [callbacks.onLog] - Log callback ({ taskId, type, text })
+ * @param {Function} [callbacks.onLog] - Log callback ({ taskId, type, text, line, raw })
  * @param {Function} [callbacks.onComplete] - Completion callback ({ taskId, code, error, cancelled })
  */
 function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callbacks = {}) {
   const { onLog, onComplete } = callbacks;
 
-  const resolvedCwd = cwd || (fs.existsSync(process.env.HOME || '') ? process.env.HOME : '/tmp');
-  const resolvedEnv = {
-    TERM: 'xterm-256color',
-    COLUMNS: '80',
-    LINES: '24',
-    ...(env || process.env)
-  };
-
-  const useScript = process.platform === 'darwin' && fs.existsSync('/usr/bin/script');
-
   const [execCmd, execArgs] = Array.isArray(args)
     ? [command, args]
-    : [shell || getDefaultShell(), shellArgs || ['-l', '-c', command]];
+    : [shell || pty.getDefaultShell(), shellArgs || ['-l', '-c', command]];
 
-  console.log(`[MAIN TASK-RUNNER (${taskId})]:`, useScript ? 'SCRIPT' : 'DIRECT', execCmd, execArgs);
+  console.log(`[MAIN TASK-RUNNER (${taskId})]:`, execCmd, execArgs);
 
-  const child = useScript
-    ? spawn('/usr/bin/script', [
-        '-q', '-t', '0', '/dev/null',
-        '/bin/sh', '-c', 'stty rows 24 cols 80 2>/dev/null; exec "$@"', '--',
-        execCmd, ...execArgs
-      ], { cwd: resolvedCwd, env: resolvedEnv, stdio: ['pipe', 'pipe', 'pipe'] })
-    : spawn(execCmd, execArgs, { cwd: resolvedCwd, env: resolvedEnv, stdio: ['pipe', 'pipe', 'pipe'] });
+  const term = pty.spawn(execCmd, execArgs, {
+    cwd,
+    env,
+    cols: 80,
+    rows: 24
+  });
 
   const buffer = new TerminalBuffer();
 
-  const handleStdout = (chunk) => {
-    let raw = chunk.toString().replace(/^\x04\s*/, '');
+  term.onData((raw) => {
     if (raw) {
       const { line, text } = buffer.write(raw);
       onLog?.({ taskId, type: 'stdout', text, line, raw });
     }
-  };
-
-  const handleStderr = (chunk) => {
-    let raw = chunk.toString().replace(/^\x04\s*/, '');
-    if (raw) {
-      console.error(`[MAIN TASK-RUNNER STDERR (${taskId})]:`, JSON.stringify(raw));
-      const { line, text } = buffer.write(raw);
-      onLog?.({ taskId, type: 'stderr', text, line, raw });
-    }
-  };
-
-  if (child.stdout) child.stdout.on('data', handleStdout);
-  if (child.stderr) child.stderr.on('data', handleStderr);
+  });
 
   let finished = false;
   const finish = (code, error = null, cancelled = false) => {
@@ -86,26 +50,19 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
     onComplete?.({ taskId, code: code ?? 0, error, cancelled });
   };
 
-  child.on('error', (err) => {
+  term.on('error', (err) => {
     console.error(`[MAIN TASK-RUNNER CHILD ERROR (${taskId})]:`, err);
     finish(1, err.message);
   });
-  child.on('close', (code) => finish(code ?? 0));
+
+  term.onExit(({ exitCode }) => {
+    finish(exitCode ?? 0);
+  });
 
   activeTasks.set(taskId, {
-    child,
-    write: (data) => {
-      try {
-        if (child.stdin && !child.stdin.destroyed) {
-          child.stdin.write(data);
-        }
-      } catch (_) {}
-    },
-    kill: (signal = 'SIGTERM') => {
-      try {
-        child.kill(signal);
-      } catch (_) {}
-    }
+    pty: term,
+    write: (data) => term.write(data),
+    kill: (signal = 'SIGTERM') => term.kill(signal)
   });
 }
 
@@ -138,5 +95,5 @@ module.exports = {
   cancelTask,
   writeTaskInput,
   isTaskActive,
-  getDefaultShell
+  getDefaultShell: pty.getDefaultShell
 };

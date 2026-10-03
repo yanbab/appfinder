@@ -79,9 +79,16 @@ class TerminalBuffer {
       }
     }
 
-    const activeLine = (this.currentLine || (this.lines.length > 0 ? this.lines[this.lines.length - 1] : ''))
-      .replace(/\s+/g, ' ')
-      .trim();
+    let rawLine = this.currentLine;
+    if (!rawLine || !rawLine.trim()) {
+      for (let j = this.lines.length - 1; j >= 0; j--) {
+        if (this.lines[j] && this.lines[j].trim()) {
+          rawLine = this.lines[j];
+          break;
+        }
+      }
+    }
+    const activeLine = (rawLine || '').trimEnd();
 
     return {
       line: activeLine,

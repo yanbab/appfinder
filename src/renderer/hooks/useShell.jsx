@@ -250,6 +250,7 @@ export function ShellProvider({ children }) {
     }
 
     if (action === 'refresh' || action === 'cleanup') {
+      clearTerminal();
       const taskId = `cask-${action}-${Date.now()}`;
       setActiveTaskId(taskId);
       setActiveTaskToken(action);
@@ -731,10 +732,13 @@ export function ShellProvider({ children }) {
         const isSuccess = data.code === 0;
         const isCancelled = data.cancelled;
 
-        terminalLogSubscribers.current.forEach(cb => {
-          if (isCancelled) cb('\r\n\x1b[31mProcess cancelled by user.\x1b[0m\r\n');
-          else if (!isSuccess) cb(`\r\n\x1b[31mProcess failed with exit code: ${data.code}\x1b[0m\r\n`);
-        });
+        const exitMsg = isCancelled
+          ? '\r\n\x1b[31mProcess cancelled by user.\x1b[0m\r\n'
+          : (!isSuccess ? `\r\n\x1b[31mProcess failed with exit code: ${data.code}\x1b[0m\r\n` : '');
+        if (exitMsg) {
+          terminalHistoryRef.current += exitMsg;
+          terminalLogSubscribers.current.forEach(cb => cb(terminalHistoryRef.current));
+        }
 
         if (!isSuccess && !isCancelled) {
           const cask = items.find(c => c.token === finishedToken);

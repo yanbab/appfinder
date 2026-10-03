@@ -26,7 +26,7 @@ export function StatusBar() {
           <>
             <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
             {drawerTitle && (
-              <span className="truncate text-[11px] font-mono text-foreground/80">{drawerTitle}</span>
+              <span className="overflow-hidden text-ellipsis whitespace-pre text-[11px] font-mono text-foreground/80">{drawerTitle}</span>
             )}
           </>
         )}
