@@ -236,79 +236,69 @@ export function extractProgress(text) {
       continue;
     }
 
-    // 1. Extracting cask / artifact / archive / sizes
-    if (/extracting/i.test(line) || (isExtractingContext && /\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?)/i.test(line))) {
-      const sizeMatch = line.match(/(\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?))/i);
-      if (sizeMatch) {
-        return { message: `Extracting ${sizeMatch[1]}`, percent: null };
-      }
-      const match = line.match(/^(?:==>\s*)?Extracting(?:\s+cask|\s+artifact)?:\s*(.*)/i);
-      const item = match && match[1] ? match[1].split(/[/\\]/).pop().trim() : '';
-      return { message: item ? `Extracting ${item}` : 'Extracting...', percent: null };
+    // 1. Raw sequential hash/bytes progress line: e.g. "### 23M/24M", "### 45.2%", "#################"
+    if (line.startsWith('#')) {
+      return { message: line };
     }
 
     // 2. Download progress with bytes / percentage: e.g. "12.5MB / 50.0MB", "34.2%"
-    const percentMatch = line.match(/(?:#+\s*)?(\d{1,3}(?:\.\d+)?%)/);
+    const percentMatch = line.match(/(\d{1,3}(?:\.\d+)?%)/);
     const byteRangeMatch = line.match(/(\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?))\s*(?:\/|of)\s*(\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?))/i);
     if (byteRangeMatch || percentMatch) {
-      const parts = [];
-      let percentVal = null;
-      if (byteRangeMatch) {
-        const current = byteRangeMatch[1].replace(/\s+/g, '').toLowerCase();
-        const total = byteRangeMatch[2].replace(/\s+/g, '').toLowerCase();
-        if (current === total) {
-          parts.push(byteRangeMatch[2]);
-        } else {
-          parts.push(`${byteRangeMatch[1]} / ${byteRangeMatch[2]}`);
-        }
-      }
-      if (percentMatch) {
-        parts.push(percentMatch[1]);
-        percentVal = parseFloat(percentMatch[1]);
-      }
-      return { message: `Downloading: ${parts.join(' ')}`, percent: percentVal };
+      return { message: line };
     }
 
-    // 3. Direct downloading URL / source
+    // 3. Extracting cask / artifact / archive / sizes
+    if (/extracting/i.test(line) || (isExtractingContext && /\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?)/i.test(line))) {
+      const sizeMatch = line.match(/(\d+(?:\.\d+)?\s*(?:[KMGT]?B|bytes?))/i);
+      if (sizeMatch) {
+        return { message: `Extracting ${sizeMatch[1]}` };
+      }
+      const match = line.match(/^(?:==>\s*)?Extracting(?:\s+cask|\s+artifact)?:\s*(.*)/i);
+      const item = match && match[1] ? match[1].split(/[/\\]/).pop().trim() : '';
+      return { message: item ? `Extracting ${item}` : 'Extracting...' };
+    }
+
+    // 4. Direct downloading URL / source
     if (/^==>\s*Downloading\s+(https?:\/\/|from)/i.test(line) || /^Downloading\s+(https?:\/\/|from)/i.test(line)) {
-      return { message: 'Downloading...', percent: null };
+      return { message: 'Downloading...' };
     }
 
-    // 4. Verifying checksum
+    // 5. Verifying checksum
     if (/verifying.*checksum/i.test(line)) {
-      return { message: 'Verifying checksum...', percent: null };
+      return { message: 'Verifying checksum...' };
     }
 
-    // 5. Moving App / Linking / Backing up
+    // 6. Moving App / Linking / Backing up
     const moveMatch = line.match(/Moving App '([^']+)'/i) || line.match(/Moving (?:Binary|Artifact) '([^']+)'/i);
     if (moveMatch) {
-      return { message: `Installing ${moveMatch[1]}`, percent: null };
+      return { message: `Installing ${moveMatch[1]}` };
     }
     if (/Linking (?:Binary|Artifact)/i.test(line)) {
-      return { message: 'Linking binaries...', percent: null };
+      return { message: 'Linking binaries...' };
     }
     if (/Backing App/i.test(line)) {
-      return { message: 'Backing up app...', percent: null };
+      return { message: 'Backing up app...' };
     }
 
-    // 6. Running installer / sudo
+    // 7. Running installer / sudo
     if (/Running.*installer/i.test(line)) {
-      return { message: 'Running installer...', percent: null };
+      return { message: 'Running installer...' };
     }
 
-    // 7. General ==> brew messages (strip ==> prefix)
+    // 8. General ==> brew messages (strip ==> prefix)
     if (line.startsWith('==>')) {
       const clean = line.replace(/^==>\s*/, '').replace(/^==\s*/, '').trim();
       if (clean && clean.length > 2 && !clean.startsWith('Caveats')) {
-        return { message: clean, percent: null };
+        return { message: clean };
       }
     }
 
-    // 8. Action verbs
+    // 9. Action verbs
     if (/^(Downloading|Extracting|Installing|Updating|Pouring|Fetching|Upgrading|Running|Executing|Cleaning|Purging)\b/i.test(line)) {
       const clean = line.replace(/^==>\s*/, '').trim();
       if (clean && clean.length > 2) {
-        return { message: clean, percent: null };
+        return { message: clean };
       }
     }
   }

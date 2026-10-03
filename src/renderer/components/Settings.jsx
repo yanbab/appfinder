@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 
 export function Settings() {
@@ -145,10 +144,30 @@ export function Settings() {
               {__('Keep the footer bar visible even when idle')}
             </div>
           </div>
-          <Switch
-            checked={alwaysShowStatusBar}
-            onCheckedChange={handleToggleStatusBar}
-          />
+          <div className="inline-flex rounded-md p-0.5 bg-muted border border-border shrink-0">
+            <button
+              type="button"
+              onClick={() => handleToggleStatusBar(false)}
+              className={`px-2.5 py-0.5 text-xs rounded-sm transition-all cursor-default select-none ${
+                !alwaysShowStatusBar
+                  ? 'bg-background text-foreground shadow-2xs font-semibold'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {__('Off')}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleStatusBar(true)}
+              className={`px-2.5 py-0.5 text-xs rounded-sm transition-all cursor-default select-none ${
+                alwaysShowStatusBar
+                  ? 'bg-background text-foreground shadow-2xs font-semibold'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {__('On')}
+            </button>
+          </div>
         </div>
 
         {/* Cleanup Package Manager Cache */}

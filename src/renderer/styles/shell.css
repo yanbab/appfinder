@@ -129,8 +129,16 @@ body {
 }
 
 .sidebar-nav-button:hover {
-  background-color: transparent !important;
+  background-color: rgba(0, 0, 0, 0.05) !important;
   color: var(--sidebar-foreground) !important;
+}
+
+.dark .sidebar-nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.sidebar-nav-button.active:hover {
+  background-color: var(--primary) !important;
 }
 
 .sidebar-nav-button .sidebar-icon {

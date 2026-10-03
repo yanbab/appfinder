@@ -7,7 +7,6 @@ export function StatusBar() {
   const {
     activeTaskId,
     drawerTitle,
-    taskProgressPercent,
     cancelAction,
     showTerminal,
     toggleTerminal,
@@ -28,16 +27,6 @@ export function StatusBar() {
             <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
             {drawerTitle && (
               <span className="truncate font-mono text-xs text-foreground/80">{drawerTitle}</span>
-            )}
-
-            {/* Live download percentage progress bar */}
-            {taskProgressPercent !== null && (
-              <div className="w-16 h-1.5 rounded-full bg-muted/80 overflow-hidden shrink-0 hidden sm:block">
-                <div
-                  className="h-full bg-primary transition-all duration-150 rounded-full"
-                  style={{ width: `${Math.min(100, Math.max(0, taskProgressPercent))}%` }}
-                />
-              </div>
             )}
           </>
         )}

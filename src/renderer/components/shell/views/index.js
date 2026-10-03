@@ -4,3 +4,4 @@ export { Sidebar, CategoryList } from './Sidebar';
 export { InfoPanel, InfoDrawer } from './InfoPanel';
 export { StatusBar } from './StatusBar';
 export { PasswordModal } from './PasswordModal';
+export { Console, TerminalDrawer } from './Console';

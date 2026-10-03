@@ -1,128 +1,145 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useShell } from '@/hooks/useShell';
-import { useTheme } from '@/hooks/useTheme';
-import { Terminal } from 'xterm';
-import { FitAddon } from '@xterm/addon-fit';
-import 'xterm/css/xterm.css';
+import { stripAnsi } from '@/hooks/utils';
+
+/**
+ * Handles terminal carriage returns (\r) by overwriting the current line in-place,
+ * exactly like a native terminal progress bar.
+ */
+function applyCarriageReturns(prev, incoming) {
+  const clean = stripAnsi(incoming);
+  // Normalize \r\n to \n first so standard terminal line endings don't wipe lines
+  const normalized = (prev + clean).replace(/\r\n/g, '\n');
+  if (!normalized.includes('\r')) return normalized;
+
+  const lines = normalized.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes('\r')) {
+      const parts = lines[i].split('\r');
+      let chosen = '';
+      for (let j = parts.length - 1; j >= 0; j--) {
+        const seg = parts[j];
+        if (seg.trim().length > 0) {
+          chosen = seg;
+          break;
+        }
+      }
+      lines[i] = chosen;
+    }
+  }
+  return lines.join('\n');
+}
 
 export function Console() {
-  const { showTerminal, registerTerminalSubscriber, activeTaskId, cancelAction } = useShell();
-  const { isDark } = useTheme();
+  const {
+    showTerminal,
+    registerTerminalSubscriber,
+    clearTerminal,
+    activeTaskId,
+    cancelAction,
+    __,
+  } = useShell();
+
+  const [logs, setLogs] = useState('');
+  const [copied, setCopied] = useState(false);
   const containerRef = useRef(null);
-  const termRef = useRef(null);
-  const fitAddonRef = useRef(null);
+  const shouldAutoScrollRef = useRef(true);
 
-  const termBg = isDark ? '#18181b' : '#f4f4f5';
-
+  // Subscribe to live terminal log events
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    const term = new Terminal({
-      fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
-      fontSize: 11,
-      lineHeight: 1.25,
-      cursorBlink: false,
-      convertEol: true,
-      scrollback: 1000,
-      theme: isDark
-        ? {
-          background: '#18181b',
-          foreground: '#e4e4e7',
-          cursor: '#e4e4e7',
-          selectionBackground: 'rgba(255, 255, 255, 0.2)',
-          black: '#18181b',
-          red: '#ef4444',
-          green: '#22c55e',
-          yellow: '#eab308',
-          blue: '#3b82f6',
-          magenta: '#a855f7',
-          cyan: '#06b6d4',
-          white: '#f4f4f5',
-        }
-        : {
-          background: '#f4f4f5',
-          foreground: '#18181b',
-          cursor: '#18181b',
-          selectionBackground: 'rgba(0, 0, 0, 0.15)',
-          black: '#18181b',
-          red: '#dc2626',
-          green: '#16a34a',
-          yellow: '#ca8a04',
-          blue: '#2563eb',
-          magenta: '#9333ea',
-          cyan: '#0891b2',
-          white: '#fafafa',
-        },
-    });
-
-    const fitAddon = new FitAddon();
-    term.loadAddon(fitAddon);
-
-    term.open(containerRef.current);
-    termRef.current = term;
-    fitAddonRef.current = fitAddon;
-
-    try {
-      fitAddon.fit();
-    } catch (e) { }
-
-    term.onData((data) => {
-      if (data === '\x03') {
-        cancelAction();
+    const unsub = registerTerminalSubscriber((text, isClear) => {
+      if (isClear) {
+        setLogs('');
         return;
       }
-      if (activeTaskId && window.ipc?.writePtyInput) {
-        window.ipc.writePtyInput(activeTaskId, data);
-      }
+      setLogs((prev) => applyCarriageReturns(prev, text));
     });
+    return unsub;
+  }, [registerTerminalSubscriber]);
 
-    const unsub = registerTerminalSubscriber((text) => {
-      term.write(text);
-      term.scrollToBottom();
-    });
-
-    const handleResize = () => {
-      try {
-        fitAddon.fit();
-      } catch (e) { }
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      unsub();
-      term.dispose();
-      termRef.current = null;
-      fitAddonRef.current = null;
-    };
-  }, [registerTerminalSubscriber, activeTaskId, cancelAction, isDark]);
-
+  // Keep scrolled to bottom if user hasn't manually scrolled up
   useEffect(() => {
-    if (showTerminal && fitAddonRef.current && termRef.current) {
-      setTimeout(() => {
-        try {
-          fitAddonRef.current?.fit();
-          termRef.current?.scrollToBottom();
-        } catch (e) { }
-      }, 50);
+    if (!showTerminal || !containerRef.current) return;
+    if (shouldAutoScrollRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
-  }, [showTerminal]);
+  }, [logs, showTerminal]);
+
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    // User is considered "at the bottom" if within 30px of the end
+    shouldAutoScrollRef.current = scrollHeight - scrollTop - clientHeight < 30;
+  }, []);
+
+  const handleCopy = useCallback(async () => {
+    if (!logs) return;
+    try {
+      await navigator.clipboard.writeText(logs);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (_) { }
+  }, [logs]);
+
+  const handleClear = useCallback(() => {
+    setLogs('');
+    clearTerminal?.();
+  }, [clearTerminal]);
+
+  if (!showTerminal) return null;
+
+  const isRunning = Boolean(activeTaskId);
 
   return (
-    <div
-      className={
-        showTerminal
-          ? "h-44 w-full border-t border-border shrink-0 flex flex-col overflow-hidden"
-          : "hidden"
-      }
-      style={{ backgroundColor: termBg }}
-    >
+    <div className="h-44 w-full border-t border-border bg-card/85 dark:bg-[#18181b]/95 backdrop-blur-md shrink-0 flex flex-col overflow-hidden select-text text-left">
+      {/* Console Header Bar */}
+      <div className="h-6 shrink-0 px-3 bg-muted/30 border-b border-border flex items-center justify-between text-[11px] text-muted-foreground select-none">
+        <div className="flex items-center gap-2">
+          <span
+            className={`size-2 rounded-full transition-colors duration-200 ${
+              isRunning ? 'bg-amber-500 animate-pulse' : 'bg-muted-foreground/40'
+            }`}
+          />
+          <span className="font-medium text-foreground/80">
+            {__('Console Output')}
+          </span>
+          {isRunning && (
+            <span className="text-[10px] text-muted-foreground">({__('Running...')})</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleCopy}
+            disabled={!logs}
+            className="hover:text-foreground disabled:opacity-40 transition-colors cursor-default"
+          >
+            {copied ? __('Copied!') : __('Copy')}
+          </button>
+          <button
+            onClick={handleClear}
+            disabled={!logs}
+            className="hover:text-foreground disabled:opacity-40 transition-colors cursor-default"
+          >
+            {__('Clear')}
+          </button>
+        </div>
+      </div>
+
+      {/* Log Output Body */}
       <div
         ref={containerRef}
-        className="w-full h-full p-2.5 overflow-hidden select-text text-left font-mono"
-        style={{ backgroundColor: termBg }}
-      />
+        onScroll={handleScroll}
+        className="flex-1 p-2.5 overflow-y-auto font-mono text-[11px] leading-[1.35] text-foreground/90 whitespace-pre-wrap break-all select-text"
+      >
+        {logs ? (
+          logs
+        ) : (
+          <div className="text-muted-foreground/50 italic select-none py-1">
+            {isRunning ? __('Executing task...') : __('No logs recorded.')}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

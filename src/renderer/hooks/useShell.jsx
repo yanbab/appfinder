@@ -69,6 +69,11 @@ export function ShellProvider({ children }) {
     return () => terminalLogSubscribers.current.delete(cb);
   }, []);
 
+  const clearTerminal = useCallback(() => {
+    terminalHistoryRef.current = '';
+    terminalLogSubscribers.current.forEach((cb) => cb('', true));
+  }, []);
+
   // i18n
   const __ = useCallback((key, defaultValue) => {
     if (!catalog) return defaultValue || key;
@@ -176,6 +181,9 @@ export function ShellProvider({ children }) {
 
   // Execute task helper
   const executeTask = useCallback((action, token, zap = false, remainingCount = null) => {
+    clearTerminal();
+    setTaskProgressPercent(null);
+    activeTaskErrorLogRef.current = '';
     const taskId = `cask-${action}-${token}-${Date.now()}`;
     setActiveTaskId(taskId);
     setActiveTaskToken(token);
@@ -637,9 +645,6 @@ export function ShellProvider({ children }) {
         const prog = extractProgress(data.text);
         if (prog && prog.message) {
           setDrawerTitle(prog.message);
-          if (prog.percent !== null) {
-            setTaskProgressPercent(prog.percent);
-          }
         }
 
         // Detect prompts
@@ -889,6 +894,7 @@ export function ShellProvider({ children }) {
     submitPassword,
     cancelPassword,
     registerTerminalSubscriber,
+    clearTerminal,
 
     // Status
     lastCheckedTime,

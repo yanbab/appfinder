@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React from 'react';
 import { useShell } from '@/hooks/useShell';
 import {
   Sidebar,
@@ -6,16 +6,12 @@ import {
   StatusBar,
   InfoPanel,
   PasswordModal,
+  Console,
 } from '@/components/shell/views';
 import { Discover, AppList, AppListUpdates } from '@/components/shell/pages';
 
 import { useNativeContextMenu } from '@/hooks/useNativeContextMenu';
 import { useKeyboardNav } from '@/hooks/useKeyboardNav';
-
-// Lazy-load terminal drawer with heavy xterm modules
-const Console = lazy(() =>
-  import('@/components/shell/views/Console').then((m) => ({ default: m.Console }))
-);
 
 export function Shell() {
   const { currentTab, search, showTerminal } = useShell();
@@ -46,11 +42,7 @@ export function Shell() {
 
         {/* Status Bar acting as Terminal Titlebar & Collapsible Terminal Drawer underneath */}
         <StatusBar />
-        {showTerminal && (
-          <Suspense fallback={null}>
-            <Console />
-          </Suspense>
-        )}
+        {showTerminal && <Console />}
       </main>
 
       {/* Slide-over Info Drawer */}

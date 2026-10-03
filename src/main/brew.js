@@ -2,7 +2,7 @@ const { execFile } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs');
 const path = require('path');
-const ptyRunner = require('./pty');
+const taskRunner = require('./task-runner');
 
 const execFileAsync = promisify(execFile);
 
@@ -223,12 +223,11 @@ function runAction(data, callbacks = {}) {
     return;
   }
 
-  const brewCmd = `"${getBrewPath()}" ${args.map((a) => `"${a}"`).join(' ')}`;
-
-  ptyRunner.runTask(
+  taskRunner.runTask(
     {
       taskId,
-      command: brewCmd,
+      command: getBrewPath(),
+      args,
       env: getEnvWithBrew()
     },
     {
@@ -248,11 +247,11 @@ function runAction(data, callbacks = {}) {
 }
 
 function cancelAction(taskId, onComplete) {
-  ptyRunner.cancelTask(taskId, onComplete);
+  taskRunner.cancelTask(taskId, onComplete);
 }
 
 function writePtyInput(taskId, text) {
-  ptyRunner.writeTaskInput(taskId, text);
+  taskRunner.writeTaskInput(taskId, text);
 }
 
 module.exports = {

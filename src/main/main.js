@@ -20,7 +20,7 @@ async function initDevTools() {
       const name = await installExtension(REACT_DEVELOPER_TOOLS, {
         loadExtensionOptions: { allowFileAccess: true },
       });
-      console.log(`[DevTools] Added Extension: ${name}`);
+      console.log(`[DevTools] Added Extension: ${name.name}`);
     } catch (err) {
       console.warn('[DevTools] Failed to install React DevTools:', err);
     }
