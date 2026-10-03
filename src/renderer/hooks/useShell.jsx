@@ -635,32 +635,17 @@ export function ShellProvider({ children }) {
 
     if (window.ipc.onTaskLog) {
       unsubs.push(window.ipc.onTaskLog(data => {
-        terminalHistoryRef.current += data.text;
-        terminalLogSubscribers.current.forEach(cb => cb(data.text));
-        activeTaskErrorLogRef.current += data.text;
+        const text = data.text || '';
+        terminalHistoryRef.current = text;
+        terminalLogSubscribers.current.forEach(cb => cb(text));
+        activeTaskErrorLogRef.current = text;
 
-        const clean = stripAnsi(data.text);
-
-        // Print raw output lines directly as they come in from /usr/bin/script
-        // Collapse padding whitespace so progress text (e.g. Downloading X / Y MB) isn't pushed off-screen
-        const rawLines = stripAnsi(
-          data.text
-            .replace(/\x1b\[\?2026[hl]/g, '')
-            .replace(/(?:\x1b\[[0-9]*[GgKk]|\r)+/g, '\n')
-        )
-          .split(/[\r\n]+/)
-          .map(l => l.replace(/\s+/g, ' ').trim())
-          .filter(Boolean);
-
-        if (rawLines.length > 0) {
-          const latestRawLine = rawLines[rawLines.length - 1];
-          if (latestRawLine) {
-            setDrawerTitle(latestRawLine);
-          }
+        if (data.line) {
+          setDrawerTitle(data.line);
         }
 
         // Detect prompts
-        const promptInfo = detectPrompt(data.text);
+        const promptInfo = detectPrompt(data.raw || text);
         if (promptInfo.isRetry) {
           lastPasswordAttemptFailedRef.current = true;
           activeTaskPasswordRef.current = null;
@@ -683,7 +668,7 @@ export function ShellProvider({ children }) {
             setShowTerminal(true);
 
             if (window.ipc?.showMessage) {
-              const { prompt: promptLine, details: detailText } = parseConfirmationDetails(clean);
+              const { prompt: promptLine, details: detailText } = parseConfirmationDetails(text);
               const message = promptLine || __('Do you want to proceed?');
 
               window.ipc.showMessage({

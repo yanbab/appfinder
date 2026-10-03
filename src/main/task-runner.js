@@ -1,5 +1,6 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
+const { TerminalBuffer } = require('./terminal-buffer');
 
 const activeTasks = new Map();
 
@@ -54,20 +55,22 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
       ], { cwd: resolvedCwd, env: resolvedEnv, stdio: ['pipe', 'pipe', 'pipe'] })
     : spawn(execCmd, execArgs, { cwd: resolvedCwd, env: resolvedEnv, stdio: ['pipe', 'pipe', 'pipe'] });
 
+  const buffer = new TerminalBuffer();
+
   const handleStdout = (chunk) => {
-    let text = chunk.toString();
-    text = text.replace(/^\x04\s*/, '');
-    if (text) {
-      onLog?.({ taskId, type: 'stdout', text });
+    let raw = chunk.toString().replace(/^\x04\s*/, '');
+    if (raw) {
+      const { line, text } = buffer.write(raw);
+      onLog?.({ taskId, type: 'stdout', text, line, raw });
     }
   };
 
   const handleStderr = (chunk) => {
-    let text = chunk.toString();
-    text = text.replace(/^\x04\s*/, '');
-    if (text) {
-      console.error(`[MAIN TASK-RUNNER STDERR (${taskId})]:`, JSON.stringify(text));
-      onLog?.({ taskId, type: 'stderr', text });
+    let raw = chunk.toString().replace(/^\x04\s*/, '');
+    if (raw) {
+      console.error(`[MAIN TASK-RUNNER STDERR (${taskId})]:`, JSON.stringify(raw));
+      const { line, text } = buffer.write(raw);
+      onLog?.({ taskId, type: 'stderr', text, line, raw });
     }
   };
 
