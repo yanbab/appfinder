@@ -3,35 +3,76 @@ import { useShell } from '@/hooks/useShell';
 import { stripAnsi } from '@/hooks/utils';
 
 /**
- * Handles terminal carriage returns (\r) by overwriting the current line in-place,
- * exactly like a native terminal progress bar.
+ * TerminalBuffer emulates a terminal text stream.
+ * Overwrites the active line on carriage returns (\r, \x1b[0G, \x1b[K),
+ * handles cursor-up rewrites (\x1b[A), and commits lines on line feeds (\n).
  */
-function applyCarriageReturns(prev, incoming) {
-  // Convert terminal cursor resets (\x1b[0G, \x1b[1G, \x1b[K) and \r to carriage returns
-  const withCR = incoming
-    .replace(/\x1b\[\?2026[hl]/g, '')
-    .replace(/(?:\x1b\[[0-9]*[GgKk]|\r)+/g, '\r');
-  const clean = stripAnsi(withCR);
-  // Normalize \r\n to \n first so standard terminal line endings don't wipe lines
-  const normalized = (prev + clean).replace(/\r\n/g, '\n');
-  if (!normalized.includes('\r')) return normalized;
+class TerminalBuffer {
+  constructor(maxLines = 2000) {
+    this.maxLines = maxLines;
+    this.lines = [];
+    this.currentLine = '';
+    this.pendingOverwrite = false;
+  }
 
-  const lines = normalized.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes('\r')) {
-      const parts = lines[i].split('\r');
-      let chosen = '';
-      for (let j = parts.length - 1; j >= 0; j--) {
-        const seg = parts[j];
-        if (seg.trim().length > 0) {
-          chosen = seg;
-          break;
+  clear() {
+    this.lines = [];
+    this.currentLine = '';
+    this.pendingOverwrite = false;
+  }
+
+  write(raw) {
+    if (!raw) return;
+
+    // 1. Strip DEC 2026 synchronized output markers
+    let text = raw.replace(/\x1b\[\?2026[hl]/g, '');
+
+    // 2. Map cursor up (\x1b[A, \x1b[1A)
+    text = text.replace(/\x1b\[(?:1)?A/g, '\x1bA');
+
+    // 3. Map cursor line-reset codes (\x1b[0G, \x1b[1G, \x1b[K) and \r to \r
+    text = text.replace(/(?:\x1b\[[0-9]*[GgKk]|\r)+/g, '\r');
+
+    // 4. Strip ANSI color/styling codes
+    text = stripAnsi(text);
+
+    // 5. Normalize \r\n to \n
+    text = text.replace(/\r\n/g, '\n');
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === '\x1b' && text[i + 1] === 'A') {
+        i++;
+        if (this.lines.length > 0) {
+          this.currentLine = this.lines.pop();
+          this.pendingOverwrite = true;
+        }
+      } else if (ch === '\r') {
+        this.pendingOverwrite = true;
+      } else if (ch === '\n') {
+        this.lines.push(this.currentLine);
+        this.currentLine = '';
+        this.pendingOverwrite = false;
+        if (this.lines.length > this.maxLines) {
+          this.lines.splice(0, this.lines.length - this.maxLines);
+        }
+      } else {
+        if (this.pendingOverwrite) {
+          this.currentLine = ch;
+          this.pendingOverwrite = false;
+        } else {
+          this.currentLine += ch;
         }
       }
-      lines[i] = chosen;
     }
   }
-  return lines.join('\n');
+
+  toString() {
+    if (this.currentLine) {
+      return [...this.lines, this.currentLine].join('\n');
+    }
+    return this.lines.join('\n');
+  }
 }
 
 export function Console() {
@@ -48,15 +89,22 @@ export function Console() {
   const [copied, setCopied] = useState(false);
   const containerRef = useRef(null);
   const shouldAutoScrollRef = useRef(true);
+  const bufferRef = useRef(null);
+
+  if (!bufferRef.current) {
+    bufferRef.current = new TerminalBuffer();
+  }
 
   // Subscribe to live terminal log events
   useEffect(() => {
     const unsub = registerTerminalSubscriber((text, isClear) => {
       if (isClear) {
+        bufferRef.current.clear();
         setLogs('');
         return;
       }
-      setLogs((prev) => applyCarriageReturns(prev, text));
+      bufferRef.current.write(text);
+      setLogs(bufferRef.current.toString());
     });
     return unsub;
   }, [registerTerminalSubscriber]);
@@ -86,6 +134,7 @@ export function Console() {
   }, [logs]);
 
   const handleClear = useCallback(() => {
+    bufferRef.current.clear();
     setLogs('');
     clearTerminal?.();
   }, [clearTerminal]);

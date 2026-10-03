@@ -31,7 +31,6 @@ function setupIpcMain() {
     console.log('[IPC-MAIN RUN ACTION]:', data);
     Backend.runAction(data, {
       onLog: (logData) => {
-        console.log('[IPC-MAIN SENDING task:log]:', logData?.text?.length, 'bytes');
         if (!event.sender.isDestroyed()) {
           event.sender.send('task:log', logData);
         }

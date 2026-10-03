@@ -640,7 +640,6 @@ export function ShellProvider({ children }) {
         activeTaskErrorLogRef.current += data.text;
 
         const clean = stripAnsi(data.text);
-        console.log('[RENDERER ON_TASK_LOG CHUNK]:', JSON.stringify(data.text));
 
         // Print raw output lines directly as they come in from /usr/bin/script
         // Collapse padding whitespace so progress text (e.g. Downloading X / Y MB) isn't pushed off-screen
@@ -654,10 +653,8 @@ export function ShellProvider({ children }) {
           .filter(Boolean);
 
         if (rawLines.length > 0) {
-          console.log('[RENDERER PARSED LINES]:', rawLines);
           const latestRawLine = rawLines[rawLines.length - 1];
           if (latestRawLine) {
-            console.log('[RENDERER STATUSBAR UPDATE]:', latestRawLine);
             setDrawerTitle(latestRawLine);
           }
         }

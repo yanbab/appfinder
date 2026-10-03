@@ -1,7 +1,5 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
-const path = require('path');
-const os = require('os');
 
 const activeTasks = new Map();
 
@@ -42,56 +40,24 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
 
   const useScript = process.platform === 'darwin' && fs.existsSync('/usr/bin/script');
 
-  let child;
-  if (Array.isArray(args)) {
-    if (useScript) {
-      console.log(`[MAIN TASK-RUNNER (${taskId}) SPAWN SCRIPT]:`, command, args);
-      // Set pseudo-terminal window dimensions (rows/cols) via stty.
-      // Without this, macOS BSD script defaults to 0 rows and 0 cols, which causes
-      // Homebrew's DownloadQueue (max_lines = [concurrency, Tty.height].min) to equal 0
-      // and suppress all download progress text!
-      child = spawn('/usr/bin/script', [
+  const [execCmd, execArgs] = Array.isArray(args)
+    ? [command, args]
+    : [shell || getDefaultShell(), shellArgs || ['-l', '-c', command]];
+
+  console.log(`[MAIN TASK-RUNNER (${taskId})]:`, useScript ? 'SCRIPT' : 'DIRECT', execCmd, execArgs);
+
+  const child = useScript
+    ? spawn('/usr/bin/script', [
         '-q', '-t', '0', '/dev/null',
         '/bin/sh', '-c', 'stty rows 24 cols 80 2>/dev/null; exec "$@"', '--',
-        command, ...args
-      ], {
-        cwd: resolvedCwd,
-        env: resolvedEnv,
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
-    } else {
-      console.log(`[MAIN TASK-RUNNER (${taskId}) SPAWN DIRECT]:`, command, args);
-      child = spawn(command, args, { cwd: resolvedCwd, env: resolvedEnv, stdio: ['pipe', 'pipe', 'pipe'] });
-    }
-  } else {
-    const resolvedShell = shell || getDefaultShell();
-    const resolvedArgs = shellArgs || ['-l', '-c', command];
-    if (useScript) {
-      console.log(`[MAIN TASK-RUNNER (${taskId}) SPAWN SCRIPT SHELL]:`, resolvedShell, resolvedArgs);
-      child = spawn('/usr/bin/script', [
-        '-q', '-t', '0', '/dev/null',
-        '/bin/sh', '-c', 'stty rows 24 cols 80 2>/dev/null; exec "$@"', '--',
-        resolvedShell, ...resolvedArgs
-      ], {
-        cwd: resolvedCwd,
-        env: resolvedEnv,
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
-    } else {
-      console.log(`[MAIN TASK-RUNNER (${taskId}) SPAWN DIRECT SHELL]:`, resolvedShell, resolvedArgs);
-      child = spawn(resolvedShell, resolvedArgs, {
-        cwd: resolvedCwd,
-        env: resolvedEnv,
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
-    }
-  }
+        execCmd, ...execArgs
+      ], { cwd: resolvedCwd, env: resolvedEnv, stdio: ['pipe', 'pipe', 'pipe'] })
+    : spawn(execCmd, execArgs, { cwd: resolvedCwd, env: resolvedEnv, stdio: ['pipe', 'pipe', 'pipe'] });
 
   const handleStdout = (chunk) => {
     let text = chunk.toString();
     text = text.replace(/^\x04\s*/, '');
     if (text) {
-      console.log(`[MAIN TASK-RUNNER STDOUT (${taskId})]:`, JSON.stringify(text));
       onLog?.({ taskId, type: 'stdout', text });
     }
   };
