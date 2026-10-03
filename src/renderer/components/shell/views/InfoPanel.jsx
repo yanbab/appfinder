@@ -38,7 +38,7 @@ export function InfoPanel() {
   if (!selectedApp) {
     return (
       <Drawer open={false} onOpenChange={() => { }} direction="right">
-        <DrawerContent className="w-[280px]" />
+        <DrawerContent className="w-[260px]" />
       </Drawer>
     );
   }
@@ -89,7 +89,7 @@ export function InfoPanel() {
       direction="right"
       shouldScaleBackground={false}
     >
-      <DrawerContent className="w-[280px] max-w-[280px] h-full bg-background border-l border-border select-none flex flex-col outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
+      <DrawerContent className="w-[260px] max-w-[260px] h-full bg-background border-l border-border select-none flex flex-col outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
         {/* Header with Close Button on the Left */}
         <div className="app-header h-11 shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
           <div className="flex items-center gap-2 min-w-0 flex-1 h-full [-webkit-app-region:drag]">

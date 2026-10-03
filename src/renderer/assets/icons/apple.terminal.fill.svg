@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <mask id="sf-apple-terminal-fill">
+    <rect width="24" height="24" fill="white" />
+    <polyline points="7.5 9.5 10.5 12 7.5 14.5" stroke="black" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <line x1="12.5" y1="14.5" x2="16.5" y2="14.5" stroke="black" stroke-width="2.2" stroke-linecap="round" fill="none" />
+  </mask>
+  <rect x="2.5" y="4" width="19" height="16" rx="3" fill="currentColor" mask="url(#sf-apple-terminal-fill)" />
+</svg>

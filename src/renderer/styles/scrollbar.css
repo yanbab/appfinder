@@ -1,0 +1,66 @@
+/* Sleek macOS-style Scrollbars (Pure CSS, hidden by default, revealed on hover/active) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  min-height: 24px;
+  transition: background-color 150ms ease-out;
+}
+
+/* Reveal floating pill thumb when hovering over the scrollable container or interacting with the scrollbar */
+.overflow-y-auto:hover::-webkit-scrollbar-thumb,
+.overflow-x-auto:hover::-webkit-scrollbar-thumb,
+.overflow-auto:hover::-webkit-scrollbar-thumb,
+aside:hover::-webkit-scrollbar-thumb,
+main:hover::-webkit-scrollbar-thumb,
+[data-scrollable]:hover::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background-color: rgba(0, 0, 0, 0.22);
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover,
+.overflow-auto::-webkit-scrollbar-thumb:hover,
+aside::-webkit-scrollbar-thumb:hover,
+main::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.dark .overflow-y-auto:hover::-webkit-scrollbar-thumb,
+.dark .overflow-x-auto:hover::-webkit-scrollbar-thumb,
+.dark .overflow-auto:hover::-webkit-scrollbar-thumb,
+.dark aside:hover::-webkit-scrollbar-thumb,
+.dark main:hover::-webkit-scrollbar-thumb,
+.dark [data-scrollable]:hover::-webkit-scrollbar-thumb,
+.dark ::-webkit-scrollbar-thumb:hover,
+.dark ::-webkit-scrollbar-thumb:active {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.dark .overflow-x-auto::-webkit-scrollbar-thumb:hover,
+.dark .overflow-auto::-webkit-scrollbar-thumb:hover,
+.dark aside::-webkit-scrollbar-thumb:hover,
+.dark main::-webkit-scrollbar-thumb:hover,
+.dark ::-webkit-scrollbar-thumb:hover,
+.dark ::-webkit-scrollbar-thumb:active {
+  background-color: rgba(255, 255, 255, 0.45);
+}

@@ -91,7 +91,7 @@ export function Console() {
   const isRunning = Boolean(activeTaskId);
 
   return (
-    <div className="h-44 w-full border-t border-border bg-card/85 dark:bg-[#18181b]/95 backdrop-blur-md shrink-0 flex flex-col overflow-hidden select-text text-left">
+    <div className="h-44 w-full border-t border-border bg-card dark:bg-[#18181b] shrink-0 flex flex-col overflow-hidden select-text text-left">
       {/* Console Header Bar */}
       <div className="h-6 shrink-0 px-3 bg-muted/30 border-b border-border flex items-center justify-between text-[11px] text-muted-foreground select-none">
         <div className="flex items-center gap-2">

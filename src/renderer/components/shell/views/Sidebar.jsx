@@ -46,11 +46,11 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`h-full shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border select-none transition-[margin-left] duration-250 ease-out overflow-hidden z-20 w-56 min-w-56 ${
-        showSidebar ? 'ml-0' : '-ml-56'
+      className={`h-full shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border select-none transition-[margin-left] duration-250 ease-out overflow-hidden z-20 w-[200px] min-w-[200px] ${
+        showSidebar ? 'ml-0' : '-ml-[200px]'
       }`}
     >
-      <div className="w-56 flex flex-col h-full shrink-0 overflow-hidden">
+      <div className="w-[200px] flex flex-col h-full shrink-0 overflow-hidden">
         {/* macOS Traffic Lights Window Drag Region */}
         <div className="h-11 shrink-0 [-webkit-app-region:drag]" />
 

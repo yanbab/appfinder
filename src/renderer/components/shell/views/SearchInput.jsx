@@ -15,7 +15,7 @@ export function SearchInput({ className = '' }) {
         placeholder={__('Search apps...')}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="h-7 pl-8 pr-7 text-xs bg-black/[0.06] dark:bg-white/[0.08] focus:bg-black/[0.09] dark:focus:bg-white/[0.12] border-0 border-none shadow-none rounded-[var(--radius-btn)] placeholder:text-muted-foreground/70 focus-visible:ring-0 focus-visible:outline-none"
+        className="h-7 pl-8 pr-7 text-xs bg-black/[0.06] dark:bg-white/[0.08] focus:bg-black/[0.09] dark:focus:bg-white/[0.12] border-0 border-none shadow-none rounded-[var(--radius-btn)] placeholder:text-muted-foreground/70"
       />
       {search && (
         <button

@@ -19,37 +19,36 @@ export function StatusBar() {
   if (!isVisible) return null;
 
   return (
-    <footer className="app-footer h-7 shrink-0 flex items-center justify-between border-t border-border bg-card text-xs font-sans text-muted-foreground select-none overflow-hidden transition-opacity duration-150">
+    <footer className="app-footer h-7 shrink-0 flex items-center justify-between border-t border-border bg-card text-xs font-sans text-muted-foreground select-none overflow-hidden transition-opacity duration-150 px-2">
       {/* Left: Status message or running task indicator with live download progress */}
-      <div className="h-full flex items-center gap-2 px-2.5 min-w-0 mr-2 select-none">
+      <div className="h-full flex items-center gap-2 min-w-0 mr-2 select-none">
         {activeTaskId && (
           <>
             <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
             {drawerTitle && (
-              <span className="truncate font-mono text-xs text-foreground/80">{drawerTitle}</span>
+              <span className="truncate text-xs text-foreground/80">{drawerTitle}</span>
             )}
           </>
         )}
       </div>
 
-
       {/* Right: Actions */}
-      <div className="h-full flex items-center shrink-0">
+      <div className="flex items-center gap-1 shrink-0">
         {activeTaskId && (
           <ShellButton
-            icon={<ShellIcon name="stop.circle" className="size-[18px] shrink-0 text-destructive" />}
+            size="icon-xs"
+            icon={<ShellIcon name="stop.circle" className="size-4 shrink-0 text-destructive" />}
             title="Cancel"
             onClick={cancelAction}
-            className="h-full w-auto px-2.5 rounded-none text-destructive hover:bg-foreground/5 active:bg-foreground/10"
           />
         )}
 
         <ShellButton
-          icon={<ShellIcon name="chevron.left.forwardslash.chevron.right" className="size-[18px] shrink-0" />}
+          size="icon-xs"
+          icon={<ShellIcon name={showTerminal ? "apple.terminal.fill" : "apple.terminal"} className="size-4 shrink-0" />}
           title={showTerminal ? "Hide Terminal" : "Show Terminal"}
           active={showTerminal}
           onClick={toggleTerminal}
-          className="h-full w-auto px-2.5 rounded-none hover:bg-foreground/5 hover:text-foreground active:bg-foreground/10 active:text-foreground"
         />
       </div>
     </footer>
