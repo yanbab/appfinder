@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { getAppName, formatVersion, stripAnsi, extractProgress, detectPrompt, parseConfirmationDetails, getIconDataUrl, extractTaskError } from './utils';
+import { getAppName, formatVersion, stripAnsi, detectPrompt, parseConfirmationDetails, getIconDataUrl, extractTaskError } from './utils';
 
 const ShellContext = createContext(null);
 
@@ -640,11 +640,26 @@ export function ShellProvider({ children }) {
         activeTaskErrorLogRef.current += data.text;
 
         const clean = stripAnsi(data.text);
+        console.log('[RENDERER ON_TASK_LOG CHUNK]:', JSON.stringify(data.text));
 
-        // Extract live progress
-        const prog = extractProgress(data.text);
-        if (prog && prog.message) {
-          setDrawerTitle(prog.message);
+        // Print raw output lines directly as they come in from /usr/bin/script
+        // Collapse padding whitespace so progress text (e.g. Downloading X / Y MB) isn't pushed off-screen
+        const rawLines = stripAnsi(
+          data.text
+            .replace(/\x1b\[\?2026[hl]/g, '')
+            .replace(/(?:\x1b\[[0-9]*[GgKk]|\r)+/g, '\n')
+        )
+          .split(/[\r\n]+/)
+          .map(l => l.replace(/\s+/g, ' ').trim())
+          .filter(Boolean);
+
+        if (rawLines.length > 0) {
+          console.log('[RENDERER PARSED LINES]:', rawLines);
+          const latestRawLine = rawLines[rawLines.length - 1];
+          if (latestRawLine) {
+            console.log('[RENDERER STATUSBAR UPDATE]:', latestRawLine);
+            setDrawerTitle(latestRawLine);
+          }
         }
 
         // Detect prompts
@@ -708,6 +723,7 @@ export function ShellProvider({ children }) {
 
     if (window.ipc.onTaskComplete) {
       unsubs.push(window.ipc.onTaskComplete(async data => {
+        console.log('[RENDERER ON_TASK_COMPLETE]:', data);
         const finishedToken = activeTaskToken;
         const finishedAction = activeTaskAction;
         const errorLog = activeTaskErrorLogRef.current;

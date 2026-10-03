@@ -28,13 +28,16 @@ function setupIpcMain() {
 
 
   ipcMain.on('cask:run-action', (event, data) => {
+    console.log('[IPC-MAIN RUN ACTION]:', data);
     Backend.runAction(data, {
       onLog: (logData) => {
+        console.log('[IPC-MAIN SENDING task:log]:', logData?.text?.length, 'bytes');
         if (!event.sender.isDestroyed()) {
           event.sender.send('task:log', logData);
         }
       },
       onComplete: ({ taskId, code, error, cancelled }) => {
+        console.log('[IPC-MAIN TASK COMPLETE]:', { taskId, code, error, cancelled });
         if (code === 0 && (data?.action === 'install' || data?.action === 'uninstall')) {
           if (app?.dock?.bounce) {
             app.dock.bounce('informational');

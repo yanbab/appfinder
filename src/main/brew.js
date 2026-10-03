@@ -57,13 +57,14 @@ function getBrewPath() {
 
 function getEnvWithBrew() {
   const defaultPath = '/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin';
-  return {
+  const env = {
     ...process.env,
     PATH: process.env.PATH ? `${process.env.PATH}:${defaultPath}` : defaultPath,
-    HOMEBREW_NO_AUTO_UPDATE: '1',
-    HOMEBREW_NO_EMOJI: '1',
-    HOMEBREW_NO_COLOR: '1'
+    HOMEBREW_NO_AUTO_UPDATE: '1'
   };
+  delete env.HOMEBREW_NO_COLOR;
+  delete env.HOMEBREW_NO_EMOJI;
+  return env;
 }
 
 async function runBrew(args) {

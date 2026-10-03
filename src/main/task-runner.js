@@ -1,5 +1,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
 const activeTasks = new Map();
 
@@ -14,7 +16,8 @@ function getDefaultShell() {
 }
 
 /**
- * Runs a command using child_process.spawn with direct streaming output.
+ * Runs a command using macOS /usr/bin/script (allocates pseudo-terminal for authentic TTY progress)
+ * with direct streaming output.
  *
  * @param {object} options
  * @param {string} options.taskId - Unique task identifier
@@ -37,33 +40,87 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
     ...(env || process.env)
   };
 
-  const child = Array.isArray(args)
-    ? spawn(command, args, { cwd: resolvedCwd, env: resolvedEnv, stdio: ['pipe', 'pipe', 'pipe'] })
-    : spawn(shell || getDefaultShell(), shellArgs || ['-l', '-c', command], {
+  const useScript = process.platform === 'darwin' && fs.existsSync('/usr/bin/script');
+
+  let child;
+  if (Array.isArray(args)) {
+    if (useScript) {
+      console.log(`[MAIN TASK-RUNNER (${taskId}) SPAWN SCRIPT]:`, command, args);
+      // Set pseudo-terminal window dimensions (rows/cols) via stty.
+      // Without this, macOS BSD script defaults to 0 rows and 0 cols, which causes
+      // Homebrew's DownloadQueue (max_lines = [concurrency, Tty.height].min) to equal 0
+      // and suppress all download progress text!
+      child = spawn('/usr/bin/script', [
+        '-q', '-t', '0', '/dev/null',
+        '/bin/sh', '-c', 'stty rows 24 cols 80 2>/dev/null; exec "$@"', '--',
+        command, ...args
+      ], {
         cwd: resolvedCwd,
         env: resolvedEnv,
         stdio: ['pipe', 'pipe', 'pipe']
       });
+    } else {
+      console.log(`[MAIN TASK-RUNNER (${taskId}) SPAWN DIRECT]:`, command, args);
+      child = spawn(command, args, { cwd: resolvedCwd, env: resolvedEnv, stdio: ['pipe', 'pipe', 'pipe'] });
+    }
+  } else {
+    const resolvedShell = shell || getDefaultShell();
+    const resolvedArgs = shellArgs || ['-l', '-c', command];
+    if (useScript) {
+      console.log(`[MAIN TASK-RUNNER (${taskId}) SPAWN SCRIPT SHELL]:`, resolvedShell, resolvedArgs);
+      child = spawn('/usr/bin/script', [
+        '-q', '-t', '0', '/dev/null',
+        '/bin/sh', '-c', 'stty rows 24 cols 80 2>/dev/null; exec "$@"', '--',
+        resolvedShell, ...resolvedArgs
+      ], {
+        cwd: resolvedCwd,
+        env: resolvedEnv,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+    } else {
+      console.log(`[MAIN TASK-RUNNER (${taskId}) SPAWN DIRECT SHELL]:`, resolvedShell, resolvedArgs);
+      child = spawn(resolvedShell, resolvedArgs, {
+        cwd: resolvedCwd,
+        env: resolvedEnv,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+    }
+  }
 
-  const handleData = (chunk) => {
-    const text = chunk.toString();
+  const handleStdout = (chunk) => {
+    let text = chunk.toString();
+    text = text.replace(/^\x04\s*/, '');
     if (text) {
+      console.log(`[MAIN TASK-RUNNER STDOUT (${taskId})]:`, JSON.stringify(text));
       onLog?.({ taskId, type: 'stdout', text });
     }
   };
 
-  if (child.stdout) child.stdout.on('data', handleData);
-  if (child.stderr) child.stderr.on('data', handleData);
+  const handleStderr = (chunk) => {
+    let text = chunk.toString();
+    text = text.replace(/^\x04\s*/, '');
+    if (text) {
+      console.error(`[MAIN TASK-RUNNER STDERR (${taskId})]:`, JSON.stringify(text));
+      onLog?.({ taskId, type: 'stderr', text });
+    }
+  };
+
+  if (child.stdout) child.stdout.on('data', handleStdout);
+  if (child.stderr) child.stderr.on('data', handleStderr);
 
   let finished = false;
   const finish = (code, error = null, cancelled = false) => {
     if (finished) return;
     finished = true;
+    console.log(`[MAIN TASK-RUNNER EXIT (${taskId})]: code=${code}, error=${error}, cancelled=${cancelled}`);
     activeTasks.delete(taskId);
     onComplete?.({ taskId, code: code ?? 0, error, cancelled });
   };
 
-  child.on('error', (err) => finish(1, err.message));
+  child.on('error', (err) => {
+    console.error(`[MAIN TASK-RUNNER CHILD ERROR (${taskId})]:`, err);
+    finish(1, err.message);
+  });
   child.on('close', (code) => finish(code ?? 0));
 
   activeTasks.set(taskId, {

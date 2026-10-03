@@ -7,7 +7,11 @@ import { stripAnsi } from '@/hooks/utils';
  * exactly like a native terminal progress bar.
  */
 function applyCarriageReturns(prev, incoming) {
-  const clean = stripAnsi(incoming);
+  // Convert terminal cursor resets (\x1b[0G, \x1b[1G, \x1b[K) and \r to carriage returns
+  const withCR = incoming
+    .replace(/\x1b\[\?2026[hl]/g, '')
+    .replace(/(?:\x1b\[[0-9]*[GgKk]|\r)+/g, '\r');
+  const clean = stripAnsi(withCR);
   // Normalize \r\n to \n first so standard terminal line endings don't wipe lines
   const normalized = (prev + clean).replace(/\r\n/g, '\n');
   if (!normalized.includes('\r')) return normalized;
