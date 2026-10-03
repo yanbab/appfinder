@@ -26,10 +26,10 @@ class PseudoTerminal extends EventEmitter {
 
     const cwd = options.cwd || (typeof process.cwd === 'function' ? process.cwd() : (fs.existsSync(process.env.HOME || '') ? process.env.HOME : '/tmp'));
     const env = {
-      TERM: options.name || 'xterm-256color',
+      ...(options.env || process.env),
+      TERM: options.name || (options.env?.TERM || 'xterm-256color'),
       COLUMNS: String(this.cols),
-      LINES: String(this.rows),
-      ...(options.env || process.env)
+      LINES: String(this.rows)
     };
 
     const isDarwin = process.platform === 'darwin' && fs.existsSync('/usr/bin/script');

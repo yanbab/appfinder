@@ -2,6 +2,7 @@ const { execFile } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs');
 const path = require('path');
+const taskRunner = require('./task-runner');
 
 const execFileAsync = promisify(execFile);
 
@@ -183,7 +184,7 @@ async function getCaskInfo(token) {
 }
 
 /**
- * Resolves the CLI arguments for a given Homebrew action.
+ * Resolves CLI arguments for a given action
  * @param {string} action
  * @param {string} token
  * @param {boolean} [zap=false]
@@ -200,6 +201,80 @@ function getActionArgs(action, token, zap = false) {
   return actions[action] || null;
 }
 
+/**
+ * Launches an installed application via macOS /usr/bin/open
+ * @param {string} appName
+ * @returns {Promise<{ success: boolean, error?: string }>}
+ */
+async function launchApp(appName) {
+  try {
+    await execFileAsync('/usr/bin/open', ['-a', appName]);
+    return { success: true };
+  } catch (err) {
+    console.error(`Failed to launch app "${appName}":`, err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Cleans Homebrew cache via brew cleanup --prune=all
+ * @returns {Promise<{ success: boolean, stdout?: string, error?: string }>}
+ */
+async function cleanCache() {
+  try {
+    const stdout = await runBrew(['cleanup', '--prune=all']);
+    return { success: true, stdout: stdout || '' };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
+/**
+ * Executes a Homebrew action via taskRunner
+ */
+function runAction(data, callbacks = {}) {
+  const cbs = typeof callbacks === 'function' ? { onComplete: callbacks } : (callbacks || {});
+  const { onLog, onComplete, onPrompt, onRefreshUpdates } = cbs;
+  const { taskId, action, token, zap } = data || {};
+
+  const args = getActionArgs(action, token, zap);
+  if (!args) {
+    onComplete?.({ taskId, code: 1, error: 'Invalid action' });
+    return;
+  }
+
+  taskRunner.runTask(
+    {
+      taskId,
+      command: getBrewPath(),
+      args,
+      env: getEnvWithBrew()
+    },
+    {
+      onLog,
+      onPrompt,
+      onComplete: ({ taskId: tid, code, error, cancelled }) => {
+        if (code === 0 && action === 'refresh') {
+          if (typeof onRefreshUpdates === 'function') {
+            onRefreshUpdates().catch(() => { });
+          } else {
+            getUpdates(true).catch(() => { });
+          }
+        }
+        onComplete?.({ taskId: tid, code, error, cancelled });
+      }
+    }
+  );
+}
+
+function cancelAction(taskId, onComplete) {
+  taskRunner.cancelTask(taskId, onComplete);
+}
+
+function writePtyInput(taskId, text) {
+  taskRunner.writeTaskInput(taskId, text);
+}
+
 module.exports = {
   getApps,
   getCategories,
@@ -213,5 +288,10 @@ module.exports = {
   setCachedCaskInfo,
   fetchCaskJson,
   getCaskInfo,
-  getActionArgs
+  getActionArgs,
+  launchApp,
+  cleanCache,
+  runAction,
+  cancelAction,
+  writePtyInput
 };

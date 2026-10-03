@@ -13,7 +13,7 @@ export function Console() {
   const [logs, setLogs] = useState('');
   const [copied, setCopied] = useState(false);
   const containerRef = useRef(null);
-  const shouldAutoScrollRef = useRef(true);
+  const endRef = useRef(null);
 
   // Subscribe to live terminal log events
   useEffect(() => {
@@ -23,20 +23,21 @@ export function Console() {
     return unsub;
   }, [registerTerminalSubscriber]);
 
-  // Keep scrolled to bottom if user hasn't manually scrolled up
+  // Keep scrolled to bottom on output
   useEffect(() => {
-    if (!showTerminal || !containerRef.current) return;
-    if (shouldAutoScrollRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
+    if (!showTerminal) return;
+    const scrollDown = () => {
+      if (containerRef.current) {
+        containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      }
+      if (endRef.current) {
+        endRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+      }
+    };
+    scrollDown();
+    const raf = requestAnimationFrame(scrollDown);
+    return () => cancelAnimationFrame(raf);
   }, [logs, showTerminal]);
-
-  const handleScroll = useCallback(() => {
-    if (!containerRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-    // User is considered "at the bottom" if within 30px of the end
-    shouldAutoScrollRef.current = scrollHeight - scrollTop - clientHeight < 30;
-  }, []);
 
   const handleCopy = useCallback(async () => {
     if (!logs) return;
@@ -95,11 +96,13 @@ export function Console() {
       {/* Log Output Body */}
       <div
         ref={containerRef}
-        onScroll={handleScroll}
         className="flex-1 p-2.5 overflow-y-auto font-mono text-[11px] leading-[1.35] text-foreground/90 whitespace-pre-wrap break-all select-text"
       >
         {logs ? (
-          logs
+          <>
+            {logs}
+            <div ref={endRef} />
+          </>
         ) : (
           <div className="text-muted-foreground/50 italic select-none py-1">
             {isRunning ? __('Executing task...') : __('No logs recorded.')}

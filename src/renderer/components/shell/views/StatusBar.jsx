@@ -14,7 +14,7 @@ export function StatusBar() {
     alwaysShowStatusBar,
   } = useShell();
 
-  // If there's no active task, no drawer title, and alwaysShowStatusBar is false, and drawer is hidden
+  // If there's no active task and alwaysShowStatusBar is false, and drawer is hidden
   const isVisible = showDrawer || alwaysShowStatusBar || activeTaskId || showTerminal;
   if (!isVisible) return null;
 

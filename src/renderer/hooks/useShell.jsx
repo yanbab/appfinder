@@ -1,7 +1,36 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { getAppName, formatVersion, stripAnsi, detectPrompt, parseConfirmationDetails, getIconDataUrl, extractTaskError } from './utils';
+import { getAppName, stripAnsi, detectPrompt, getIconDataUrl, extractTaskError } from './utils';
 
 const ShellContext = createContext(null);
+
+const CHUNK_SIZE = 50;
+const FEATURED_TOKENS = new Set([
+  'onlyoffice', 'iina', 'visual-studio-code', 'figma', 'rectangle', 'spotify', 'raycast', 'obsidian', 'zed'
+]);
+
+function sortCategories(cats, currentCatalog) {
+  const translate = (key) => (currentCatalog && currentCatalog[key] !== undefined) ? currentCatalog[key] : key;
+  return [...cats].sort((a, b) => {
+    if (a.name === 'other') return 1;
+    if (b.name === 'other') return -1;
+    if (a.name === 'font') return 1;
+    if (b.name === 'font') return -1;
+    return translate(a.displayName || '').localeCompare(translate(b.displayName || ''));
+  });
+}
+
+function parseUpdatesMap(upds) {
+  const casks = upds?.casks || (Array.isArray(upds) ? upds : []);
+  const map = {};
+  for (const item of casks) {
+    const token = item.token || item.name;
+    map[token] = {
+      installedVersion: item.installed_versions?.[0] || item.installed_version || null,
+      currentVersion: item.current_version || item.latest_version
+    };
+  }
+  return map;
+}
 
 export function ShellProvider({ children }) {
   // Navigation & Search
@@ -17,14 +46,17 @@ export function ShellProvider({ children }) {
   const [showDrawer, setShowDrawer] = useState(false);
   const [alwaysShowStatusBar, setAlwaysShowStatusBar] = useState(false);
 
+  // App Details
   const [selectedApp, setSelectedApp] = useState(null);
   const [appDetails, setAppDetails] = useState(null);
   const [loadingAppDetails, setLoadingAppDetails] = useState(false);
   const infoCache = useRef(new Map());
 
-
   // Data & Collections
   const [items, setItems] = useState([]);
+  const itemsRef = useRef([]);
+  itemsRef.current = items;
+
   const [categories, setCategories] = useState([]);
   const rawCategoriesRef = useRef([]);
   const [installed, setInstalled] = useState([]);
@@ -32,15 +64,18 @@ export function ShellProvider({ children }) {
   const [outdatedMap, setOutdatedMap] = useState({});
   const [lastCheckedTime, setLastCheckedTime] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [catalog, setCatalog] = useState({});
   const catalogRef = useRef({});
+  catalogRef.current = catalog;
 
   // Tasks & Execution
   const [runningTasks, setRunningTasks] = useState({});
   const [activeTaskId, setActiveTaskId] = useState(null);
   const [activeTaskToken, setActiveTaskToken] = useState(null);
   const [activeTaskAction, setActiveTaskAction] = useState(null);
+  const activeTaskRef = useRef({ id: null, token: null, action: null });
+  activeTaskRef.current = { id: activeTaskId, token: activeTaskToken, action: activeTaskAction };
+
   const [drawerTitle, setDrawerTitle] = useState('');
   const [taskProgressPercent, setTaskProgressPercent] = useState(null);
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
@@ -52,15 +87,14 @@ export function ShellProvider({ children }) {
   const updateQueueRef = useRef([]);
   const isUpdatingAllRef = useRef(false);
   const batchActionRef = useRef('upgrade');
-  const isConfirmPromptOpenRef = useRef(false);
 
   // Pagination
-  const [displayedCount, setDisplayedCount] = useState(50);
-  const chunkSize = 50;
+  const [displayedCount, setDisplayedCount] = useState(CHUNK_SIZE);
 
-  // Terminal log listener callback registration & history buffer
+  // Terminal log listener & history buffer
   const terminalHistoryRef = useRef('');
   const terminalLogSubscribers = useRef(new Set());
+
   const registerTerminalSubscriber = useCallback((cb) => {
     terminalLogSubscribers.current.add(cb);
     if (terminalHistoryRef.current) {
@@ -79,20 +113,17 @@ export function ShellProvider({ children }) {
     if (!catalog) return defaultValue || key;
     return catalog[key] !== undefined ? catalog[key] : (defaultValue || key);
   }, [catalog]);
+  const translateRef = useRef(__);
+  translateRef.current = __;
 
-  // Sort categories helper taking current translations
-  const sortCategories = useCallback((cats, currentCatalog) => {
-    const translate = (key) => {
-      if (!currentCatalog) return key;
-      return currentCatalog[key] !== undefined ? currentCatalog[key] : key;
-    };
-    return [...cats].sort((a, b) => {
-      if (a.name === 'other') return 1;
-      if (b.name === 'other') return -1;
-      if (a.name === 'font') return 1;
-      if (b.name === 'font') return -1;
-      return translate(a.displayName || '').localeCompare(translate(b.displayName || ''));
-    });
+  const applyTranslations = useCallback((cat) => {
+    const newCat = cat || {};
+    catalogRef.current = newCat;
+    setCatalog(newCat);
+    document.documentElement.dir = newCat?._languageDirection === 'rtl' ? 'rtl' : 'ltr';
+    if (rawCategoriesRef.current.length > 0) {
+      setCategories(sortCategories(rawCategoriesRef.current, newCat));
+    }
   }, []);
 
   // Dynamic Document Title
@@ -110,10 +141,15 @@ export function ShellProvider({ children }) {
     document.title = categoryName ? `AppFinder - ${categoryName}` : 'AppFinder';
   }, [getPageTitle]);
 
-  // Save viewMode
+  // Persist viewMode
   useEffect(() => {
     localStorage.setItem('appfinder-view-mode', viewMode);
   }, [viewMode]);
+
+  // Sync sidebar visibility with main process
+  useEffect(() => {
+    window.ipc?.sidebarChanged?.(showSidebar);
+  }, [showSidebar]);
 
   // Categories Map
   const categoriesMap = useMemo(() => {
@@ -122,14 +158,9 @@ export function ShellProvider({ children }) {
     return map;
   }, [categories]);
 
-  // All apps count (excluding fonts)
-  const allAppsCount = useMemo(() => {
-    return items.filter(c => c.category !== 'font').length;
-  }, [items]);
-
-  const updatesCount = useMemo(() => {
-    return Object.keys(outdatedMap).length;
-  }, [outdatedMap]);
+  // Counts
+  const allAppsCount = useMemo(() => items.filter(c => c.category !== 'font').length, [items]);
+  const updatesCount = useMemo(() => Object.keys(outdatedMap).length, [outdatedMap]);
 
   // Info Drawer controls
   const openAppInfo = useCallback((item) => {
@@ -156,16 +187,17 @@ export function ShellProvider({ children }) {
     }
   }, []);
 
-
   const closeAppInfo = useCallback(() => {
     setSelectedApp(null);
     setAppDetails(null);
   }, []);
+  const closeAppInfoRef = useRef(closeAppInfo);
+  closeAppInfoRef.current = closeAppInfo;
 
   // Tab switching with search redirect
   const selectTab = useCallback((tab) => {
     setCurrentTab(tab);
-    setDisplayedCount(chunkSize);
+    setDisplayedCount(CHUNK_SIZE);
     if (window.innerWidth <= 560) {
       setShowSidebar(false);
     }
@@ -173,7 +205,7 @@ export function ShellProvider({ children }) {
 
   const handleSearchChange = useCallback((val) => {
     setSearch(val);
-    setDisplayedCount(chunkSize);
+    setDisplayedCount(CHUNK_SIZE);
     if (val && val.trim() && currentTab === 'discover') {
       setCurrentTab('all-apps');
     }
@@ -190,7 +222,7 @@ export function ShellProvider({ children }) {
     setActiveTaskAction(action);
     setRunningTasks(prev => ({ ...prev, [token]: action }));
 
-    const cask = items.find(c => c.token === token);
+    const cask = itemsRef.current.find(c => c.token === token);
     const name = cask ? getAppName(cask) : token;
     let title = action === 'install' ? `Installing ${name}...`
       : action === 'uninstall' ? `Deleting ${name}...`
@@ -205,7 +237,9 @@ export function ShellProvider({ children }) {
     setShowDrawer(true);
 
     window.ipc?.runAction?.(taskId, action, token, zap);
-  }, [items]);
+  }, [clearTerminal]);
+  const executeTaskRef = useRef(executeTask);
+  executeTaskRef.current = executeTask;
 
   // Process next update in batch queue
   const processNextQueuedUpdate = useCallback(() => {
@@ -218,13 +252,15 @@ export function ShellProvider({ children }) {
     }
     const nextToken = updateQueueRef.current.shift();
     const action = batchActionRef.current || 'upgrade';
-    executeTask(action, nextToken, false, updateQueueRef.current.length + 1);
-  }, [executeTask]);
+    executeTaskRef.current(action, nextToken, false, updateQueueRef.current.length + 1);
+  }, []);
+  const processNextQueuedUpdateRef = useRef(processNextQueuedUpdate);
+  processNextQueuedUpdateRef.current = processNextQueuedUpdate;
 
   // Start Action
   const startAction = useCallback(async (action, token, appName) => {
     if (action === 'open') {
-      const cask = items.find(c => c.token === token);
+      const cask = itemsRef.current.find(c => c.token === token);
       const app = appName || (cask ? (cask.app || cask.name) : null);
       try {
         await window.ipc?.openApp?.(token, app);
@@ -234,7 +270,7 @@ export function ShellProvider({ children }) {
       return;
     }
 
-    if (activeTaskId) {
+    if (activeTaskRef.current.id) {
       alert(__('Another operation is currently running. Please wait.'));
       return;
     }
@@ -245,7 +281,7 @@ export function ShellProvider({ children }) {
       isUpdatingAllRef.current = true;
       batchActionRef.current = 'upgrade';
       updateQueueRef.current = [...outdatedTokens];
-      processNextQueuedUpdate();
+      processNextQueuedUpdateRef.current();
       return;
     }
 
@@ -265,7 +301,7 @@ export function ShellProvider({ children }) {
 
     let zap = false;
     if (action === 'uninstall') {
-      const cask = items.find(c => c.token === token);
+      const cask = itemsRef.current.find(c => c.token === token);
       const name = cask ? getAppName(cask) : token;
 
       if (window.ipc?.showMessage) {
@@ -297,22 +333,24 @@ export function ShellProvider({ children }) {
       }
     }
 
-    executeTask(action, token, zap);
-  }, [activeTaskId, items, outdatedMap, executeTask, processNextQueuedUpdate, __]);
+    executeTaskRef.current(action, token, zap);
+  }, [outdatedMap, clearTerminal, __]);
+  const startActionRef = useRef(startAction);
+  startActionRef.current = startAction;
 
   const cancelAction = useCallback(() => {
-    if (activeTaskId) {
-      window.ipc?.writePtyInput?.(activeTaskId, '\x03');
-      window.ipc?.cancelAction?.(activeTaskId);
+    const currentId = activeTaskRef.current.id;
+    if (currentId) {
+      window.ipc?.writePtyInput?.(currentId, '\x03');
+      window.ipc?.cancelAction?.(currentId);
     }
     isUpdatingAllRef.current = false;
     updateQueueRef.current = [];
-    isConfirmPromptOpenRef.current = false;
     setShowPasswordModal(false);
     setIsWaitingForInput(false);
     setShowDrawer(false);
     setDrawerTitle('');
-  }, [activeTaskId]);
+  }, []);
 
   const submitPassword = useCallback((pass) => {
     activeTaskPasswordRef.current = pass || '';
@@ -320,14 +358,37 @@ export function ShellProvider({ children }) {
     lastPasswordSentTimeRef.current = Date.now();
     setIsWaitingForInput(false);
     setShowPasswordModal(false);
-    if (activeTaskId) {
-      window.ipc?.writePtyInput?.(activeTaskId, (pass || '') + '\r');
+    if (activeTaskRef.current.id) {
+      window.ipc?.writePtyInput?.(activeTaskRef.current.id, (pass || '') + '\r');
     }
-  }, [activeTaskId]);
+  }, []);
 
   const cancelPassword = useCallback(() => {
     cancelAction();
   }, [cancelAction]);
+
+  // Refresh helpers
+  const refreshInstalledState = useCallback(async () => {
+    if (!window.ipc?.getInstalled) return;
+    try {
+      const inst = await window.ipc.getInstalled();
+      setInstalled(Array.isArray(inst) ? inst : (inst?.tokens || inst?.list || []));
+      setInstalledVersions(inst?.versions || {});
+    } catch (e) {
+      console.error('Failed refreshing installed state:', e);
+    }
+  }, []);
+
+  const refreshUpdatesState = useCallback(async (force = false) => {
+    if (!window.ipc?.getUpdates) return;
+    try {
+      const upds = await window.ipc.getUpdates(force);
+      setOutdatedMap(parseUpdatesMap(upds));
+      setLastCheckedTime(new Date());
+    } catch (e) {
+      console.error('Failed refreshing updates state:', e);
+    }
+  }, []);
 
   // Filtered and Sorted Items
   const filteredItems = useMemo(() => {
@@ -359,7 +420,6 @@ export function ShellProvider({ children }) {
       });
     }
 
-    // Filter by search query
     if (search && search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(c =>
@@ -392,14 +452,8 @@ export function ShellProvider({ children }) {
     return list;
   }, [items, currentTab, search, order, installed, outdatedMap, categoriesMap]);
 
-  // Featured and Top Installed for Discover View
-  const featuredTokens = useMemo(() => [
-    'onlyoffice', 'iina', 'visual-studio-code', 'figma', 'rectangle', 'spotify', 'raycast', 'obsidian', 'zed'
-  ], []);
-
-  const featuredItems = useMemo(() => {
-    return items.filter(c => featuredTokens.includes(c.token));
-  }, [items, featuredTokens]);
+  // Discover View memoized lists
+  const featuredItems = useMemo(() => items.filter(c => FEATURED_TOKENS.has(c.token)), [items]);
 
   const nextSlide = useCallback(() => {
     if (featuredItems.length <= 1) return;
@@ -413,7 +467,7 @@ export function ShellProvider({ children }) {
 
   const topInstalledItems = useMemo(() => {
     const sorted = items
-      .filter(c => c.count > 0 && (c.icon || c.iconUrl) && c.category !== 'font' && !featuredTokens.includes(c.token))
+      .filter(c => c.count > 0 && (c.icon || c.iconUrl) && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
       .sort((a, b) => (b.count || 0) - (a.count || 0));
 
     const top = [];
@@ -427,68 +481,31 @@ export function ShellProvider({ children }) {
       }
     }
     return top;
-  }, [items, featuredTokens]);
+  }, [items]);
 
   const loadMore = useCallback(() => {
-    setDisplayedCount(prev => prev + chunkSize);
+    setDisplayedCount(prev => prev + CHUNK_SIZE);
   }, []);
 
   const displayedItems = useMemo(() => {
     return filteredItems.slice(0, displayedCount);
   }, [filteredItems, displayedCount]);
 
-  // Load initial data
+  // Load initial data on mount
   useEffect(() => {
-    // 1. Translations
-    if (window.ipc?.getTranslations) {
-      window.ipc.getTranslations().then(cat => {
-        const newCat = cat || {};
-        catalogRef.current = newCat;
-        setCatalog(newCat);
-        if (newCat?._languageDirection === 'rtl') {
-          document.documentElement.dir = 'rtl';
-        } else {
-          document.documentElement.dir = 'ltr';
-        }
-        if (rawCategoriesRef.current.length > 0) {
-          setCategories(sortCategories(rawCategoriesRef.current, newCat));
-        }
-      });
+    if (!window.ipc) return;
+
+    if (window.ipc.getTranslations) {
+      window.ipc.getTranslations().then(applyTranslations);
     }
 
-    if (window.ipc?.onI18nChanged) {
-      const unsub = window.ipc.onI18nChanged(() => {
-        window.ipc.getTranslations().then(cat => {
-          const newCat = cat || {};
-          catalogRef.current = newCat;
-          setCatalog(newCat);
-          if (newCat?._languageDirection === 'rtl') {
-            document.documentElement.dir = 'rtl';
-          } else {
-            document.documentElement.dir = 'ltr';
-          }
-          if (rawCategoriesRef.current.length > 0) {
-            setCategories(sortCategories(rawCategoriesRef.current, newCat));
-          }
-        });
-      });
-      // unsubscribe handled if unmounted
-    }
-
-    // 2. Config
-    if (window.ipc?.getConfig) {
+    if (window.ipc.getConfig) {
       window.ipc.getConfig().then(cfg => {
         if (cfg?.alwaysShowStatusBar) setAlwaysShowStatusBar(true);
       });
     }
-    if (window.ipc?.onConfigUpdated) {
-      window.ipc.onConfigUpdated(cfg => {
-        if (cfg?.alwaysShowStatusBar !== undefined) setAlwaysShowStatusBar(!!cfg.alwaysShowStatusBar);
-      });
-    }
 
-    // 3. Categories
-    if (window.ipc?.getCategories) {
+    if (window.ipc.getCategories) {
       window.ipc.getCategories().then(cats => {
         const list = cats || [];
         rawCategoriesRef.current = list;
@@ -496,144 +513,104 @@ export function ShellProvider({ children }) {
       });
     }
 
-    // 4. Casks
-    if (window.ipc?.getCasks) {
+    if (window.ipc.getCasks) {
       window.ipc.getCasks().then(casks => {
         setItems(casks || []);
         setLoading(false);
       });
     }
 
-    // 5. Initial status check
-    const checkStatus = async () => {
-      try {
-        if (window.ipc?.getInstalled && window.ipc?.getUpdates) {
-          const [inst, upds] = await Promise.all([
-            window.ipc.getInstalled(),
-            window.ipc.getUpdates(false),
-          ]);
-          setInstalled(Array.isArray(inst) ? inst : (inst?.tokens || inst?.list || []));
-          setInstalledVersions(inst?.versions || {});
+    refreshInstalledState();
+    refreshUpdatesState(false);
+  }, [applyTranslations, refreshInstalledState, refreshUpdatesState]);
 
-          const casks = upds?.casks || (Array.isArray(upds) ? upds : []);
-          const map = {};
-          for (const item of casks) {
-            const token = item.token || item.name;
-            map[token] = {
-              installedVersion: item.installed_versions?.[0] || item.installed_version || null,
-              currentVersion: item.current_version || item.latest_version
-            };
-          }
-          setOutdatedMap(map);
-          setLastCheckedTime(new Date());
-        }
-      } catch (err) {
-        console.error('Initial status check failed:', err);
-      }
-    };
-    checkStatus();
-  }, []);
-
-  // Sync sidebar with main process
+  // Setup all IPC event listeners once on mount
   useEffect(() => {
-    if (window.ipc?.sidebarChanged) {
-      window.ipc.sidebarChanged(showSidebar);
-    }
-  }, [showSidebar]);
-
-  // IPC Event Listeners
-  useEffect(() => {
+    if (!window.ipc) return;
     const unsubs = [];
 
-    if (window.ipc?.onSelectTab) {
-      unsubs.push(window.ipc.onSelectTab(tab => {
-        closeAppInfo();
-        setCurrentTab(tab);
-        setDisplayedCount(chunkSize);
+    // 1. App configuration & translations
+    if (window.ipc.onI18nChanged) {
+      unsubs.push(window.ipc.onI18nChanged(() => {
+        window.ipc.getTranslations?.().then(applyTranslations);
       }));
     }
 
-    if (window.ipc?.onFocusSearch) {
+    if (window.ipc.onConfigUpdated) {
+      unsubs.push(window.ipc.onConfigUpdated(cfg => {
+        if (cfg?.alwaysShowStatusBar !== undefined) setAlwaysShowStatusBar(!!cfg.alwaysShowStatusBar);
+      }));
+    }
+
+    if (window.ipc.onUpdatesRefreshed) {
+      unsubs.push(window.ipc.onUpdatesRefreshed(data => {
+        setOutdatedMap(parseUpdatesMap(data));
+        setLastCheckedTime(new Date());
+      }));
+    }
+
+    // 2. Navigation & View Menu triggers
+    if (window.ipc.onSelectTab) {
+      unsubs.push(window.ipc.onSelectTab(tab => {
+        closeAppInfoRef.current();
+        setCurrentTab(tab);
+        setDisplayedCount(CHUNK_SIZE);
+      }));
+    }
+
+    if (window.ipc.onFocusSearch) {
       unsubs.push(window.ipc.onFocusSearch(() => {
-        closeAppInfo();
+        closeAppInfoRef.current();
         setShowSidebar(true);
         setTimeout(() => {
-          const searchInput = document.getElementById('search-input');
-          if (searchInput) {
-            searchInput.focus();
-            searchInput.select?.();
+          const input = document.getElementById('search-input');
+          if (input) {
+            input.focus();
+            input.select?.();
           }
         }, 50);
       }));
     }
 
-    if (window.ipc?.onCheckUpdates) {
+    if (window.ipc.onCheckUpdates) {
       unsubs.push(window.ipc.onCheckUpdates(() => {
-        closeAppInfo();
+        closeAppInfoRef.current();
         setCurrentTab('updates');
-        startAction('refresh', 'refresh');
+        startActionRef.current('refresh', 'refresh');
       }));
     }
 
-    if (window.ipc?.onSetOrder) {
+    if (window.ipc.onSetOrder) {
       unsubs.push(window.ipc.onSetOrder(newOrder => {
-        if (currentTab === 'discover' || currentTab === 'updates') {
-          setCurrentTab('all-apps');
-        }
+        setCurrentTab(prev => (prev === 'discover' || prev === 'updates') ? 'all-apps' : prev);
         setOrder(newOrder);
       }));
     }
 
-    if (window.ipc?.onSetViewMode) {
+    if (window.ipc.onSetViewMode) {
       unsubs.push(window.ipc.onSetViewMode(newMode => {
         setViewMode(newMode);
       }));
     }
 
-    if (window.ipc?.onToggleSidebar) {
+    if (window.ipc.onToggleSidebar) {
       unsubs.push(window.ipc.onToggleSidebar(show => {
         setShowSidebar(prev => (typeof show === 'boolean' ? show : !prev));
       }));
     }
 
-    if (window.ipc?.onUpdatesRefreshed) {
-      unsubs.push(window.ipc.onUpdatesRefreshed(data => {
-        const casks = data?.casks || (Array.isArray(data) ? data : []);
-        const map = {};
-        for (const item of casks) {
-          const token = item.token || item.name;
-          map[token] = {
-            installedVersion: item.installed_versions?.[0] || item.installed_version || null,
-            currentVersion: item.current_version || item.latest_version
-          };
-        }
-        setOutdatedMap(map);
-        setLastCheckedTime(new Date());
-      }));
-    }
-
-    if (window.ipc?.onImportCasks) {
+    if (window.ipc.onImportCasks) {
       unsubs.push(window.ipc.onImportCasks(casksToInstall => {
         if (!Array.isArray(casksToInstall) || casksToInstall.length === 0) return;
-        closeAppInfo();
+        closeAppInfoRef.current();
         isUpdatingAllRef.current = true;
         batchActionRef.current = 'install';
         updateQueueRef.current = [...casksToInstall];
-        processNextQueuedUpdate();
+        processNextQueuedUpdateRef.current();
       }));
     }
 
-    return () => {
-      unsubs.forEach(u => typeof u === 'function' && u());
-    };
-  }, [currentTab, closeAppInfo, startAction, setOrder, executeTask, processNextQueuedUpdate]);
-
-  // Task log & complete listeners
-  useEffect(() => {
-    if (!window.ipc) return;
-
-    const unsubs = [];
-
+    // 3. Task runner prompts & logs
     if (window.ipc.onTaskPrompt) {
       unsubs.push(window.ipc.onTaskPrompt(data => {
         if (data.type === 'password') {
@@ -644,7 +621,7 @@ export function ShellProvider({ children }) {
           if (Date.now() - lastPasswordSentTimeRef.current < 1500) return;
           if (activeTaskPasswordRef.current && !lastPasswordAttemptFailedRef.current) {
             lastPasswordSentTimeRef.current = Date.now();
-            window.ipc.writePtyInput(data.taskId || activeTaskId, activeTaskPasswordRef.current + '\r');
+            window.ipc.writePtyInput(data.taskId || activeTaskRef.current.id, activeTaskPasswordRef.current + '\r');
             setIsWaitingForInput(false);
             return;
           }
@@ -665,7 +642,6 @@ export function ShellProvider({ children }) {
           setDrawerTitle(data.line);
         }
 
-        // Detect fallback password prompts
         const promptInfo = detectPrompt(data.raw || text);
         if (promptInfo.isRetry) {
           lastPasswordAttemptFailedRef.current = true;
@@ -676,7 +652,7 @@ export function ShellProvider({ children }) {
           if (Date.now() - lastPasswordSentTimeRef.current < 1500) return;
           if (activeTaskPasswordRef.current && !lastPasswordAttemptFailedRef.current) {
             lastPasswordSentTimeRef.current = Date.now();
-            window.ipc.writePtyInput(activeTaskId, activeTaskPasswordRef.current + '\r');
+            window.ipc.writePtyInput(activeTaskRef.current.id, activeTaskPasswordRef.current + '\r');
             setIsWaitingForInput(false);
             return;
           }
@@ -688,19 +664,19 @@ export function ShellProvider({ children }) {
 
     if (window.ipc.onStatusLog) {
       unsubs.push(window.ipc.onStatusLog(text => {
-        terminalHistoryRef.current += text;
-        terminalLogSubscribers.current.forEach(cb => cb(text));
+        if (!text) return;
+        terminalHistoryRef.current = terminalHistoryRef.current ? `${terminalHistoryRef.current}\n${text}` : text;
+        terminalLogSubscribers.current.forEach(cb => cb(terminalHistoryRef.current));
       }));
     }
 
+    // 4. Task completion
     if (window.ipc.onTaskComplete) {
       unsubs.push(window.ipc.onTaskComplete(async data => {
-        console.log('[RENDERER ON_TASK_COMPLETE]:', data);
-        const finishedToken = activeTaskToken;
-        const finishedAction = activeTaskAction;
+        const finishedToken = activeTaskRef.current.token;
+        const finishedAction = activeTaskRef.current.action;
         const errorLog = activeTaskErrorLogRef.current;
 
-        // Reset task state
         setActiveTaskId(null);
         setActiveTaskToken(null);
         setActiveTaskAction(null);
@@ -709,8 +685,9 @@ export function ShellProvider({ children }) {
         lastPasswordAttemptFailedRef.current = false;
         lastPasswordSentTimeRef.current = 0;
         activeTaskErrorLogRef.current = '';
-        isConfirmPromptOpenRef.current = false;
         setIsWaitingForInput(false);
+        setShowDrawer(false);
+        setDrawerTitle('');
 
         setRunningTasks(prev => {
           const next = { ...prev };
@@ -730,16 +707,16 @@ export function ShellProvider({ children }) {
         }
 
         if (!isSuccess && !isCancelled) {
-          const cask = items.find(c => c.token === finishedToken);
+          const cask = itemsRef.current.find(c => c.token === finishedToken);
           const name = cask ? getAppName(cask) : finishedToken;
-          const err = extractTaskError(errorLog, finishedAction, name, catalogRef.current, __);
+          const err = extractTaskError(errorLog, finishedAction, name, catalogRef.current, translateRef.current);
           if (err.isFullDiskAccess) {
             const res = await window.ipc?.showMessage?.({
               type: 'warning',
               title: err.title,
               message: err.title,
               detail: err.details,
-              buttons: [__('Open System Settings'), __('Cancel')],
+              buttons: [translateRef.current('Open System Settings'), translateRef.current('Cancel')],
               defaultId: 0,
               cancelId: 1,
             });
@@ -756,8 +733,8 @@ export function ShellProvider({ children }) {
           const lines = cleanLogs.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
           const freedLine = lines.slice().reverse().find(l => /freed|disk space/i.test(l));
           const lastLine = (freedLine || (lines.length > 0 ? lines[lines.length - 1] : ''))
-            .replace(/^==>\s*/, '').trim() || __('No files cleaned up.');
-          const title = __('Cleanup Finished');
+            .replace(/^==>\s*/, '').trim() || translateRef.current('No files cleaned up.');
+          const title = translateRef.current('Cleanup Finished');
           window.ipc?.showMessage?.({ type: 'info', title, message: title, detail: lastLine, buttons: ['OK'] });
         }
 
@@ -765,41 +742,18 @@ export function ShellProvider({ children }) {
           if (isCancelled || !isSuccess) {
             isUpdatingAllRef.current = false;
             updateQueueRef.current = [];
-            setShowDrawer(false);
-            setDrawerTitle('');
           } else {
-            // Process next update in queue
             setTimeout(() => {
-              processNextQueuedUpdate();
+              processNextQueuedUpdateRef.current();
             }, 800);
           }
-        } else {
-          setShowDrawer(false);
-          setDrawerTitle('');
         }
 
-        // Refresh installed & outdated state
+        // Refresh installed and outdated state
         try {
-          if (window.ipc?.getInstalled) {
-            const inst = await window.ipc.getInstalled();
-            setInstalled(Array.isArray(inst) ? inst : (inst?.tokens || inst?.list || []));
-            setInstalledVersions(inst?.versions || {});
-          }
+          await refreshInstalledState();
           if (finishedAction === 'refresh') {
-            setLastCheckedTime(new Date());
-            if (window.ipc?.getUpdates) {
-              const upds = await window.ipc.getUpdates(false);
-              const casks = upds?.casks || (Array.isArray(upds) ? upds : []);
-              const map = {};
-              for (const item of casks) {
-                const token = item.token || item.name;
-                map[token] = {
-                  installedVersion: item.installed_versions?.[0] || item.installed_version || null,
-                  currentVersion: item.current_version || item.latest_version
-                };
-              }
-              setOutdatedMap(map);
-            }
+            await refreshUpdatesState(false);
           } else if (isSuccess && finishedToken && (finishedAction === 'upgrade' || finishedAction === 'uninstall')) {
             setOutdatedMap(prev => {
               const next = { ...prev };
@@ -816,7 +770,7 @@ export function ShellProvider({ children }) {
     return () => {
       unsubs.forEach(u => typeof u === 'function' && u());
     };
-  }, [activeTaskId, activeTaskToken, activeTaskAction, items, executeTask, processNextQueuedUpdate, __]);
+  }, [applyTranslations, refreshInstalledState, refreshUpdatesState]);
 
   const value = {
     // Nav & Filters
@@ -845,7 +799,6 @@ export function ShellProvider({ children }) {
     loadingAppDetails,
     openAppInfo,
     closeAppInfo,
-
 
     // Collections
     items,
@@ -889,7 +842,7 @@ export function ShellProvider({ children }) {
 
     // Status
     lastCheckedTime,
-    isRefreshing,
+    isRefreshing: false,
     __,
   };
 

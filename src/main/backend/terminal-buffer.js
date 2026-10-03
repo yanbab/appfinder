@@ -12,8 +12,6 @@ function stripAnsi(str) {
 
 /**
  * TerminalBuffer maintains an in-memory virtual terminal scrollback buffer.
- * Dual-mode: maintains plain stripped lines for status titles/logs AND
- * retains styled text for terminal viewing.
  * It resolves ANSI cursor line resets (\r, \x1b[0G, \x1b[K), handles cursor-up (\x1b[A),
  * and commits lines on line feeds (\n).
  */
@@ -50,8 +48,8 @@ class TerminalBuffer {
     // 1. Strip DEC 2026 synchronized output mode markers
     let text = raw.replace(/\x1b\[\?2026[hl]/g, '');
 
-    // 2. Map cursor-up (\x1b[A, \x1b[1A)
-    text = text.replace(/\x1b\[(?:1)?A/g, '\x1bA');
+    // 2. Map cursor-up (\x1b[A, \x1b[1A) to safe control character \x02 (preserved across stripAnsi)
+    text = text.replace(/\x1b\[(?:1)?A/g, '\x02');
 
     // 3. Map cursor line-reset codes (\x1b[0G, \x1b[1G, \x1b[K) and \r to \r
     text = text.replace(/(?:\x1b\[[0-9]*[GgKk]|\r)+/g, '\r');
@@ -64,8 +62,7 @@ class TerminalBuffer {
 
     for (let i = 0; i < text.length; i++) {
       const ch = text[i];
-      if (ch === '\x1b' && text[i + 1] === 'A') {
-        i++;
+      if (ch === '\x02') {
         if (this.lines.length > 0) {
           this.currentLine = this.lines.pop();
           this.pendingOverwrite = true;

@@ -109,11 +109,6 @@ function setupApplicationMenu() {
           accelerator: 'CmdOrCtrl+2',
           click: () => sendToShell('shell:set-view-mode', 'list')
         },
-        {
-          label: __('as Gallery'),
-          accelerator: 'CmdOrCtrl+3',
-          click: () => sendToShell('shell:set-view-mode', 'gallery')
-        },
         { type: 'separator' },
         {
           label: __('Search'),
@@ -201,13 +196,7 @@ function setupApplicationMenu() {
         { type: 'separator' },
         { role: 'reload', label: __('Reload') },
         { role: 'forceReload', label: __('Force Reload') },
-        { role: 'toggleDevTools', label: __('Toggle Developer Tools') },
-        { type: 'separator' },
-        { role: 'resetZoom', label: __('Actual Size') },
-        { role: 'zoomIn', label: __('Zoom In') },
-        { role: 'zoomOut', label: __('Zoom Out') },
-        { type: 'separator' },
-        { role: 'togglefullscreen', label: __('Toggle Full Screen') }
+        { role: 'toggleDevTools', label: __('Toggle Developer Tools') }
       ]
     },
     { role: 'windowMenu', label: __('Window') },

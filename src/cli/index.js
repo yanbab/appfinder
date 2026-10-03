@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const path = require('path');
-const backend = require('../main/brew');
+const backend = require('../main/backend/brew');
 
 function printHelp() {
   console.log(`
