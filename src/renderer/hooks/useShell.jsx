@@ -634,6 +634,26 @@ export function ShellProvider({ children }) {
 
     const unsubs = [];
 
+    if (window.ipc.onTaskPrompt) {
+      unsubs.push(window.ipc.onTaskPrompt(data => {
+        if (data.type === 'password') {
+          if (data.isRetry) {
+            lastPasswordAttemptFailedRef.current = true;
+            activeTaskPasswordRef.current = null;
+          }
+          if (Date.now() - lastPasswordSentTimeRef.current < 1500) return;
+          if (activeTaskPasswordRef.current && !lastPasswordAttemptFailedRef.current) {
+            lastPasswordSentTimeRef.current = Date.now();
+            window.ipc.writePtyInput(data.taskId || activeTaskId, activeTaskPasswordRef.current + '\r');
+            setIsWaitingForInput(false);
+            return;
+          }
+          setIsWaitingForInput(true);
+          setShowPasswordModal(true);
+        }
+      }));
+    }
+
     if (window.ipc.onTaskLog) {
       unsubs.push(window.ipc.onTaskLog(data => {
         const text = data.text || '';
@@ -645,7 +665,7 @@ export function ShellProvider({ children }) {
           setDrawerTitle(data.line);
         }
 
-        // Detect prompts
+        // Detect fallback password prompts
         const promptInfo = detectPrompt(data.raw || text);
         if (promptInfo.isRetry) {
           lastPasswordAttemptFailedRef.current = true;
@@ -662,37 +682,6 @@ export function ShellProvider({ children }) {
           }
           setIsWaitingForInput(true);
           setShowPasswordModal(true);
-        } else if (promptInfo.isConfirmPrompt) {
-          if (!isConfirmPromptOpenRef.current) {
-            isConfirmPromptOpenRef.current = true;
-            setIsWaitingForInput(true);
-            setShowTerminal(true);
-
-            if (window.ipc?.showMessage) {
-              const { prompt: promptLine, details: detailText } = parseConfirmationDetails(text);
-              const message = promptLine || __('Do you want to proceed?');
-
-              window.ipc.showMessage({
-                type: 'question',
-                buttons: [__('Proceed'), __('Cancel')],
-                defaultId: 0,
-                cancelId: 1,
-                title: __('Confirmation Required'),
-                message,
-                detail: detailText
-              }).then(res => {
-                isConfirmPromptOpenRef.current = false;
-                setIsWaitingForInput(false);
-                const answer = (res && res.response === 0) ? 'y\r' : 'n\r';
-                if (activeTaskId) {
-                  window.ipc.writePtyInput(activeTaskId, answer);
-                }
-              }).catch(() => {
-                isConfirmPromptOpenRef.current = false;
-                setIsWaitingForInput(false);
-              });
-            }
-          }
         }
       }));
     }

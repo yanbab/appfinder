@@ -108,6 +108,7 @@ contextBridge.exposeInMainWorld('ipc', {
   onContextMenuAction: (cb) => on('context-menu:action', cb),
 
   onTaskLog: (cb) => on('task:log', cb),
+  onTaskPrompt: (cb) => on('task:prompt', cb),
   onTaskComplete: (cb) => on('task:complete', cb),
   onStatusLog: (cb) => on('status:log', cb),
   onUpdatesRefreshed: (cb) => on('cask:updates-refreshed', cb),
