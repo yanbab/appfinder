@@ -16,8 +16,13 @@ const UPDATES_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
 
 function getData(file) {
+  if (memoryCache.has(file)) {
+    return memoryCache.get(file);
+  }
   try {
-    return JSON.parse(fs.readFileSync(path.join(DATA_DIR, file), 'utf8'));
+    const data = JSON.parse(fs.readFileSync(path.join(DATA_DIR, file), 'utf8'));
+    memoryCache.set(file, data);
+    return data;
   } catch (e) {
     console.error(`Failed to read data file ${file}:`, e);
     return [];

@@ -288,3 +288,36 @@ export function extractTaskError(logText, action, appName, catalog, __) {
   return { title, details: matchedKey ? translate(matchedKey) : translate(rawError), isFullDiskAccess: false };
 }
 
+const STATUS_KEYWORDS = ['Downloading', 'Downloaded', 'Verifying', 'Verified', 'Extracting'];
+
+/**
+ * Filters and formats a terminal log line for display in the status bar.
+ * Returns null if the line should not be displayed in the status bar.
+ *
+ * @param {string} rawLine
+ * @returns {string|null}
+ */
+export function formatStatusBarMessage(rawLine) {
+  if (!rawLine || typeof rawLine !== 'string') return null;
+
+  const clean = stripAnsi(rawLine).trim();
+  if (!clean) return null;
+
+  // 1. Check for download/progress keywords: include keyword and rest of line
+  for (const kw of STATUS_KEYWORDS) {
+    const idx = clean.indexOf(kw);
+    if (idx !== -1) {
+      const rest = clean.slice(idx).trim();
+      return rest.replace(/\s{2,}/g, ' ');
+    }
+  }
+
+  // 2. Check if line begins with "==>": show text after "==> "
+  if (clean.startsWith('==>')) {
+    const textAfter = clean.replace(/^==>\s*/, '').trim();
+    return textAfter || null;
+  }
+
+  return null;
+}
+

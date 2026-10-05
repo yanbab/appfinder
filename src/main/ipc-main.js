@@ -29,8 +29,8 @@ function setupIpcMain() {
           event.sender.send('task:log', logData);
         }
       },
-      onPrompt: async ({ taskId, type, isRetry, prompt, details, respond }) => {
-        console.log('[IPC-MAIN PROMPT DETECTED]:', { taskId, type, isRetry, prompt });
+      onPrompt: async ({ taskId, type, isRetry, isDependency, targetApp, dependencies, prompt, details, respond }) => {
+        console.log('[IPC-MAIN PROMPT DETECTED]:', { taskId, type, isRetry, isDependency, targetApp, dependencies, prompt });
         if (type === 'confirm') {
           try {
             const senderWin = BrowserWindow.fromWebContents(event.sender);
@@ -38,21 +38,35 @@ function setupIpcMain() {
               ? senderWin
               : (BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0]);
 
+            const allApps = Backend.getApps();
+            const findAppName = (tokenOrName) => {
+              if (!tokenOrName) return '';
+              const found = Array.isArray(allApps) ? allApps.find(c => c.token === tokenOrName || c.name === tokenOrName) : null;
+              return found?.name || tokenOrName;
+            };
+
+            const appName = data?.appName || findAppName(targetApp || data?.token) || targetApp || data?.token || i18n.__('This application');
+            const message = isDependency
+              ? i18n.__('%s requires installing:', appName)
+              : (prompt ? prompt.replace(/^==>\s*/, '').replace(/\s*\[y\/n\]|\(y\/n\)/i, '').trim() : i18n.__('Do you want to proceed?'));
+            const detail = (isDependency && dependencies) ? dependencies : (details || '');
+
             const result = await dialog.showMessageBox(win, {
               type: 'question',
-              buttons: [i18n.__('Proceed'), i18n.__('Cancel')],
+              buttons: [i18n.__('Install'), i18n.__('Cancel')],
               defaultId: 0,
               cancelId: 1,
               title: i18n.__('Confirmation Required'),
-              message: prompt || i18n.__('Do you want to proceed?'),
-              detail: details || ''
+              message,
+              detail
             });
 
             const answer = (result.response === 0) ? 'y\r' : 'n\r';
-            respond(answer);
+            const userCancelled = (result.response !== 0);
+            respond(answer, userCancelled);
           } catch (err) {
             console.error('[IPC-MAIN CONFIRM PROMPT ERROR]:', err);
-            respond('n\r');
+            respond('n\r', true);
           }
         } else if (type === 'password') {
           if (!event.sender.isDestroyed()) {

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { getAppName, stripAnsi, detectPrompt, getIconDataUrl, extractTaskError } from './utils';
+import { getAppName, stripAnsi, detectPrompt, getIconDataUrl, extractTaskError, formatStatusBarMessage } from './utils';
 
 const ShellContext = createContext(null);
 
@@ -236,7 +236,7 @@ export function ShellProvider({ children }) {
     setDrawerTitle(title);
     setShowDrawer(true);
 
-    window.ipc?.runAction?.(taskId, action, token, zap);
+    window.ipc?.runAction?.(taskId, action, token, zap, name);
   }, [clearTerminal]);
   const executeTaskRef = useRef(executeTask);
   executeTaskRef.current = executeTask;
@@ -639,7 +639,10 @@ export function ShellProvider({ children }) {
         activeTaskErrorLogRef.current = text;
 
         if (data.line) {
-          setDrawerTitle(data.line);
+          const statusMsg = formatStatusBarMessage(data.line);
+          if (statusMsg) {
+            setDrawerTitle(statusMsg);
+          }
         }
 
         const promptInfo = detectPrompt(data.raw || text);

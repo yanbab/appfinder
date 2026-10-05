@@ -95,7 +95,7 @@ contextBridge.exposeInMainWorld('ipc', {
   showErrorDialog: (title, content) => invoke('dialog:error', title, content),
   showMessage: (options) => invoke('dialog:message', options),
 
-  runAction: (taskId, action, token, zap) => ipcRenderer.send('cask:run-action', { taskId, action, token, zap }),
+  runAction: (taskId, action, token, zap, appName) => ipcRenderer.send('cask:run-action', { taskId, action, token, zap, appName }),
   cancelAction: (taskId) => ipcRenderer.send('cask:cancel-action', taskId),
   writePtyInput: (taskId, text) => ipcRenderer.send('cask:write-pty-input', { taskId, text }),
   clearCaches: () => invoke('settings:clear-caches'),

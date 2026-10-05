@@ -23,7 +23,7 @@ const PROMPTS = {
  */
 function detectPrompt(text) {
   if (!text) {
-    return { isPrompt: false, type: null, isRetry: false, prompt: '', details: '' };
+    return { isPrompt: false, type: null, isRetry: false, isDependency: false, targetApp: '', dependencies: '', prompt: '', details: '' };
   }
 
   const clean = stripAnsi(text);
@@ -32,7 +32,7 @@ function detectPrompt(text) {
   const isConfirmPrompt = !isPasswordPrompt && PROMPTS.CONFIRM.test(clean);
 
   if (!isPasswordPrompt && !isConfirmPrompt && !isRetry) {
-    return { isPrompt: false, type: null, isRetry: false, prompt: '', details: '' };
+    return { isPrompt: false, type: null, isRetry: false, isDependency: false, targetApp: '', dependencies: '', prompt: '', details: '' };
   }
 
   const lines = clean.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
@@ -40,16 +40,48 @@ function detectPrompt(text) {
     PROMPTS.CONFIRM.test(l) || PROMPTS.PASSWORD.test(l)
   ) || lines[lines.length - 1] || '';
 
-  const detailLines = lines
-    .filter(l => !PROMPTS.CONFIRM.test(l) && !/password|passphrase/i.test(l) && (l.startsWith('==>') || /dependenc|install|require|package/i.test(l)))
-    .slice(-5)
-    .map(l => l.replace(/^==>\s*/, '• '))
-    .join('\n');
+  // Check for dependency confirmation
+  let isDependency = false;
+  let targetApp = '';
+  const depList = [];
+
+  const depHeaderIdx = lines.findIndex(l => /Would install \d+ dependenc/i.test(l));
+  if (depHeaderIdx !== -1) {
+    isDependency = true;
+    const match = lines[depHeaderIdx].match(/for ([^:]+):/i);
+    if (match) {
+      targetApp = match[1].trim();
+    } else {
+      const caskHeaderIdx = lines.findIndex(l => /Would install \d+ cask/i.test(l));
+      if (caskHeaderIdx !== -1 && lines[caskHeaderIdx + 1] && !lines[caskHeaderIdx + 1].startsWith('==>')) {
+        targetApp = lines[caskHeaderIdx + 1].trim();
+      }
+    }
+
+    for (let i = depHeaderIdx + 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.startsWith('==>') || PROMPTS.CONFIRM.test(line)) break;
+      if (line) depList.push(line);
+    }
+  }
+
+  const dependencies = depList.join(', ');
+
+  const detailLines = isDependency && dependencies
+    ? dependencies
+    : lines
+        .filter(l => !PROMPTS.CONFIRM.test(l) && !/password|passphrase/i.test(l) && (l.startsWith('==>') || /dependenc|install|require|package/i.test(l)))
+        .slice(-5)
+        .map(l => l.replace(/^==>\s*/, '• '))
+        .join('\n');
 
   return {
     isPrompt: true,
     type: isPasswordPrompt ? 'password' : (isConfirmPrompt ? 'confirm' : null),
     isRetry,
+    isDependency,
+    targetApp,
+    dependencies,
     prompt: promptLine,
     details: detailLines
   };
@@ -66,7 +98,7 @@ function detectPrompt(text) {
  * @param {object} [options.env] - Environment variables
  * @param {object} [callbacks]
  * @param {Function} [callbacks.onLog] - Log callback ({ taskId, type, text, line, raw, plainText })
- * @param {Function} [callbacks.onPrompt] - Prompt callback ({ taskId, type, isRetry, prompt, details, respond })
+ * @param {Function} [callbacks.onPrompt] - Prompt callback ({ taskId, type, isRetry, isDependency, targetApp, dependencies, prompt, details, respond })
  * @param {Function} [callbacks.onComplete] - Completion callback ({ taskId, code, error, cancelled })
  */
 function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callbacks = {}) {
@@ -87,6 +119,7 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
 
   const buffer = new TerminalBuffer();
   let waitingForPrompt = false;
+  let isCancelledByUser = false;
 
   term.onData((raw) => {
     if (raw) {
@@ -94,17 +127,23 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
       onLog?.({ taskId, type: 'stdout', text, line, raw, plainText });
 
       if (onPrompt && !waitingForPrompt) {
-        const promptInfo = detectPrompt(raw || line);
+        const promptInfo = detectPrompt(plainText || text || raw || line);
         if (promptInfo.isPrompt && promptInfo.type) {
           waitingForPrompt = true;
           onPrompt({
             taskId,
             type: promptInfo.type,
             isRetry: promptInfo.isRetry,
+            isDependency: promptInfo.isDependency,
+            targetApp: promptInfo.targetApp,
+            dependencies: promptInfo.dependencies,
             prompt: promptInfo.prompt,
             details: promptInfo.details,
-            respond: (answer) => {
+            respond: (answer, userCancelled = false) => {
               waitingForPrompt = false;
+              if (userCancelled || answer === 'n\r' || answer === 'n') {
+                isCancelledByUser = true;
+              }
               term.write(answer);
             }
           });
@@ -118,9 +157,10 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
     if (finished) return;
     finished = true;
     waitingForPrompt = false;
-    console.log(`[TASK-RUNNER EXIT (${taskId})]: code=${code}, error=${error}, cancelled=${cancelled}`);
+    const finalCancelled = cancelled || isCancelledByUser;
+    console.log(`[TASK-RUNNER EXIT (${taskId})]: code=${code}, error=${error}, cancelled=${finalCancelled}`);
     activeTasks.delete(taskId);
-    onComplete?.({ taskId, code: code ?? 0, error, cancelled });
+    onComplete?.({ taskId, code: code ?? 0, error, cancelled: finalCancelled });
   };
 
   term.on('error', (err) => {
@@ -135,7 +175,10 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
   activeTasks.set(taskId, {
     pty: term,
     write: (data) => term.write(data),
-    kill: (signal = 'SIGTERM') => term.kill(signal)
+    kill: (signal = 'SIGTERM') => {
+      isCancelledByUser = true;
+      term.kill(signal);
+    }
   });
 }
 

@@ -1,17 +1,15 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useShell } from '@/hooks/useShell';
+
 export function Console() {
   const {
     showTerminal,
     registerTerminalSubscriber,
-    clearTerminal,
     activeTaskId,
-    cancelAction,
     __,
   } = useShell();
 
   const [logs, setLogs] = useState('');
-  const [copied, setCopied] = useState(false);
   const containerRef = useRef(null);
   const endRef = useRef(null);
 
@@ -39,60 +37,12 @@ export function Console() {
     return () => cancelAnimationFrame(raf);
   }, [logs, showTerminal]);
 
-  const handleCopy = useCallback(async () => {
-    if (!logs) return;
-    try {
-      await navigator.clipboard.writeText(logs);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch (_) { }
-  }, [logs]);
-
-  const handleClear = useCallback(() => {
-    setLogs('');
-    clearTerminal?.();
-  }, [clearTerminal]);
-
   if (!showTerminal) return null;
 
   const isRunning = Boolean(activeTaskId);
 
   return (
     <div className="h-44 w-full border-t border-border bg-card dark:bg-[#18181b] shrink-0 flex flex-col overflow-hidden select-text text-left">
-      {/* Console Header Bar */}
-      <div className="h-6 shrink-0 px-3 bg-muted/30 border-b border-border flex items-center justify-between text-[11px] text-muted-foreground select-none">
-        <div className="flex items-center gap-2">
-          <span
-            className={`size-2 rounded-full transition-colors duration-200 ${
-              isRunning ? 'bg-amber-500 animate-pulse' : 'bg-muted-foreground/40'
-            }`}
-          />
-          <span className="font-medium text-foreground/80">
-            {__('Console Output')}
-          </span>
-          {isRunning && (
-            <span className="text-[10px] text-muted-foreground">({__('Running...')})</span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleCopy}
-            disabled={!logs}
-            className="hover:text-foreground disabled:opacity-40 transition-colors cursor-default"
-          >
-            {copied ? __('Copied!') : __('Copy')}
-          </button>
-          <button
-            onClick={handleClear}
-            disabled={!logs}
-            className="hover:text-foreground disabled:opacity-40 transition-colors cursor-default"
-          >
-            {__('Clear')}
-          </button>
-        </div>
-      </div>
-
       {/* Log Output Body */}
       <div
         ref={containerRef}

@@ -4,6 +4,12 @@ const { TerminalBuffer, stripAnsi } = require('../src/main/backend/terminal-buff
 const { detectPrompt } = require('../src/main/backend/task-runner');
 const brew = require('../src/main/backend/brew');
 
+let formatStatusBarMessage;
+test.before(async () => {
+  const utils = await import('../src/renderer/hooks/utils.js');
+  formatStatusBarMessage = utils.formatStatusBarMessage;
+});
+
 test('stripAnsi removes color and control escapes', () => {
   const colored = '\x1b[32mSuccess\x1b[0m: Installed \x1b[1mApp\x1b[0m';
   assert.equal(stripAnsi(colored), 'Success: Installed App');
@@ -48,6 +54,42 @@ test('detectPrompt identifies [y/n] confirmation prompts and extracts details', 
   assert.equal(result.prompt, 'Do you want to proceed with uninstallation? [y/N]');
   assert.ok(result.details.includes('• Satisfying dependencies'));
   assert.ok(result.details.includes('• Downloading https://example.com/app.dmg'));
+});
+
+test('detectPrompt correctly parses dependency confirmation with target app and dependencies', () => {
+  const output = [
+    '==> Would install 1 cask:',
+    'ace-link',
+    '==> Would install 1 dependency for ace-link:',
+    'docker-desktop',
+    '==> Do you want to proceed with the installation? [y/n]'
+  ].join('\n');
+
+  const result = detectPrompt(output);
+  assert.equal(result.isPrompt, true);
+  assert.equal(result.type, 'confirm');
+  assert.equal(result.isDependency, true);
+  assert.equal(result.targetApp, 'ace-link');
+  assert.equal(result.dependencies, 'docker-desktop');
+  assert.equal(result.details, 'docker-desktop');
+  assert.equal(result.prompt, '==> Do you want to proceed with the installation? [y/n]');
+});
+
+test('detectPrompt correctly parses multiple dependencies', () => {
+  const output = [
+    '==> Would install 2 dependencies for my-tool:',
+    'pkg-a',
+    'pkg-b',
+    '==> Do you want to proceed with the installation? [y/n]'
+  ].join('\n');
+
+  const result = detectPrompt(output);
+  assert.equal(result.isPrompt, true);
+  assert.equal(result.type, 'confirm');
+  assert.equal(result.isDependency, true);
+  assert.equal(result.targetApp, 'my-tool');
+  assert.equal(result.dependencies, 'pkg-a, pkg-b');
+  assert.equal(result.details, 'pkg-a, pkg-b');
 });
 
 test('detectPrompt identifies lowercase (y/n) prompts', () => {
@@ -201,3 +243,92 @@ test('taskRunner streams live carriage-return progress events through onLog', as
   assert.ok(capturedLines.some(l => l.includes('Downloading')), 'Must capture live download progress line');
   assert.ok(capturedLines.some(l => l.includes('Step 2: Complete')), 'Must capture Step 2');
 });
+
+test('formatStatusBarMessage extracts lines starting with ==> and strips prefix', () => {
+  assert.equal(
+    formatStatusBarMessage('==> Fetching downloads for: codex'),
+    'Fetching downloads for: codex'
+  );
+  assert.equal(
+    formatStatusBarMessage('==> \x1b[1mInstalling Cask google-chrome\x1b[0m'),
+    'Installing Cask google-chrome'
+  );
+  assert.equal(
+    formatStatusBarMessage('==> Caveats'),
+    'Caveats'
+  );
+});
+
+test('formatStatusBarMessage extracts download, verify, and extract progress keyword and rest of line', () => {
+  assert.equal(
+    formatStatusBarMessage('\x1b[34m⠙\x1b[0m Cask codex (0.160.0)                                                              Downloading  28.7KB/141.3MB'),
+    'Downloading 28.7KB/141.3MB'
+  );
+  assert.equal(
+    formatStatusBarMessage('⠦ Cask codex (0.160.0)                                                              Downloaded  141.3MB/141.3MB'),
+    'Downloaded 141.3MB/141.3MB'
+  );
+  assert.equal(
+    formatStatusBarMessage('⠴ Cask codex (0.160.0)                                                              Verifying   141.3MB/141.3MB'),
+    'Verifying 141.3MB/141.3MB'
+  );
+  assert.equal(
+    formatStatusBarMessage('⠙ Cask codex (0.160.0)                                                              Verified    141.3MB/141.3MB'),
+    'Verified 141.3MB/141.3MB'
+  );
+  assert.equal(
+    formatStatusBarMessage('⠙ Cask codex (0.160.0)                                                              Extracting  141.3MB/141.3MB'),
+    'Extracting 141.3MB/141.3MB'
+  );
+  assert.equal(
+    formatStatusBarMessage('==> Downloading https://ghcr.io/v2/homebrew/cask/codex'),
+    'Downloading https://ghcr.io/v2/homebrew/cask/codex'
+  );
+});
+
+test('formatStatusBarMessage ignores arbitrary and non-progress output', () => {
+  assert.equal(formatStatusBarMessage('Warning: You are using macOS 13.'), null);
+  assert.equal(formatStatusBarMessage('We (and Apple) do not provide support for this old version.'), null);
+  assert.equal(formatStatusBarMessage(''), null);
+  assert.equal(formatStatusBarMessage('   \n  '), null);
+  assert.equal(formatStatusBarMessage(null), null);
+  assert.equal(formatStatusBarMessage(undefined), null);
+});
+
+test('taskRunner marks completion as cancelled: true when user declines confirmation prompt', async () => {
+  const taskRunner = require('../src/main/backend/task-runner');
+  const taskId = 'test-cancel-prompt-' + Date.now();
+
+  const result = await new Promise((resolve) => {
+    taskRunner.runTask(
+      {
+        taskId,
+        command: process.execPath,
+        args: [
+          '-e',
+          'process.stdout.write("==> Would install 1 dependency for ace-link:\\ndocker-desktop\\n==> Do you want to proceed with the installation? [y/n]\\n");' +
+          'process.stdin.setEncoding("utf8");' +
+          'process.stdin.on("data", (chunk) => {' +
+          '  if (chunk.trim() === "n") { process.exit(1); } else { process.exit(0); }' +
+          '});'
+        ]
+      },
+      {
+        onPrompt: ({ respond, isDependency, targetApp, dependencies }) => {
+          assert.equal(isDependency, true);
+          assert.equal(targetApp, 'ace-link');
+          assert.equal(dependencies, 'docker-desktop');
+          // Decline confirmation
+          respond('n\r', true);
+        },
+        onComplete: (res) => {
+          resolve(res);
+        }
+      }
+    );
+  });
+
+  assert.equal(result.cancelled, true, 'Result must have cancelled: true when user declines confirmation');
+});
+
+

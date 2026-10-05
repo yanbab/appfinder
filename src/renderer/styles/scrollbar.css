@@ -28,7 +28,6 @@
 .overflow-auto:hover::-webkit-scrollbar-thumb,
 aside:hover::-webkit-scrollbar-thumb,
 main:hover::-webkit-scrollbar-thumb,
-[data-scrollable]:hover::-webkit-scrollbar-thumb,
 ::-webkit-scrollbar-thumb:hover,
 ::-webkit-scrollbar-thumb:active {
   background-color: rgba(0, 0, 0, 0.22);
@@ -49,7 +48,6 @@ main::-webkit-scrollbar-thumb:hover,
 .dark .overflow-auto:hover::-webkit-scrollbar-thumb,
 .dark aside:hover::-webkit-scrollbar-thumb,
 .dark main:hover::-webkit-scrollbar-thumb,
-.dark [data-scrollable]:hover::-webkit-scrollbar-thumb,
 .dark ::-webkit-scrollbar-thumb:hover,
 .dark ::-webkit-scrollbar-thumb:active {
   background-color: rgba(255, 255, 255, 0.22);

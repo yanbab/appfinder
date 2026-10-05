@@ -88,16 +88,6 @@ body,
   user-select: none;
 }
 
-/* Allow individual scrollable containers to bounce naturally without moving the window/body */
-.overflow-y-auto,
-.overflow-x-auto,
-.overflow-auto,
-[data-scrollable],
-.scrollable {
-  overscroll-behavior: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
 /* 3. Header, Footer & Dark Split-view Dividers */
 .app-header {
   background-color: var(--card);
@@ -257,7 +247,3 @@ dialog {
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.4);
 }
-
-
-
-
