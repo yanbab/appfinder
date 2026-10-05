@@ -33,13 +33,13 @@ export function Sidebar() {
     {
       id: 'installed',
       label: __('Installed'),
-      icon: <ShellIcon name="arrow.down.to.line" className="size-[18px] shrink-0" />,
+      icon: <ShellIcon name="arrow.down.circle" className="size-[18px] shrink-0" />,
       badge: currentTab === 'installed' && search ? filteredCount : installed.length,
     },
     {
       id: 'updates',
       label: __('Updates'),
-      icon: <ShellIcon name="arrow.uturn.down" className="size-[18px] shrink-0" />,
+      icon: <ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-[18px] shrink-0" />,
       badge: currentTab === 'updates' && search ? filteredCount : updatesCount,
     },
   ];

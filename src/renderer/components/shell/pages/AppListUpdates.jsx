@@ -104,7 +104,7 @@ export function AppListUpdates() {
   );
 
   const footer = (
-    <div className="text-center pt-2 pb-3 text-xs text-muted-foreground select-none">
+    <div className="text-center pt-1 pb-1 text-xs text-muted-foreground select-none">
       {__('Last check :')} {formattedLastChecked}
     </div>
   );

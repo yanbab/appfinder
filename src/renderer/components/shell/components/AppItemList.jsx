@@ -1,27 +1,33 @@
 import React from 'react';
 import { useShell } from '@/hooks/useShell';
-import { useAppItemState } from '@/hooks/useAppItemState';
 import { AppIcon } from './AppIcon';
 import { ShellButton } from './ShellButton';
 import { ShellIcon } from './ShellIcon';
 import { getAppName, formatVersion } from '@/hooks/utils';
+
+
 import { Loader2 } from 'lucide-react';
 
 export function AppItemList({ item }) {
   const {
     openAppInfo,
     selectedApp,
+    installed,
     outdatedMap,
+    runningTasks,
     currentTab,
+    startAction,
     __,
   } = useShell();
 
-  const { isRunning, isInstalled, isOutdated, canOpen, install, upgrade, uninstall, open } = useAppItemState(item);
-
   const isSelected = selectedApp?.token === item.token;
+  const isRunning = Boolean(runningTasks[item.token]);
+  const isInstalled = installed.includes(item.token);
+  const isOutdated = Boolean(outdatedMap[item.token]);
+
   const name = getAppName(item);
   const desc = currentTab === 'updates' && isOutdated
-    ? `${formatVersion(outdatedMap[item.token]?.installedVersion)} → ${formatVersion(outdatedMap[item.token]?.currentVersion)}`
+    ? `${formatVersion(outdatedMap[item.token].installedVersion)} → ${formatVersion(outdatedMap[item.token].currentVersion)}`
     : (item.desc || '');
 
   return (
@@ -58,77 +64,65 @@ export function AppItemList({ item }) {
 
       {/* Actions */}
       <div
-        className="flex items-center gap-1.5 shrink-0"
+        className="flex items-center gap-2 shrink-0"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
       >
         {isRunning ? (
-          <ShellButton
-            variant="secondary"
-            size="sm"
-            disabled
-            icon={<Loader2 className="size-3.5 animate-spin shrink-0" />}
-            title="Working..."
-            className="w-7 sm:w-auto px-0 sm:px-2.5 justify-center"
-          >
-            <span className="hidden sm:inline ml-1">{__('Working...')}</span>
+          <ShellButton variant="secondary" disabled icon={<Loader2 className="size-3.5 animate-spin mr-1.5" />}>
+            {__('Working...')}
           </ShellButton>
         ) : isOutdated ? (
           <ShellButton
             variant="secondary"
-            size="sm"
-            onClick={upgrade}
-            icon={<ShellIcon name="arrow.uturn.down" className="size-3.5 shrink-0 text-primary" />}
-            title="Upgrade"
-            className="w-7 sm:w-auto px-0 sm:px-2.5 justify-center"
+            onClick={(e) => {
+              e.stopPropagation();
+              startAction('upgrade', item.token);
+            }}
           >
-            <span className="hidden sm:inline ml-1">{__('Upgrade')}</span>
+            {__('Upgrade')}
           </ShellButton>
         ) : isInstalled ? (
           <>
             <ShellButton
-              variant="ghost"
-              size="icon-sm"
-              icon={<ShellIcon name="trash" className="size-[17px] text-muted-foreground hover:text-destructive" />}
-              onClick={uninstall}
+              icon={<ShellIcon name="trash" className="size-[18px]" />}
+              onClick={(e) => {
+                e.stopPropagation();
+                startAction('uninstall', item.token);
+              }}
               className="hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20"
               title="Uninstall"
             />
-            {canOpen ? (
+            {item.app ? (
               <ShellButton
                 variant="secondary"
-                size="sm"
-                onClick={open}
-                icon={<ShellIcon name="play" className="size-3.5 shrink-0" />}
-                title="Open"
-                className="w-7 sm:w-auto px-0 sm:px-2.5 justify-center"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startAction('open', item.token, item.app);
+                }}
               >
-                <span className="hidden sm:inline ml-1">{__('Open')}</span>
+                {__('Open')}
               </ShellButton>
             ) : (
               <ShellButton
                 variant="secondary"
-                size="sm"
                 disabled
-                icon={<ShellIcon name="play" className="size-3.5 shrink-0" />}
-                className="opacity-40 cursor-not-allowed w-7 sm:w-auto px-0 sm:px-2.5 justify-center"
-                title="Open"
+                className="opacity-40 cursor-not-allowed"
               >
-                <span className="hidden sm:inline ml-1">{__('Open')}</span>
+                {__('Open')}
               </ShellButton>
             )}
           </>
         ) : (
           <ShellButton
             variant="secondary"
-            size="sm"
-            onClick={install}
-            icon={<ShellIcon name="arrow.down.to.line" className="size-3.5 shrink-0" />}
-            title="Install"
-            className="w-7 sm:w-auto px-0 sm:px-2.5 justify-center"
+            onClick={(e) => {
+              e.stopPropagation();
+              startAction('install', item.token);
+            }}
           >
-            <span className="hidden sm:inline ml-1">{__('Install')}</span>
+            {__('Install')}
           </ShellButton>
         )}
       </div>

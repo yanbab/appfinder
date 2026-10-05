@@ -5,7 +5,7 @@ import { AppIcon } from './AppIcon';
 import { ShellButton } from './ShellButton';
 import { ShellIcon } from './ShellIcon';
 import { getAppName, formatVersion } from '@/hooks/utils';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowDownToLine, ArrowUpCircle, ExternalLink } from 'lucide-react';
 
 export function AppItemGrid({ item }) {
   const { openAppInfo, selectedApp, outdatedMap, currentTab } = useShell();
@@ -68,7 +68,7 @@ export function AppItemGrid({ item }) {
               e.stopPropagation();
               upgrade();
             }}
-            icon={<ShellIcon name="arrow.uturn.down" className="size-4 text-primary" />}
+            icon={<ArrowUpCircle className="size-4 text-primary" />}
             title="Upgrade"
           />
         ) : isInstalled ? (
@@ -79,7 +79,7 @@ export function AppItemGrid({ item }) {
                 e.stopPropagation();
                 open();
               }}
-              icon={<ShellIcon name="play" className="size-4 text-muted-foreground group-hover:text-foreground" />}
+              icon={<ExternalLink className="size-4 text-muted-foreground group-hover:text-foreground" />}
               title="Open"
             />
           ) : (
@@ -100,7 +100,7 @@ export function AppItemGrid({ item }) {
               e.stopPropagation();
               install();
             }}
-            icon={<ShellIcon name="arrow.down.to.line" className="size-4 text-muted-foreground group-hover:text-foreground" />}
+            icon={<ArrowDownToLine className="size-4 text-muted-foreground group-hover:text-foreground" />}
             title="Install"
           />
         )}
