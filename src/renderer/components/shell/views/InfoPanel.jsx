@@ -96,7 +96,7 @@ export function InfoPanel() {
     >
       <DrawerContent className="w-[260px] max-w-[260px] h-full bg-background border-l border-border select-none flex flex-col outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
         {/* Header with Close Button on the Left */}
-        <div className="app-header h-11 shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
+        <div className="app-header h-[52px] shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
           <div className="flex items-center gap-2 min-w-0 flex-1 h-full [-webkit-app-region:drag]">
             <ShellButton
               icon={<X className="size-[18px]" />}

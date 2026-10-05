@@ -26,7 +26,7 @@ export function TitleBar() {
   };
 
   return (
-    <header className="app-header h-11 shrink-0 flex items-center justify-between border-b border-border bg-background select-none [-webkit-app-region:drag] z-10 gap-3 px-3">
+    <header className="app-header h-[52px] shrink-0 flex items-center justify-between border-b border-border bg-background select-none [-webkit-app-region:drag] z-10 gap-3 px-3.5">
       {/* Left section: Sidebar toggle & Title with smooth traffic-light spacer */}
       <div className="flex items-center min-w-0 flex-1 h-full [-webkit-app-region:drag]">
         <div className={`shrink-0 transition-[width] duration-250 ease-out overflow-hidden ${showSidebar ? 'w-0' : 'w-[68px]'}`} />

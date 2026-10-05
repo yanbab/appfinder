@@ -24,7 +24,7 @@ export function NavGroup({
   // If no title, it's not collapsable - render flat list
   if (!hasTitle) {
     return (
-      <div className={cn("space-y-0.5", className)} {...props}>
+      <div className={cn("space-y-0", className)} {...props}>
         {children}
       </div>
     );
@@ -33,22 +33,22 @@ export function NavGroup({
   const resolvedTitle = typeof title === 'string' ? __(title) : title;
 
   return (
-    <div className={cn("space-y-1", className)} {...props}>
+    <div className={cn("space-y-0.5", className)} {...props}>
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full px-2.5 py-1 flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase tracking-wider cursor-default select-none group hover:text-foreground transition-colors"
+        className="w-full px-2.5 py-1 flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase tracking-wider cursor-default select-none group transition-colors"
       >
         <span className="truncate">{resolvedTitle}</span>
         <ChevronRight
           className={cn(
-            "size-3 text-muted-foreground/70 group-hover:text-foreground shrink-0 transition-transform duration-150 ease-out",
+            "size-3 text-muted-foreground/70 group-hover:text-foreground dark:group-hover:text-white shrink-0 transition-transform duration-150 ease-out",
             isOpen ? "rotate-90" : "rotate-0"
           )}
         />
       </button>
       {isOpen && (
-        <div className="space-y-0.5">
+        <div className="space-y-0">
           {children}
         </div>
       )}

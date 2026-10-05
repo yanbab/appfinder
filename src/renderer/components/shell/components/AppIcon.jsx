@@ -37,7 +37,7 @@ export function AppIcon({ item, size = "md", className }) {
             alt={name}
             loading="lazy"
             decoding="async"
-            fetchpriority="low"
+            fetchPriority="low"
             className={cn(
               "w-full h-full object-contain rounded-[inherit]",
               loaded ? "block" : "invisible"

@@ -21,25 +21,25 @@ export function Sidebar() {
     {
       id: 'discover',
       label: __('Explore'),
-      icon: <ShellIcon name="star" className="size-4 shrink-0" />,
+      icon: <ShellIcon name="star" className="size-[18px] shrink-0" />,
       badge: null,
     },
     {
       id: 'all-apps',
       label: __('All Apps'),
-      icon: <ShellIcon name="books.vertical" className="size-4 shrink-0" />,
+      icon: <ShellIcon name="books.vertical" className="size-[18px] shrink-0" />,
       badge: currentTab === 'all-apps' && search ? filteredCount : allAppsCount,
     },
     {
       id: 'installed',
       label: __('Installed'),
-      icon: <ShellIcon name="arrow.down.circle" className="size-4 shrink-0" />,
+      icon: <ShellIcon name="arrow.down.to.line" className="size-[18px] shrink-0" />,
       badge: currentTab === 'installed' && search ? filteredCount : installed.length,
     },
     {
       id: 'updates',
       label: __('Updates'),
-      icon: <ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-4 shrink-0" />,
+      icon: <ShellIcon name="arrow.uturn.down" className="size-[18px] shrink-0" />,
       badge: currentTab === 'updates' && search ? filteredCount : updatesCount,
     },
   ];
@@ -52,7 +52,7 @@ export function Sidebar() {
     >
       <div className="w-[200px] flex flex-col h-full shrink-0 overflow-hidden">
         {/* macOS Traffic Lights Window Drag Region */}
-        <div className="h-11 shrink-0 [-webkit-app-region:drag]" />
+        <div className="h-[52px] shrink-0 [-webkit-app-region:drag]" />
 
         {/* Search Input Container */}
         <div className="px-2.5 pb-2.5">
@@ -84,7 +84,7 @@ export function Sidebar() {
                 <ShellButton
                   key={cat.name}
                   variant="sidebar"
-                  icon={<ShellIcon name={cat.symbolName} className="size-4 shrink-0 [&>svg]:size-4" />}
+                  icon={<ShellIcon name={cat.symbolName} className="size-[18px] shrink-0 [&>svg]:size-[18px]" />}
                   active={currentTab === cat.name}
                   badge={currentTab === cat.name && search && filteredCount > 0 ? filteredCount : null}
                   onClick={() => selectTab(cat.name)}
