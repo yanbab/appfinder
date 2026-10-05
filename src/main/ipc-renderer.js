@@ -34,6 +34,7 @@ let pendingConfigPromise = null;
 
 let systemVersion = '';
 let platform = 'darwin';
+let arch = 'arm64';
 try {
   if (typeof process !== 'undefined') {
     if (typeof process.getSystemVersion === 'function') {
@@ -41,6 +42,9 @@ try {
     }
     if (process.platform) {
       platform = process.platform;
+    }
+    if (process.arch) {
+      arch = process.arch;
     }
     if (!systemVersion && platform === 'darwin') {
       const os = require('os');
@@ -61,6 +65,7 @@ ipcRenderer.on('config:updated', (_, newConfig) => {
 contextBridge.exposeInMainWorld('ipc', {
   systemVersion,
   platform,
+  arch,
 
 
   getCasks: () => invoke('cask:get-data'),

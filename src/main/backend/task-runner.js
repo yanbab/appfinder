@@ -27,18 +27,24 @@ function detectPrompt(text) {
   }
 
   const clean = stripAnsi(text);
-  const isRetry = PROMPTS.RETRY.test(clean);
-  const isPasswordPrompt = PROMPTS.PASSWORD.test(clean);
-  const isConfirmPrompt = !isPasswordPrompt && PROMPTS.CONFIRM.test(clean);
+  const lines = clean.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) {
+    return { isPrompt: false, type: null, isRetry: false, isDependency: false, targetApp: '', dependencies: '', prompt: '', details: '' };
+  }
+
+  // An active interactive prompt must be in the tail (last 2 non-empty lines) of the output
+  const tailLines = lines.slice(-2);
+  const promptLine = tailLines.slice().reverse().find(l =>
+    PROMPTS.CONFIRM.test(l) || PROMPTS.PASSWORD.test(l)
+  );
+
+  const isRetry = tailLines.some(l => PROMPTS.RETRY.test(l));
+  const isPasswordPrompt = promptLine ? PROMPTS.PASSWORD.test(promptLine) : false;
+  const isConfirmPrompt = !isPasswordPrompt && promptLine ? PROMPTS.CONFIRM.test(promptLine) : false;
 
   if (!isPasswordPrompt && !isConfirmPrompt && !isRetry) {
     return { isPrompt: false, type: null, isRetry: false, isDependency: false, targetApp: '', dependencies: '', prompt: '', details: '' };
   }
-
-  const lines = clean.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
-  const promptLine = lines.slice().reverse().find(l =>
-    PROMPTS.CONFIRM.test(l) || PROMPTS.PASSWORD.test(l)
-  ) || lines[lines.length - 1] || '';
 
   // Check for dependency confirmation
   let isDependency = false;
@@ -82,7 +88,7 @@ function detectPrompt(text) {
     isDependency,
     targetApp,
     dependencies,
-    prompt: promptLine,
+    prompt: promptLine || lines[lines.length - 1] || '',
     details: detailLines
   };
 }
@@ -118,6 +124,7 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
   });
 
   const buffer = new TerminalBuffer();
+  const handledPrompts = new Set();
   let waitingForPrompt = false;
   let isCancelledByUser = false;
 
@@ -129,24 +136,28 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
       if (onPrompt && !waitingForPrompt) {
         const promptInfo = detectPrompt(plainText || text || raw || line);
         if (promptInfo.isPrompt && promptInfo.type) {
-          waitingForPrompt = true;
-          onPrompt({
-            taskId,
-            type: promptInfo.type,
-            isRetry: promptInfo.isRetry,
-            isDependency: promptInfo.isDependency,
-            targetApp: promptInfo.targetApp,
-            dependencies: promptInfo.dependencies,
-            prompt: promptInfo.prompt,
-            details: promptInfo.details,
-            respond: (answer, userCancelled = false) => {
-              waitingForPrompt = false;
-              if (userCancelled || answer === 'n\r' || answer === 'n') {
-                isCancelledByUser = true;
+          const promptKey = `${promptInfo.type}:${promptInfo.prompt}:${promptInfo.dependencies || ''}`;
+          if (!handledPrompts.has(promptKey)) {
+            waitingForPrompt = true;
+            onPrompt({
+              taskId,
+              type: promptInfo.type,
+              isRetry: promptInfo.isRetry,
+              isDependency: promptInfo.isDependency,
+              targetApp: promptInfo.targetApp,
+              dependencies: promptInfo.dependencies,
+              prompt: promptInfo.prompt,
+              details: promptInfo.details,
+              respond: (answer, userCancelled = false) => {
+                handledPrompts.add(promptKey);
+                waitingForPrompt = false;
+                if (userCancelled || answer === 'n\r' || answer === 'n') {
+                  isCancelledByUser = true;
+                }
+                term.write(answer);
               }
-              term.write(answer);
-            }
-          });
+            });
+          }
         }
       }
     }

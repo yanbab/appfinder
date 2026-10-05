@@ -113,87 +113,18 @@ export function formatDate(dateVal, __) {
   }
 }
 
-export function getCaskRequirements(appDetails) {
-  const macos = appDetails?.depends_on?.macos;
-  if (!macos) return null;
-  if (typeof macos === 'string') return `macOS ${macos}`;
-  if (Array.isArray(macos)) return `macOS ${macos.join(', ')}`;
-  if (typeof macos === 'object') {
-    const entries = Object.entries(macos);
-    if (entries.length === 0) return 'macOS';
-    const text = entries
-      .map(([op, val]) => {
-        const v = Array.isArray(val) ? val.join(', ') : val;
-        if (op === '>=' || op === '>= ') return `${v}+`;
-        if (op === '<=' || op === '<= ') return `≤ ${v}`;
-        if (op === '==' || op === '=') return v;
-        return `${op} ${v}`;
-      })
-      .join(', ');
-    return `macOS ${text}`;
-  }
-  return 'macOS';
-}
-
-export function isRequirementMet(appDetails) {
-  const macos = appDetails?.depends_on?.macos;
-  if (macos === undefined || macos === null) {
-    return (window.ipc?.platform || 'darwin') === 'darwin';
-  }
-  if ((window.ipc?.platform || 'darwin') !== 'darwin') return false;
-
-  const sysVer = window.ipc?.systemVersion;
-  if (!sysVer) return true;
-
-  const codeNames = {
-    high_sierra: '10.13', mojave: '10.14', catalina: '10.15',
-    big_sur: '11', monterey: '12', ventura: '13', sonoma: '14', sequoia: '15', tahoe: '16'
+export function formatReason(reason, __) {
+  if (!reason) return '';
+  const translate = typeof __ === 'function' ? __ : (s => s);
+  const map = {
+    fails_gatekeeper_check: translate('Fails Gatekeeper check'),
+    discontinued: translate('Discontinued'),
+    no_longer_maintained: translate('No longer maintained'),
+    unmaintained: translate('Unmaintained'),
+    moved_to_mas: translate('Moved to Mac App Store'),
+    unsigned: translate('Unsigned binary')
   };
-
-  const parseVer = (v) => {
-    if (!v) return [0];
-    const clean = String(v).replace(/^[:]/, '').toLowerCase().trim();
-    return (codeNames[clean] || clean).split('.').map((n) => parseInt(n, 10) || 0);
-  };
-
-  const compareVer = (v1, v2) => {
-    const p1 = parseVer(v1), p2 = parseVer(v2);
-    const len = Math.max(p1.length, p2.length);
-    for (let i = 0; i < len; i++) {
-      const a = p1[i] || 0, b = p2[i] || 0;
-      if (a !== b) return a > b ? 1 : -1;
-    }
-    return 0;
-  };
-
-  const sysMajor = parseVer(sysVer)[0];
-  const rules = [];
-
-  if (typeof macos === 'object' && !Array.isArray(macos)) {
-    for (const [op, targets] of Object.entries(macos)) {
-      for (const t of (Array.isArray(targets) ? targets : [targets])) {
-        rules.push([op, t]);
-      }
-    }
-  } else {
-    for (const req of (Array.isArray(macos) ? macos : [macos])) {
-      if (typeof req !== 'string') continue;
-      const match = req.match(/^(>=|<=|>|<|==|=)?\s*(.*)$/);
-      if (match && match[2]) rules.push([match[1] || '>=', match[2]]);
-    }
-  }
-
-  for (const [op, target] of rules) {
-    if (op === '>=' && compareVer(sysVer, target) < 0) return false;
-    if (op === '>' && compareVer(sysVer, target) <= 0) return false;
-    if (op === '<=' && compareVer(sysVer, target) > 0) return false;
-    if (op === '<' && compareVer(sysVer, target) >= 0) return false;
-    if (op === '==' || op === '=') {
-      const tParts = parseVer(target);
-      if (tParts.length === 1 ? sysMajor !== tParts[0] : compareVer(sysVer, target) !== 0) return false;
-    }
-  }
-  return true;
+  return map[reason] || reason.replace(/_/g, ' ');
 }
 
 export function detectPrompt(text) {
@@ -203,23 +134,6 @@ export function detectPrompt(text) {
   const isConfirmPrompt = !isPasswordPrompt && (/\[y\/n\]/i.test(clean) || /\(y\/n\)/i.test(clean));
   const isInteractivePrompt = isPasswordPrompt || isConfirmPrompt;
   return { isRetry, isPasswordPrompt, isInteractivePrompt, isConfirmPrompt };
-}
-
-export function parseConfirmationDetails(cleanText) {
-  if (!cleanText) return { prompt: '', details: '' };
-  const lines = cleanText.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
-  const promptLine = lines.slice().reverse().find(l => /\[y\/n\]|\(y\/n\)/i.test(l)) || lines[lines.length - 1] || '';
-
-  const detailLines = lines
-    .filter(l => !/\[y\/n\]|\(y\/n\)/i.test(l) && (l.startsWith('==>') || /dependenc|install|require|package/i.test(l)))
-    .slice(-5)
-    .map(l => l.replace(/^==>\s*/, '• '))
-    .join('\n');
-
-  return {
-    prompt: promptLine,
-    details: detailLines
-  };
 }
 
 export async function getIconDataUrl(url) {
@@ -269,10 +183,16 @@ export function extractTaskError(logText, action, appName, catalog, __) {
   const errorLines = lines.filter(l => !l.startsWith('==>') && (
     /error/i.test(l) || /permission denied/i.test(l) || /operation not permitted/i.test(l) ||
     /access/i.test(l) || /sudo/i.test(l) || /failed/i.test(l)
-  ));
+  )).map(l => {
+    // Clean up duplicated token repetitions like "Error: token: token: message" -> "Error: token: message"
+    return l.replace(/^(Error:\s*)([a-zA-Z0-9_-]+):\s*\2:\s*/i, '$1$2: ');
+  });
+
+  // Deduplicate identical error lines
+  const uniqueErrorLines = errorLines.filter((line, index, self) => self.indexOf(line) === index);
 
   const nonProgressLines = lines.filter(l => !l.startsWith('==>'));
-  let rawError = errorLines.length > 0 ? errorLines.slice(-3).join('\n')
+  let rawError = uniqueErrorLines.length > 0 ? uniqueErrorLines.slice(-3).join('\n')
     : nonProgressLines.length > 0 ? nonProgressLines[nonProgressLines.length - 1]
       : lines.length > 0 ? lines[lines.length - 1] : defaultError;
 

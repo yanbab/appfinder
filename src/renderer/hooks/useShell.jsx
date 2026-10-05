@@ -165,8 +165,11 @@ export function ShellProvider({ children }) {
   // Info Drawer controls
   const openAppInfo = useCallback((item) => {
     if (!item) return;
-    setSelectedApp(item);
-    const token = item.token;
+    const resolvedItem = typeof item === 'string'
+      ? (itemsRef.current.find(c => c.token === item) || { token: item, name: item })
+      : item;
+    setSelectedApp(resolvedItem);
+    const token = resolvedItem.token;
     const cached = infoCache.current.get(token);
 
     if (cached) {
@@ -179,7 +182,7 @@ export function ShellProvider({ children }) {
       window.ipc?.getCaskInfo?.(token).then(details => {
         if (details) {
           infoCache.current.set(token, details);
-          setAppDetails(prev => (item.token === token ? details : prev));
+          setAppDetails(prev => (resolvedItem.token === token ? details : prev));
         }
       }).finally(() => {
         setLoadingAppDetails(false);

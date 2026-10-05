@@ -2,6 +2,7 @@ const { execFile } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const taskRunner = require('./task-runner');
 
 const execFileAsync = promisify(execFile);
@@ -14,6 +15,132 @@ const UPDATES_CACHE_FILE = path.join(CACHE_DIR, 'updates.json');
 const UPDATES_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
 const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
+
+const CODE_NAMES = {
+  high_sierra: '10.13', mojave: '10.14', catalina: '10.15',
+  big_sur: '11', monterey: '12', ventura: '13', sonoma: '14', sequoia: '15', tahoe: '16'
+};
+
+function getSystemInfo() {
+  let sysVer = '';
+  try {
+    sysVer = typeof process.getSystemVersion === 'function' ? process.getSystemVersion() : '';
+    if (!sysVer && process.platform === 'darwin') {
+      const dMajor = parseInt(os.release().split('.')[0], 10);
+      sysVer = dMajor >= 20 ? String(dMajor - 9) : (dMajor >= 5 ? `10.${dMajor - 4}` : '15');
+    }
+  } catch (_) { }
+  return {
+    platform: process.platform,
+    arch: process.arch || 'arm64',
+    systemVersion: sysVer || '15'
+  };
+}
+
+function parseVer(v) {
+  const s = String(v || '').replace(/^[:]/, '').toLowerCase().trim();
+  const resolved = CODE_NAMES[s] || s;
+  return String(resolved).split('.').map(n => parseInt(n, 10) || 0);
+}
+
+function compareVer(v1, v2) {
+  const [a1, b1 = 0] = parseVer(v1), [a2, b2 = 0] = parseVer(v2);
+  return a1 !== a2 ? a1 - a2 : b1 - b2;
+}
+
+function getCaskRequirements(cask) {
+  const macos = cask?.depends_on?.macos;
+  if (!macos) return null;
+  if (typeof macos === 'string') return `macOS ${macos}`;
+  if (Array.isArray(macos)) return `macOS ${macos.join(', ')}`;
+  if (typeof macos === 'object') {
+    const text = Object.entries(macos)
+      .map(([op, val]) => `${op === '>=' ? '' : op + ' '}${Array.isArray(val) ? val.join(', ') : val}${op === '>=' ? '+' : ''}`)
+      .join(', ');
+    return text ? `macOS ${text}` : 'macOS';
+  }
+  return 'macOS';
+}
+
+function isRequirementMet(cask, sysInfo) {
+  const info = typeof sysInfo === 'string' ? { systemVersion: sysInfo } : (sysInfo || getSystemInfo());
+  if ((info.platform || 'darwin') !== 'darwin') return false;
+  const macos = cask?.depends_on?.macos;
+  if (!macos || !info.systemVersion) return true;
+
+  const pairs = typeof macos === 'object' && !Array.isArray(macos)
+    ? Object.entries(macos).flatMap(([op, val]) => (Array.isArray(val) ? val : [val]).map(v => [op, v]))
+    : (Array.isArray(macos) ? macos : [macos]).map(req => {
+      const m = String(req).match(/^(>=|<=|>|<|==|=)?\s*(.*)$/);
+      return [m?.[1] || '>=', m?.[2] || ''];
+    });
+
+  return pairs.every(([op, target]) => {
+    const diff = compareVer(info.systemVersion, target);
+    if (op === '>=' || op === '>= ') return diff >= 0;
+    if (op === '<=' || op === '<= ') return diff <= 0;
+    if (op === '>') return diff > 0;
+    if (op === '<') return diff < 0;
+    if (op === '==' || op === '=') return diff === 0;
+    return true;
+  });
+}
+
+function getCaskArchCompatibility(cask, sysInfo) {
+  const info = typeof sysInfo === 'string' ? { arch: sysInfo } : (sysInfo || getSystemInfo());
+  const currentArch = info.arch === 'x64' ? 'x64' : 'arm64';
+  const archField = JSON.stringify(cask?.depends_on?.arch || '').toLowerCase();
+
+  let requiredArch = null;
+  if (archField.includes('arm')) requiredArch = 'arm64';
+  else if (archField.includes('intel') || archField.includes('x86_64') || archField.includes('x64')) requiredArch = 'x64';
+
+  const rosetta = Boolean(cask?.caveats_rosetta) || /rosetta\s*2/i.test(cask?.caveats || '');
+
+  if (requiredArch === 'arm64') {
+    return currentArch === 'arm64'
+      ? { requiredArch: 'arm64', isSupported: true, status: 'native', label: 'Apple Silicon' }
+      : { requiredArch: 'arm64', isSupported: false, status: 'incompatible', label: 'Apple Silicon only' };
+  }
+  if (requiredArch === 'x64' || rosetta) {
+    return currentArch === 'x64'
+      ? { requiredArch: 'x64', isSupported: true, status: 'native', label: 'Intel 64-bit' }
+      : { requiredArch: 'x64', isSupported: true, status: 'rosetta', label: 'Intel (Rosetta 2)' };
+  }
+  return { requiredArch: null, isSupported: true, status: 'universal', label: 'Universal' };
+}
+
+function getCaskDependencies(cask) {
+  const toArr = (v) => Array.isArray(v) ? v : (v ? [v] : []);
+  return {
+    casks: toArr(cask?.depends_on?.cask),
+    formulae: toArr(cask?.depends_on?.formula)
+  };
+}
+
+function getCaskStatus(cask) {
+  return {
+    isDisabled: Boolean(cask?.disabled),
+    disableReason: cask?.disable_reason || cask?.disable_args?.because || null,
+    disableReplacement: cask?.disable_replacement_cask || cask?.disable_args?.replacement_cask || null,
+    isDeprecated: Boolean(cask?.deprecated),
+    deprecationReason: cask?.deprecation_reason || cask?.deprecate_args?.because || null,
+    deprecationReplacement: cask?.deprecation_replacement_cask || cask?.deprecate_args?.replacement_cask || null
+  };
+}
+
+function normalizeCaskInfo(cask, sysInfo) {
+  if (!cask) return null;
+  const info = sysInfo || getSystemInfo();
+  return {
+    ...cask,
+    reqText: getCaskRequirements(cask),
+    reqMet: isRequirementMet(cask, info),
+    archCompat: getCaskArchCompatibility(cask, info),
+    dependencies: getCaskDependencies(cask),
+    status: getCaskStatus(cask)
+  };
+}
 
 function getData(file) {
   if (memoryCache.has(file)) {
@@ -180,8 +307,9 @@ async function getCaskInfo(token) {
 
   let cask = getCachedCaskInfo(sanitized);
   if (!cask) {
-    cask = await fetchCaskJson(sanitized);
-    if (cask) {
+    const raw = await fetchCaskJson(sanitized);
+    if (raw) {
+      cask = normalizeCaskInfo(raw);
       setCachedCaskInfo(sanitized, cask);
     }
   }
@@ -293,6 +421,13 @@ module.exports = {
   setCachedCaskInfo,
   fetchCaskJson,
   getCaskInfo,
+  getSystemInfo,
+  getCaskRequirements,
+  isRequirementMet,
+  getCaskArchCompatibility,
+  getCaskDependencies,
+  getCaskStatus,
+  normalizeCaskInfo,
   getActionArgs,
   launchApp,
   cleanCache,

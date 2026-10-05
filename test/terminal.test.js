@@ -5,9 +5,13 @@ const { detectPrompt } = require('../src/main/backend/task-runner');
 const brew = require('../src/main/backend/brew');
 
 let formatStatusBarMessage;
+let extractTaskError;
+let formatReason;
 test.before(async () => {
   const utils = await import('../src/renderer/hooks/utils.js');
   formatStatusBarMessage = utils.formatStatusBarMessage;
+  extractTaskError = utils.extractTaskError;
+  formatReason = utils.formatReason;
 });
 
 test('stripAnsi removes color and control escapes', () => {
@@ -330,5 +334,155 @@ test('taskRunner marks completion as cancelled: true when user declines confirma
 
   assert.equal(result.cancelled, true, 'Result must have cancelled: true when user declines confirmation');
 });
+
+test('taskRunner triggers onPrompt exactly once per prompt and ignores subsequent output chunks', async () => {
+  const taskRunner = require('../src/main/backend/task-runner');
+  const taskId = 'test-single-prompt-' + Date.now();
+  let promptCallCount = 0;
+
+  await new Promise((resolve) => {
+    taskRunner.runTask(
+      {
+        taskId,
+        command: process.execPath,
+        args: [
+          '-e',
+          'process.stdout.write("==> Would install 1 dependency for ace-link:\\ndocker-desktop\\n==> Do you want to proceed with the installation? [y/n]\\n");' +
+          'process.stdin.setEncoding("utf8");' +
+          'process.stdin.on("data", () => {' +
+          '  process.stdout.write("==> Downloading https://example.com/docker.dmg\\n");' +
+          '  process.stdout.write("==> Installing Docker Desktop\\n");' +
+          '  process.exit(0);' +
+          '});'
+        ]
+      },
+      {
+        onPrompt: ({ respond }) => {
+          promptCallCount++;
+          respond('y\r');
+        },
+        onComplete: () => {
+          resolve();
+        }
+      }
+    );
+  });
+
+  assert.equal(promptCallCount, 1, 'onPrompt must only be called once');
+});
+
+test('extractTaskError cleans duplicated token prefixes and deduplicates repeated error lines', () => {
+  const duplicateErrorLog = [
+    '==> Installing Cask baseline',
+    'Error: baseline: baseline: This cask does not run on macOS versions older than Sequoia.',
+    'Error: baseline: baseline: This cask does not run on macOS versions older than Sequoia.'
+  ].join('\n');
+
+  const err = extractTaskError(duplicateErrorLog, 'install', 'Baseline', {}, s => s);
+  assert.equal(err.title, 'Baseline installation failed');
+  assert.equal(err.details, 'Error: baseline: This cask does not run on macOS versions older than Sequoia.');
+});
+
+test('brew.getCaskArchCompatibility identifies Apple Silicon and Intel constraints', () => {
+  // 1. Arm64 only on arm64
+  const armApp = { depends_on: { arch: 'arm64' } };
+  const armOnArm = brew.getCaskArchCompatibility(armApp, 'arm64');
+  assert.equal(armOnArm.isSupported, true);
+  assert.equal(armOnArm.status, 'native');
+  assert.equal(armOnArm.label, 'Apple Silicon');
+
+  // 2. Arm64 only on x64 (Intel)
+  const armOnIntel = brew.getCaskArchCompatibility(armApp, 'x64');
+  assert.equal(armOnIntel.isSupported, false);
+  assert.equal(armOnIntel.status, 'incompatible');
+  assert.equal(armOnIntel.label, 'Apple Silicon only');
+
+  // 3. Intel only on arm64 (Rosetta 2)
+  const intelApp = { depends_on: { arch: 'x86_64' } };
+  const intelOnArm = brew.getCaskArchCompatibility(intelApp, 'arm64');
+  assert.equal(intelOnArm.isSupported, true);
+  assert.equal(intelOnArm.status, 'rosetta');
+  assert.equal(intelOnArm.label, 'Intel (Rosetta 2)');
+
+  // 4. Universal
+  const universalApp = {};
+  const univ = brew.getCaskArchCompatibility(universalApp, 'arm64');
+  assert.equal(univ.isSupported, true);
+  assert.equal(univ.status, 'universal');
+  assert.equal(univ.label, 'Universal');
+
+  // 5. Rosetta 2 caveat
+  const rosettaApp = { caveats_rosetta: true };
+  const rosetta = brew.getCaskArchCompatibility(rosettaApp, 'arm64');
+  assert.equal(rosetta.status, 'rosetta');
+});
+
+test('brew.getCaskDependencies extracts cask and formula dependencies', () => {
+  const details = {
+    depends_on: {
+      cask: ['docker-desktop', 'swiftdialog'],
+      formula: ['node']
+    }
+  };
+  const deps = brew.getCaskDependencies(details);
+  assert.deepEqual(deps.casks, ['docker-desktop', 'swiftdialog']);
+  assert.deepEqual(deps.formulae, ['node']);
+
+  assert.deepEqual(brew.getCaskDependencies(null), { casks: [], formulae: [] });
+});
+
+test('brew.getCaskStatus extracts disabled and deprecated info with replacement', () => {
+  const disabledDetails = {
+    disabled: true,
+    disable_reason: 'fails_gatekeeper_check',
+    disable_replacement_cask: 'alternative-app'
+  };
+  const status = brew.getCaskStatus(disabledDetails);
+  assert.equal(status.isDisabled, true);
+  assert.equal(status.disableReason, 'fails_gatekeeper_check');
+  assert.equal(status.disableReplacement, 'alternative-app');
+  assert.equal(formatReason(status.disableReason), 'Fails Gatekeeper check');
+
+  const deprecatedDetails = {
+    deprecated: true,
+    deprecation_reason: 'discontinued'
+  };
+  const depStatus = brew.getCaskStatus(deprecatedDetails);
+  assert.equal(depStatus.isDeprecated, true);
+  assert.equal(formatReason(depStatus.deprecationReason), 'Discontinued');
+});
+
+test('brew.normalizeCaskInfo enriches raw cask with requirements, arch, dependencies, and status', () => {
+  const rawCask = {
+    token: 'baseline',
+    name: ['Baseline'],
+    version: '1.2.0',
+    depends_on: {
+      macos: { '>=': '14' },
+      arch: 'arm64',
+      cask: ['docker-desktop']
+    },
+    disabled: true,
+    disable_reason: 'fails_gatekeeper_check'
+  };
+
+  const sysInfo = { platform: 'darwin', arch: 'arm64', systemVersion: '14.5' };
+  const normalized = brew.normalizeCaskInfo(rawCask, sysInfo);
+
+  assert.equal(normalized.token, 'baseline');
+  assert.equal(normalized.reqText, 'macOS 14+');
+  assert.equal(normalized.reqMet, true);
+  assert.equal(normalized.archCompat.status, 'native');
+  assert.equal(normalized.archCompat.label, 'Apple Silicon');
+  assert.deepEqual(normalized.dependencies.casks, ['docker-desktop']);
+  assert.equal(normalized.status.isDisabled, true);
+  assert.equal(normalized.status.disableReason, 'fails_gatekeeper_check');
+
+  // Verify incompatible system version
+  const oldSysInfo = { platform: 'darwin', arch: 'arm64', systemVersion: '13.0' };
+  assert.equal(brew.isRequirementMet(rawCask, oldSysInfo), false);
+});
+
+
 
 

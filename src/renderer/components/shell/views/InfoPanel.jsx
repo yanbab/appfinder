@@ -13,15 +13,16 @@ import {
   formatVersion,
   formatCountK,
   formatDate,
-  getCaskRequirements,
-  isRequirementMet,
+  formatReason,
 } from '@/hooks/utils';
-import { X, ExternalLink, AlertTriangle, Check, Loader2, ArrowDown } from 'lucide-react';
+import { X, ExternalLink, AlertTriangle, AlertOctagon, Info, Check, Loader2, ArrowDown } from 'lucide-react';
 
 export function InfoPanel() {
   const {
     selectedApp,
     closeAppInfo,
+    openAppInfo,
+    items,
     appDetails,
     loadingAppDetails,
     installed,
@@ -61,8 +62,12 @@ export function InfoPanel() {
     (typeof appDetails?.installed === 'string' ? appDetails.installed : appDetails?.installed?.[0]?.version) ||
     (isInstalled ? latestVersion : '');
 
-  const reqText = getCaskRequirements(appDetails);
-  const reqMet = isRequirementMet(appDetails);
+  const reqText = appDetails?.reqText || null;
+  const reqMet = appDetails?.reqMet !== false;
+  const archCompat = appDetails?.archCompat || { status: 'universal', label: 'Universal' };
+  const depCasks = appDetails?.dependencies?.casks || [];
+  const depFormulae = appDetails?.dependencies?.formulae || [];
+  const caskStatus = appDetails?.status || { isDisabled: false, isDeprecated: false };
 
   // App categories
   const appCategories = (() => {
@@ -131,6 +136,57 @@ export function InfoPanel() {
             </div>
           </div>
 
+          {/* Cask Status Alert (Disabled / Deprecated) */}
+          {caskStatus.isDisabled && (
+            <div className="p-2.5 rounded-[var(--radius-card)] border border-destructive/40 bg-destructive/10 text-destructive space-y-1 overflow-hidden">
+              <div className="flex items-center gap-1.5 font-semibold text-xs text-destructive">
+                <AlertOctagon className="size-3.5 shrink-0" />
+                <span>{__('Cask Disabled')}</span>
+              </div>
+              {caskStatus.disableReason && (
+                <p className="text-xs text-foreground/90 leading-relaxed">
+                  {formatReason(caskStatus.disableReason, __)}
+                </p>
+              )}
+              {caskStatus.disableReplacement && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground pt-0.5">
+                  <span>{__('Alternative:')}</span>
+                  <button
+                    onClick={() => openAppInfo(caskStatus.disableReplacement)}
+                    className="text-primary hover:underline font-medium cursor-default"
+                  >
+                    {caskStatus.disableReplacement}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!caskStatus.isDisabled && caskStatus.isDeprecated && (
+            <div className="p-2.5 rounded-[var(--radius-card)] border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1 overflow-hidden">
+              <div className="flex items-center gap-1.5 font-semibold text-xs">
+                <AlertTriangle className="size-3.5 shrink-0" />
+                <span>{__('Cask Deprecated')}</span>
+              </div>
+              {caskStatus.deprecationReason && (
+                <p className="text-xs text-foreground/90 leading-relaxed">
+                  {formatReason(caskStatus.deprecationReason, __)}
+                </p>
+              )}
+              {caskStatus.deprecationReplacement && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground pt-0.5">
+                  <span>{__('Alternative:')}</span>
+                  <button
+                    onClick={() => openAppInfo(caskStatus.deprecationReplacement)}
+                    className="text-primary hover:underline font-medium cursor-default"
+                  >
+                    {caskStatus.deprecationReplacement}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Primary Actions */}
           <div className="flex items-center gap-2 pt-0.5">
             {isRunning ? (
@@ -169,7 +225,16 @@ export function InfoPanel() {
                   </ShellButton>
                 )}
 
-                {!isInstalled && (
+                {!isInstalled && caskStatus.isDisabled ? (
+                  <ShellButton
+                    className="w-full opacity-60 cursor-not-allowed"
+                    variant="secondary"
+                    disabled
+                    title={formatReason(caskStatus.disableReason, __) || __('Cask Disabled')}
+                  >
+                    {__('Disabled')}
+                  </ShellButton>
+                ) : !isInstalled ? (
                   <ShellButton
                     className="w-full"
                     variant="default"
@@ -177,7 +242,7 @@ export function InfoPanel() {
                   >
                     {__('Install')}
                   </ShellButton>
-                )}
+                ) : null}
               </>
             )}
           </div>
@@ -224,7 +289,7 @@ export function InfoPanel() {
               </div>
             )}
 
-            {/* Require */}
+            {/* Require (macOS) */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Require', 'Require')}</span>
               {loadingAppDetails ? (
@@ -240,6 +305,62 @@ export function InfoPanel() {
                 </span>
               )}
             </div>
+
+            {/* Architecture */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Architecture')}</span>
+              {loadingAppDetails ? (
+                <span className="text-muted-foreground font-mono">...</span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium">
+                  {archCompat.status === 'incompatible' ? (
+                    <AlertTriangle className="size-[14px] text-destructive shrink-0" />
+                  ) : archCompat.status === 'rosetta' ? (
+                    <Info className="size-[14px] text-blue-500 shrink-0" />
+                  ) : (
+                    <Check className="size-[14px] text-emerald-500 shrink-0" />
+                  )}
+                  <span>{__(archCompat.label)}</span>
+                </span>
+              )}
+            </div>
+
+            {/* Dependencies */}
+            {(depCasks.length > 0 || depFormulae.length > 0) && (
+              <div className="flex items-start justify-between py-0.5 gap-2">
+                <span className="text-muted-foreground shrink-0">{__('Dependencies')}</span>
+                <div className="flex flex-wrap gap-1 justify-end max-w-[160px]">
+                  {depCasks.map((depToken) => {
+                    const depApp = items.find((c) => c.token === depToken);
+                    const depName = depApp ? getAppName(depApp) : depToken;
+                    const isDepInstalled = installed.includes(depToken);
+                    return (
+                      <button
+                        key={depToken}
+                        onClick={() => openAppInfo(depToken)}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium hover:bg-accent transition-colors cursor-default"
+                        title={`${depName} (${isDepInstalled ? __('Installed') : __('Require', 'Require')})`}
+                      >
+                        {isDepInstalled ? (
+                          <Check className="size-3 text-emerald-500 shrink-0" />
+                        ) : (
+                          <span className="size-1.5 rounded-full bg-muted-foreground/60 shrink-0" />
+                        )}
+                        <span className="truncate max-w-[110px]">{depName}</span>
+                      </button>
+                    );
+                  })}
+                  {depFormulae.map((form) => (
+                    <span
+                      key={form}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-muted-foreground font-mono"
+                    >
+                      <span>{form}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Auto-updates */}
             <div className="flex items-center justify-between py-0.5">
