@@ -108,6 +108,10 @@ function setupIpcMain() {
   // Localization
   ipcMain.handle('i18n:get-catalog', async () => i18n.getCatalog(i18n.getLocale()));
   ipcMain.handle('i18n:get-locales', async () => i18n.getLocales());
+  ipcMain.handle('i18n:get-system-locale', async () => {
+    const sys = app?.getLocale?.() || 'en';
+    return sys.split('-')[0].toLowerCase();
+  });
 
   // External & Dialogs
   ipcMain.handle('external:open', async (_, url) => shell.openExternal(url));

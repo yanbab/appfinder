@@ -75,7 +75,10 @@ contextBridge.exposeInMainWorld('ipc', {
 
   getUpdates: (force = false) => invoke('cask:get-updates', force),
   getTranslations: () => invoke('i18n:get-catalog'),
+  getI18nCatalog: () => invoke('i18n:get-catalog'),
   getAvailableLocales: () => invoke('i18n:get-locales'),
+  getI18nLocales: () => invoke('i18n:get-locales'),
+  getSystemLocale: () => invoke('i18n:get-system-locale'),
   getConfig: async () => {
     if (cachedConfig) return cachedConfig;
     if (!pendingConfigPromise) {

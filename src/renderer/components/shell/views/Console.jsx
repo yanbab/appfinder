@@ -42,11 +42,11 @@ export function Console() {
   const isRunning = Boolean(activeTaskId);
 
   return (
-    <div className="h-44 w-full border-t border-border bg-card dark:bg-[#18181b] shrink-0 flex flex-col overflow-hidden select-text text-left">
+    <div className="h-44 w-full border-t border-border/80 bg-black/50 shrink-0 flex flex-col overflow-hidden select-text text-left">
       {/* Log Output Body */}
       <div
         ref={containerRef}
-        className="flex-1 p-2.5 overflow-y-auto font-mono text-[11px] leading-[1.35] text-foreground/90 whitespace-pre-wrap break-all select-text"
+        className="flex-1 p-2.5 overflow-y-auto font-mono text-[11px] leading-[1.35] text-zinc-100 whitespace-pre-wrap break-all select-text"
       >
         {logs ? (
           <>
@@ -54,7 +54,7 @@ export function Console() {
             <div ref={endRef} />
           </>
         ) : (
-          <div className="text-muted-foreground/50 italic select-none py-1">
+          <div className="text-zinc-400/60 italic select-none py-1">
             {isRunning ? __('Executing task...') : __('No logs recorded.')}
           </div>
         )}

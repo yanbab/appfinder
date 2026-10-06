@@ -122,49 +122,18 @@ jobs:
           echo "Intel SHA: $INTEL_SHA"
 
           git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/yanbab/homebrew-tap.git" tap-repo
+          mkdir -p tap-repo/Casks
+
+          node src/scripts/generate-cask.js \
+            --version "$VERSION" \
+            --arm-dmg "$ARM_FILE" \
+            --intel-dmg "$INTEL_FILE" \
+            --out tap-repo/Casks/appfinder.rb
+
+          # Sanity-check Ruby syntax before committing
+          ruby -c tap-repo/Casks/appfinder.rb
+
           cd tap-repo
-          mkdir -p Casks
-
-          VERSION="$VERSION" ARM_SHA="$ARM_SHA" INTEL_SHA="$INTEL_SHA" node -e '
-            const fs = require("fs");
-            const v = process.env.VERSION;
-            const arm = process.env.ARM_SHA;
-            const intel = process.env.INTEL_SHA;
-            const lines = [
-              `cask "appfinder" do`,
-              `  arch arm: "arm64", intel: ""`,
-              ``,
-              `  version "${v}"`,
-              `  sha256 arm:   "${arm}",`,
-              `         intel: "${intel}"`,
-              ``,
-              `  url "https://github.com/yanbab/appfinder/releases/download/v#{version}/AppFinder-#{version}#{arch.empty? ? "" : "-#{arch}"}.dmg"`,
-              `  name "AppFinder"`,
-              `  desc "App store for the Homebrew package manager"`,
-              `  homepage "https://github.com/yanbab/appfinder"`,
-              ``,
-              `  auto_updates true`,
-              `  depends_on macos: :ventura`,
-              ``,
-              `  app "AppFinder.app"`,
-              ``,
-              `  postflight do`,
-              `    system_command "xattr",`,
-              `                   args: ["-cr", "#{appdir}/AppFinder.app"]`,
-              `  end`,
-              ``,
-              `  zap trash: [`,
-              `    "~/.config/appfinder",`,
-              `    "~/Library/Application Support/AppFinder",`,
-              `    "~/Library/Preferences/org.yanbab.appfinder.plist",`,
-              `    "~/Library/Saved Application State/org.yanbab.appfinder.savedState",`,
-              `  ]`,
-              `end`,
-              ``
-            ];
-            fs.writeFileSync("Casks/appfinder.rb", lines.join("\n"));
-          '
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Casks/appfinder.rb
