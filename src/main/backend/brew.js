@@ -189,17 +189,56 @@ async function runBrew(args) {
   }
 }
 
+function readJsonSafely(filePath) {
+  if (!fs.existsSync(filePath)) return null;
+  const stat = fs.statSync(filePath);
+  if (stat.size === 0) return null;
+  const content = fs.readFileSync(filePath, 'utf8');
+  return JSON.parse(content);
+}
+
 function getData(file, forceReload = false) {
   if (!forceReload && memoryCache.has(file)) return memoryCache.get(file);
-  try {
-    const targetFile = resolveDataFilePath(file);
-    const data = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
-    memoryCache.set(file, data);
-    return data;
-  } catch (e) {
-    console.error(`Failed to read data file ${file}:`, e);
-    return [];
+
+  const baseName = file.replace(/\.json$/, '');
+  const bundledFile = path.join(BUNDLED_DATA_DIR, file);
+  const candidatePaths = [
+    path.join(CACHE_APPFINDER_DIR, file),
+    path.join(CACHE_APPFINDER_DIR, baseName),
+    path.join(CACHE_HOME_DIR, file),
+    path.join(CACHE_HOME_DIR, baseName)
+  ];
+
+  // 1. Try reading from cached locations
+  for (const candidate of candidatePaths) {
+    if (fs.existsSync(candidate)) {
+      try {
+        const data = readJsonSafely(candidate);
+        if (Array.isArray(data) && data.length > 0) {
+          memoryCache.set(file, data);
+          return data;
+        }
+      } catch (err) {
+        console.warn(`[BREW] Corrupted cache file detected at "${candidate}": ${err.message}. Removing corrupted cache file.`);
+        try {
+          fs.unlinkSync(candidate);
+        } catch (_) { }
+      }
+    }
   }
+
+  // 2. Fallback to bundled data file
+  try {
+    const bundledData = readJsonSafely(bundledFile);
+    if (bundledData) {
+      memoryCache.set(file, bundledData);
+      return bundledData;
+    }
+  } catch (err) {
+    console.error(`[BREW] Failed to read bundled data file "${bundledFile}":`, err.message);
+  }
+
+  return [];
 }
 
 function getApps(forceReload = false) {

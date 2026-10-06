@@ -19,11 +19,14 @@ export function PasswordModal() {
   const dialogRef = useRef(null);
   const inputRef = useRef(null);
 
+  const previousActiveElementRef = useRef(null);
+
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
     if (showPasswordModal) {
+      previousActiveElementRef.current = document.activeElement;
       setPassword('');
       if (!dialog.open) {
         try {
@@ -36,6 +39,10 @@ export function PasswordModal() {
     } else {
       if (dialog.open) {
         dialog.close();
+      }
+      if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
+        previousActiveElementRef.current.focus();
+        previousActiveElementRef.current = null;
       }
     }
   }, [showPasswordModal]);
@@ -81,6 +88,10 @@ export function PasswordModal() {
   return (
     <dialog
       ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="password-modal-title"
+      aria-describedby="password-modal-desc"
       onCancel={(e) => {
         e.preventDefault();
         cancelPassword();
@@ -98,10 +109,10 @@ export function PasswordModal() {
             </div>
           </div>
 
-          <h3 className="font-semibold text-xs text-foreground mb-1 leading-snug">
+          <h3 id="password-modal-title" className="font-semibold text-xs text-foreground mb-1 leading-snug">
             {title}
           </h3>
-          <p className="text-[11px] text-muted-foreground mb-3.5">
+          <p id="password-modal-desc" className="text-[11px] text-muted-foreground mb-3.5">
             {__('Type your password to allow this action.')}
           </p>
         </div>
@@ -113,6 +124,7 @@ export function PasswordModal() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={__('Password')}
+            aria-label={__('Password')}
             className="h-7 text-xs text-left px-2.5 bg-black/[0.06] dark:bg-white/[0.08] focus:bg-black/[0.09] dark:focus:bg-white/[0.12] border-0 border-none shadow-none rounded-[var(--radius-btn)] placeholder:text-muted-foreground/70"
           />
 

@@ -5,14 +5,14 @@ export function Settings() {
   const [isReady, setIsReady] = useState(false);
   const [language, setLanguage] = useState('system');
   const [locales, setLocales] = useState([]);
-  const [catalog, setCatalog] = useState({});
+  const [messages, setMessages] = useState({});
   const [systemLanguageName, setSystemLanguageName] = useState('English');
   const containerRef = useRef(null);
 
   // Translation helper supporting interpolation (%s)
   const __ = useCallback(
     (key, ...args) => {
-      let text = (catalog && catalog[key] !== undefined) ? catalog[key] : key;
+      let text = (messages && messages[key] !== undefined) ? messages[key] : key;
       if (args.length > 0) {
         args.forEach((arg) => {
           text = text.replace(/%s|%d/, String(arg));
@@ -20,7 +20,7 @@ export function Settings() {
       }
       return text;
     },
-    [catalog]
+    [messages]
   );
 
   const resizeToContent = useCallback(() => {
@@ -50,8 +50,8 @@ export function Settings() {
 
   const loadI18n = useCallback(async () => {
     try {
-      const cat = await (window.ipc?.getTranslations?.() || window.ipc?.getI18nCatalog?.());
-      if (cat) setCatalog(cat);
+      const msgs = await (window.ipc?.getMessages?.() || window.ipc?.getTranslations?.() || window.ipc?.getI18nCatalog?.());
+      if (msgs) setMessages(msgs);
 
       const locs = await (window.ipc?.getAvailableLocales?.() || window.ipc?.getI18nLocales?.());
       if (Array.isArray(locs)) {
@@ -79,8 +79,8 @@ export function Settings() {
 
   useEffect(() => {
     const unsub = window.ipc?.onI18nChanged?.(async () => {
-      const cat = await (window.ipc?.getTranslations?.() || window.ipc?.getI18nCatalog?.());
-      if (cat) setCatalog(cat);
+      const msgs = await (window.ipc?.getMessages?.() || window.ipc?.getTranslations?.() || window.ipc?.getI18nCatalog?.());
+      if (msgs) setMessages(msgs);
       resizeToContent();
     });
     return () => unsub?.();
@@ -106,8 +106,8 @@ export function Settings() {
     setLanguage(newLang);
     try {
       await window.ipc?.updateConfig?.({ language: newLang });
-      const cat = await (window.ipc?.getTranslations?.() || window.ipc?.getI18nCatalog?.());
-      if (cat) setCatalog(cat);
+      const msgs = await (window.ipc?.getMessages?.() || window.ipc?.getTranslations?.() || window.ipc?.getI18nCatalog?.());
+      if (msgs) setMessages(msgs);
       resizeToContent();
     } catch (err) {
       console.error('Failed to update language:', err);

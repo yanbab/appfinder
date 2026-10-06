@@ -14,7 +14,7 @@ let currentLocale = 'en';
 let currentCatalog = {};
 let availableLocales = null;
 
-function loadCatalog(locale) {
+function loadMessages(locale) {
     if (!catalogs[locale]) {
         try {
             catalogs[locale] = JSON.parse(fs.readFileSync(path.join(localesDir, `${locale}.json`), 'utf8'));
@@ -32,7 +32,7 @@ function getLocales() {
                 .filter(f => f.endsWith('.json'))
                 .map(f => {
                     const code = f.replace('.json', '');
-                    return { code, name: loadCatalog(code)._languageName || code };
+                    return { code, name: loadMessages(code)._languageName || code };
                 });
         } catch {
             availableLocales = [{ code: 'en', name: 'English' }];
@@ -44,7 +44,7 @@ function getLocales() {
 function setLocale(lang) {
     const codes = getLocales().map(l => l.code);
     currentLocale = codes.includes(lang) ? lang : 'en';
-    currentCatalog = loadCatalog(currentLocale);
+    currentCatalog = loadMessages(currentLocale);
 }
 
 function setupI18n() {
@@ -57,8 +57,12 @@ function setupI18n() {
     setLocale(lang);
 }
 
+function getMessages(locale = currentLocale) {
+    return loadMessages(locale);
+}
+
 function getCatalog(locale = currentLocale) {
-    return loadCatalog(locale);
+    return getMessages(locale);
 }
 
 function getLocale() {
@@ -74,6 +78,7 @@ module.exports = {
     setupI18n,
     getLocale,
     setLocale,
+    getMessages,
     getCatalog,
     getLocales,
     __

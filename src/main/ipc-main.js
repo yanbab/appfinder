@@ -106,7 +106,8 @@ function setupIpcMain() {
   ipcMain.on('cask:write-pty-input', (_, { taskId, text }) => Backend.writePtyInput(taskId, text));
 
   // Localization
-  ipcMain.handle('i18n:get-catalog', async () => i18n.getCatalog(i18n.getLocale()));
+  ipcMain.handle('i18n:get-messages', async () => i18n.getMessages(i18n.getLocale()));
+  ipcMain.handle('i18n:get-catalog', async () => i18n.getMessages(i18n.getLocale()));
   ipcMain.handle('i18n:get-locales', async () => i18n.getLocales());
   ipcMain.handle('i18n:get-system-locale', async () => {
     const sys = app?.getLocale?.() || 'en';

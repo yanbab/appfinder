@@ -85,6 +85,46 @@ export function InfoPanel() {
       .filter(Boolean);
   })();
 
+  const panelRef = React.useRef(null);
+  const previousActiveElementRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      previousActiveElementRef.current = document.activeElement;
+      // Focus close button or panel on open
+      setTimeout(() => {
+        const firstFocusable = panelRef.current?.querySelector('button, a, [tabindex]:not([tabindex="-1"])');
+        firstFocusable?.focus?.();
+      }, 50);
+    } else if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
+      previousActiveElementRef.current.focus();
+      previousActiveElementRef.current = null;
+    }
+  }, [isOpen]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeAppInfo();
+      return;
+    }
+
+    if (e.key === 'Tab') {
+      const focusable = panelRef.current?.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      if (!focusable || focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  };
+
   return (
     <Drawer
       open={isOpen}
@@ -94,7 +134,14 @@ export function InfoPanel() {
       direction="right"
       shouldScaleBackground={false}
     >
-      <DrawerContent className="w-[260px] max-w-[260px] h-full bg-background border-l border-border select-none flex flex-col outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
+      <DrawerContent
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={name || __('Infos')}
+        onKeyDown={handleKeyDown}
+        className="w-[260px] max-w-[260px] h-full bg-background border-l border-border select-none flex flex-col outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0"
+      >
         {/* Header with Close Button on the Left */}
         <div className="app-header h-[52px] shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
           <div className="flex items-center gap-2 min-w-0 flex-1 h-full [-webkit-app-region:drag]">
@@ -102,7 +149,8 @@ export function InfoPanel() {
               icon={<X className="size-[18px]" />}
               onClick={closeAppInfo}
               className="rounded-sm shrink-0 [-webkit-app-region:no-drag]"
-              title="Close"
+              title={__('Close')}
+              aria-label={__('Close')}
             />
             <DrawerTitle className="text-sm font-semibold text-foreground truncate cursor-default select-none [-webkit-app-region:drag]">
               {__('Infos')}

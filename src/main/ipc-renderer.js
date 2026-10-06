@@ -74,8 +74,9 @@ contextBridge.exposeInMainWorld('ipc', {
   getInstalled: () => invoke('cask:get-installed'),
 
   getUpdates: (force = false) => invoke('cask:get-updates', force),
-  getTranslations: () => invoke('i18n:get-catalog'),
-  getI18nCatalog: () => invoke('i18n:get-catalog'),
+  getMessages: () => invoke('i18n:get-messages'),
+  getTranslations: () => invoke('i18n:get-messages'),
+  getI18nCatalog: () => invoke('i18n:get-messages'),
   getAvailableLocales: () => invoke('i18n:get-locales'),
   getI18nLocales: () => invoke('i18n:get-locales'),
   getSystemLocale: () => invoke('i18n:get-system-locale'),

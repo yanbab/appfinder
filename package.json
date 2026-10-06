@@ -96,7 +96,6 @@
       "src/**/*",
       "data/**/*",
       "dist/vite/**/*",
-      "node_modules/**/*",
       "package.json"
     ]
   }
