@@ -18,8 +18,8 @@ function setupIpcMain() {
   ipcMain.handle('cask:get-categories', async () => Backend.getCategories());
   ipcMain.handle('cask:get-installed', async () => Backend.getInstalled());
   ipcMain.handle('cask:get-updates', async (_, force) => Backend.getUpdates(force));
-  ipcMain.handle('cask:get-info', async (_, token) => Backend.getCaskInfo(token));
-  ipcMain.handle('cask:open', async (_, token, appName) => Backend.launchApp(appName || token));
+  ipcMain.handle('cask:get-info', async (_, token) => Backend.getInfo(token));
+  ipcMain.handle('cask:open', async (_, token, appName) => Backend.launch(appName || token));
 
   ipcMain.on('cask:run-action', (event, data) => {
     console.log('[IPC-MAIN RUN ACTION]:', data);
@@ -84,6 +84,9 @@ function setupIpcMain() {
         if (data?.action === 'cleanup') {
           broadcast('cleanup:status', 'complete');
         }
+        if (code === 0 && data?.action === 'fetch') {
+          broadcast('cask:data-refreshed');
+        }
         if (!event.sender.isDestroyed()) {
           event.sender.send('task:complete', { taskId, code, error, cancelled });
         }
@@ -147,9 +150,17 @@ function setupIpcMain() {
 
   ipcMain.handle('settings:clear-caches', async () => {
     broadcast('cleanup:status', 'start');
-    const result = await Backend.cleanCache();
-    broadcast('cleanup:status', 'complete', result);
-    return result;
+    return new Promise((resolve) => {
+      Backend.runAction(
+        { taskId: `cleanup-${Date.now()}`, action: 'cleanup' },
+        {
+          onComplete: (res) => {
+            broadcast('cleanup:status', 'complete', res);
+            resolve({ success: res.code === 0, ...res });
+          }
+        }
+      );
+    });
   });
 
   // Config & Settings

@@ -91,7 +91,7 @@ export function AppItemList({ item }) {
                 e.stopPropagation();
                 startAction('uninstall', item.token);
               }}
-              className="hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20"
+              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 [&:hover_svg]:text-destructive"
               title="Uninstall"
             />
             {item.app ? (

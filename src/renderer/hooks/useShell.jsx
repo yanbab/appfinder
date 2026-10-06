@@ -288,14 +288,18 @@ export function ShellProvider({ children }) {
       return;
     }
 
-    if (action === 'refresh' || action === 'cleanup') {
+    if (action === 'refresh' || action === 'cleanup' || action === 'fetch') {
       clearTerminal();
       const taskId = `cask-${action}-${Date.now()}`;
       setActiveTaskId(taskId);
       setActiveTaskToken(action);
       setActiveTaskAction(action);
       setRunningTasks(prev => ({ ...prev, [action]: action }));
-      setDrawerTitle(action === 'refresh' ? __('Checking for updates...') : __('Cleaning up Homebrew cache...'));
+      setDrawerTitle(
+        action === 'refresh' ? __('Checking for updates...')
+        : action === 'fetch' ? __('Checking for new applications...')
+        : __('Cleaning up Homebrew cache...')
+      );
       setShowDrawer(true);
       if (action === 'cleanup') setShowTerminal(true);
       window.ipc?.runAction?.(taskId, action, '', false);
@@ -486,6 +490,32 @@ export function ShellProvider({ children }) {
     return top;
   }, [items]);
 
+  const recentItems = useMemo(() => {
+    const sorted = items
+      .filter(c => c.added && (c.icon || c.iconUrl) && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
+      .sort((a, b) => (b.added || '').localeCompare(a.added || ''));
+
+    const top = [];
+    const seenCategories = new Set();
+    for (const item of sorted) {
+      const cat = item.category || 'other';
+      if (!seenCategories.has(cat)) {
+        seenCategories.add(cat);
+        top.push(item);
+        if (top.length >= 6) break;
+      }
+    }
+    if (top.length < 6) {
+      for (const item of sorted) {
+        if (!top.includes(item)) {
+          top.push(item);
+          if (top.length >= 6) break;
+        }
+      }
+    }
+    return top;
+  }, [items]);
+
   const loadMore = useCallback(() => {
     setDisplayedCount(prev => prev + CHUNK_SIZE);
   }, []);
@@ -580,6 +610,27 @@ export function ShellProvider({ children }) {
         closeAppInfoRef.current();
         setCurrentTab('updates');
         startActionRef.current('refresh', 'refresh');
+      }));
+    }
+
+    if (window.ipc.onFetchApps) {
+      unsubs.push(window.ipc.onFetchApps(() => {
+        closeAppInfoRef.current();
+        startActionRef.current('fetch', 'fetch');
+      }));
+    }
+
+    if (window.ipc.onClearCache) {
+      unsubs.push(window.ipc.onClearCache(() => {
+        closeAppInfoRef.current();
+        startActionRef.current('cleanup', 'cleanup');
+      }));
+    }
+
+    if (window.ipc.onDataRefreshed) {
+      unsubs.push(window.ipc.onDataRefreshed(() => {
+        window.ipc?.getCasks?.().then(casks => setItems(casks || []));
+        window.ipc?.getCategories?.().then(cats => setCategories(sortCategories(cats || [], catalogRef.current)));
       }));
     }
 
@@ -760,6 +811,9 @@ export function ShellProvider({ children }) {
           await refreshInstalledState();
           if (finishedAction === 'refresh') {
             await refreshUpdatesState(false);
+          } else if (finishedAction === 'fetch' && isSuccess) {
+            window.ipc?.getCasks?.().then(casks => setItems(casks || []));
+            window.ipc?.getCategories?.().then(cats => setCategories(sortCategories(cats || [], catalogRef.current)));
           } else if (isSuccess && finishedToken && (finishedAction === 'upgrade' || finishedAction === 'uninstall')) {
             setOutdatedMap(prev => {
               const next = { ...prev };
@@ -824,6 +878,7 @@ export function ShellProvider({ children }) {
     // Discover data
     featuredItems,
     topInstalledItems,
+    recentItems,
     slideIndex,
     setSlideIndex,
     nextSlide,

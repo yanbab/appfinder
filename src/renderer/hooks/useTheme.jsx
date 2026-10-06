@@ -26,7 +26,11 @@ function getLuminance(hex) {
 export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false;
+    const match = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false;
+    if (match) {
+      document.documentElement.classList.add('dark');
+    }
+    return match;
   });
   const [accentColor, setAccentColor] = useState(null);
   const [isWindowBlurred, setIsWindowBlurred] = useState(false);

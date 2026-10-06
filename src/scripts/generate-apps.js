@@ -8,13 +8,13 @@
 const fs = require('fs');
 const path = require('path');
 
-const dataDir = '../../cache';
+const fetchDir = process.argv[2] || path.join(process.env.HOME || '', '.cache', 'appfinder', 'fetch');
 const iconBaseUrl = 'https://cdn.jsdelivr.net/gh/alielsokary/CaskFlow@icons/';
 
-const categoriesRaw = require(`${dataDir}/categories.json`);
-const casksRaw = require(`${dataDir}/cask.json`);
-const downloadsRaw = require(`${dataDir}/365d.json`);
-const addedRaw = require(`${dataDir}/added_dates.json`);
+const categoriesRaw = JSON.parse(fs.readFileSync(path.join(fetchDir, 'categories.json'), 'utf8'));
+const casksRaw = JSON.parse(fs.readFileSync(path.join(fetchDir, 'cask.json'), 'utf8'));
+const downloadsRaw = JSON.parse(fs.readFileSync(path.join(fetchDir, '365d.json'), 'utf8'));
+const addedRaw = JSON.parse(fs.readFileSync(path.join(fetchDir, 'added_dates.json'), 'utf8'));
 
 function getCasks() {
 

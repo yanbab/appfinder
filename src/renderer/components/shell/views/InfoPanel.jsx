@@ -255,7 +255,7 @@ export function InfoPanel() {
               {selectedApp.homepage ? (
                 <button
                   onClick={() => window.ipc?.openExternal?.(selectedApp.homepage)}
-                  className="text-primary active:underline flex items-center gap-1 max-w-[150px] truncate cursor-default"
+                  className="text-primary hover:underline flex items-center gap-1 max-w-[150px] truncate cursor-default"
                 >
                   <ExternalLink className="size-3 shrink-0" />
                   <span className="truncate">{selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
@@ -265,23 +265,17 @@ export function InfoPanel() {
               )}
             </div>
 
-            {/* Token */}
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Token')}</span>
-              <span className="text-foreground select-text truncate max-w-[150px]">{selectedApp.token}</span>
-            </div>
-
-            {/* Categories */}
+            {/* Categories (Under link, clean styling without badge background) */}
             {appCategories.length > 0 && (
               <div className="flex items-start justify-between py-0.5 gap-2">
-                <span className="text-muted-foreground">{appCategories.length > 1 ? __('Categories') : __('Category')}</span>
-                <div className="flex flex-wrap gap-1 justify-end max-w-[160px]">
+                <span className="text-muted-foreground shrink-0">{appCategories.length > 1 ? __('Categories') : __('Category')}</span>
+                <div className="flex flex-wrap gap-1.5 justify-end max-w-[160px]">
                   {appCategories.map((c) => (
                     <span
                       key={c.name}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium"
+                      className="inline-flex items-center gap-1 text-xs text-foreground font-medium"
                     >
-                      <ShellIcon name={c.symbolName} className="size-[14px]" />
+                      <ShellIcon name={c.symbolName} className="size-[14px] text-muted-foreground" />
                       <span>{__(c.displayName)}</span>
                     </span>
                   ))}
@@ -289,47 +283,17 @@ export function InfoPanel() {
               </div>
             )}
 
-            {/* Require (macOS) */}
+            {/* Token */}
             <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Require', 'Require')}</span>
-              {loadingAppDetails ? (
-                <span className="text-muted-foreground font-mono">...</span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium">
-                  {reqMet ? (
-                    <Check className="size-[14px] text-emerald-500 shrink-0" />
-                  ) : (
-                    <AlertTriangle className="size-[14px] text-amber-500 shrink-0" />
-                  )}
-                  <span>{reqText || 'macOS'}</span>
-                </span>
-              )}
+              <span className="text-muted-foreground">{__('Token')}</span>
+              <span className="text-foreground select-text truncate max-w-[150px]">{selectedApp.token}</span>
             </div>
 
-            {/* Architecture */}
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Architecture')}</span>
-              {loadingAppDetails ? (
-                <span className="text-muted-foreground font-mono">...</span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium">
-                  {archCompat.status === 'incompatible' ? (
-                    <AlertTriangle className="size-[14px] text-destructive shrink-0" />
-                  ) : archCompat.status === 'rosetta' ? (
-                    <Info className="size-[14px] text-blue-500 shrink-0" />
-                  ) : (
-                    <Check className="size-[14px] text-emerald-500 shrink-0" />
-                  )}
-                  <span>{__(archCompat.label)}</span>
-                </span>
-              )}
-            </div>
-
-            {/* Dependencies */}
+            {/* Dependencies (No badge background) */}
             {(depCasks.length > 0 || depFormulae.length > 0) && (
               <div className="flex items-start justify-between py-0.5 gap-2">
                 <span className="text-muted-foreground shrink-0">{__('Dependencies')}</span>
-                <div className="flex flex-wrap gap-1 justify-end max-w-[160px]">
+                <div className="flex flex-wrap gap-1.5 justify-end max-w-[160px]">
                   {depCasks.map((depToken) => {
                     const depApp = items.find((c) => c.token === depToken);
                     const depName = depApp ? getAppName(depApp) : depToken;
@@ -338,8 +302,8 @@ export function InfoPanel() {
                       <button
                         key={depToken}
                         onClick={() => openAppInfo(depToken)}
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-foreground font-medium hover:bg-accent transition-colors cursor-default"
-                        title={`${depName} (${isDepInstalled ? __('Installed') : __('Require', 'Require')})`}
+                        className="inline-flex items-center gap-1 text-xs text-foreground hover:underline transition-colors cursor-default"
+                        title={`${depName} (${isDepInstalled ? __('Installed') : __('Platform', 'Platform')})`}
                       >
                         {isDepInstalled ? (
                           <Check className="size-3 text-emerald-500 shrink-0" />
@@ -353,7 +317,7 @@ export function InfoPanel() {
                   {depFormulae.map((form) => (
                     <span
                       key={form}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-muted text-xs text-muted-foreground font-mono"
+                      className="inline-flex items-center gap-1 text-xs text-muted-foreground font-mono"
                     >
                       <span>{form}</span>
                     </span>
@@ -361,14 +325,6 @@ export function InfoPanel() {
                 </div>
               </div>
             )}
-
-            {/* Auto-updates */}
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Auto-updates')}</span>
-              <span className="text-foreground">
-                {loadingAppDetails ? '...' : (appDetails ? (appDetails.auto_updates ? __('Yes') : __('No')) : '—')}
-              </span>
-            </div>
 
             {/* Monthly Installs */}
             <div className="flex items-center justify-between py-0.5">
@@ -386,6 +342,42 @@ export function InfoPanel() {
                 <span className="text-foreground">{formatDate(selectedApp.added, __)}</span>
               </div>
             )}
+
+            {/* Platform (At the bottom) */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Platform', 'Platform')}</span>
+              {loadingAppDetails ? (
+                <span className="text-muted-foreground text-xs font-normal">…</span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs text-foreground font-medium">
+                  {reqMet ? (
+                    <Check className="size-[14px] text-emerald-500 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="size-[14px] text-amber-500 shrink-0" />
+                  )}
+                  <span>{reqText || 'macOS'}</span>
+                </span>
+              )}
+            </div>
+
+            {/* Architecture (At the bottom) */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Architecture')}</span>
+              {loadingAppDetails ? (
+                <span className="text-muted-foreground text-xs font-normal">…</span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs text-foreground font-medium">
+                  {archCompat.status === 'incompatible' ? (
+                    <AlertTriangle className="size-[14px] text-destructive shrink-0" />
+                  ) : archCompat.status === 'rosetta' ? (
+                    <Info className="size-[14px] text-blue-500 shrink-0" />
+                  ) : (
+                    <Check className="size-[14px] text-emerald-500 shrink-0" />
+                  )}
+                  <span>{__(archCompat.label)}</span>
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Caveat Notice */}

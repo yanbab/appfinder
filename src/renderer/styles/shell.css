@@ -16,6 +16,17 @@
   --accent-color-muted: color-mix(in srgb, var(--primary) 85%, black);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --card-border: rgba(255, 255, 255, 0.08);
+    --card-active-bg: rgba(255, 255, 255, 0.14);
+    --btn-bg-active: #5c5c60;
+    --accent-color-raw: #98989d;
+    --accent-color: var(--primary);
+    --accent-color-muted: color-mix(in srgb, var(--primary) 80%, black);
+  }
+}
+
 .dark {
   --card-border: rgba(255, 255, 255, 0.08);
   --card-active-bg: rgba(255, 255, 255, 0.14);
@@ -101,24 +112,40 @@ body,
   transition: background-color 150ms ease-out, border-color 150ms ease-out;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .app-header {
+    background-color: #343436;
+  }
+
+  :root:not(.light) .app-footer {
+    background-color: #343436;
+  }
+
+  :root:not(.light) aside {
+    border-right-color: #000000 !important;
+  }
+}
+
 .dark .app-header {
   background-color: #343436;
-  border-bottom-color: #000000 !important;
 }
 
 .dark .app-footer {
   background-color: #343436;
-  border-top-color: #000000 !important;
 }
 
 .dark aside {
   border-right-color: #000000 !important;
 }
 
-.dark [role="dialog"],
-.dark [role="dialog"] .app-header {
-  border-left-color: #000000 !important;
-  border-color: #000000 !important;
+select,
+select:focus,
+select:focus-visible,
+.window-select select,
+.window-select select:focus,
+.window-select select:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* 4. Sidebar Navigation Buttons */

@@ -5,7 +5,7 @@ import { AppIcon } from './AppIcon';
 import { ShellButton } from './ShellButton';
 import { ShellIcon } from './ShellIcon';
 import { getAppName, formatVersion } from '@/hooks/utils';
-import { Loader2, ArrowDownToLine, ArrowUpCircle, ExternalLink } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export function AppItemGrid({ item }) {
   const { openAppInfo, selectedApp, outdatedMap, currentTab } = useShell();
@@ -29,11 +29,11 @@ export function AppItemGrid({ item }) {
           openAppInfo(item);
         }
       }}
-      className={`app-card group relative flex items-center justify-between gap-2.5 p-2 rounded-[var(--radius-card)] bg-card text-card-foreground border border-[var(--card-border)] shadow-2xs select-none cursor-default focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/50 ${
+      className={`app-card relative flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card text-card-foreground border border-[var(--card-border)] shadow-2xs select-none cursor-default focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/50 ${
         isSelected ? 'bg-[var(--card-active-bg)]' : ''
       }`}
     >
-      <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-1">
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <AppIcon item={item} size="grid" className="size-14 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
         <div className="min-w-0 flex-1 flex flex-col justify-center">
           <h3 className="font-semibold text-[13px] text-foreground truncate leading-snug">
@@ -47,9 +47,9 @@ export function AppItemGrid({ item }) {
         </div>
       </div>
 
-      {/* Single Icon Action Button */}
+      {/* Single Icon Action Button (0px gap with column, no card hover highlight) */}
       <div
-        className="shrink-0 mr-0.5 flex items-center"
+        className="shrink-0 flex items-center"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
@@ -68,7 +68,7 @@ export function AppItemGrid({ item }) {
               e.stopPropagation();
               upgrade();
             }}
-            icon={<ArrowUpCircle className="size-4 text-primary" />}
+            icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-4 text-muted-foreground hover:text-foreground" />}
             title="Upgrade"
           />
         ) : isInstalled ? (
@@ -79,7 +79,7 @@ export function AppItemGrid({ item }) {
                 e.stopPropagation();
                 open();
               }}
-              icon={<ExternalLink className="size-4 text-muted-foreground group-hover:text-foreground" />}
+              icon={<ShellIcon name="play" className="size-3.5 text-muted-foreground hover:text-foreground" />}
               title="Open"
             />
           ) : (
@@ -89,7 +89,8 @@ export function AppItemGrid({ item }) {
                 e.stopPropagation();
                 uninstall();
               }}
-              icon={<ShellIcon name="trash" className="size-4 text-muted-foreground hover:text-destructive" />}
+              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 [&:hover_svg]:text-destructive"
+              icon={<ShellIcon name="trash" className="size-4" />}
               title="Uninstall"
             />
           )
@@ -100,7 +101,7 @@ export function AppItemGrid({ item }) {
               e.stopPropagation();
               install();
             }}
-            icon={<ArrowDownToLine className="size-4 text-muted-foreground group-hover:text-foreground" />}
+            icon={<ShellIcon name="arrow.down.to.line" className="size-4 text-muted-foreground hover:text-foreground" />}
             title="Install"
           />
         )}

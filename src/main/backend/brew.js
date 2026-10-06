@@ -7,19 +7,34 @@ const taskRunner = require('./task-runner');
 
 const execFileAsync = promisify(execFile);
 
-// Cache definitions
+// Cache definitions & directory locations
 const memoryCache = new Map();
 const caskInfoCache = new Map();
-const CACHE_DIR = path.join(process.env.HOME || '', '.config', 'appfinder');
-const UPDATES_CACHE_FILE = path.join(CACHE_DIR, 'updates.json');
+const CONFIG_DIR = path.join(process.env.HOME || '', '.config', 'appfinder');
+const UPDATES_CACHE_FILE = path.join(CONFIG_DIR, 'updates.json');
 const UPDATES_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
+const CACHE_APPFINDER_DIR = path.join(process.env.HOME || '', '.cache', 'appfinder');
+const CACHE_HOME_DIR = path.join(process.env.HOME || '', '.cache');
+const BUNDLED_DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
+const FETCH_SCRIPT = path.join(__dirname, '..', '..', 'scripts', 'fetch-casks.sh');
 
 const CODE_NAMES = {
   high_sierra: '10.13', mojave: '10.14', catalina: '10.15',
   big_sur: '11', monterey: '12', ventura: '13', sonoma: '14', sequoia: '15', tahoe: '16'
 };
+
+function resolveDataFilePath(file) {
+  const baseName = file.replace(/\.json$/, '');
+  const candidates = [
+    path.join(CACHE_APPFINDER_DIR, file),
+    path.join(CACHE_APPFINDER_DIR, baseName),
+    path.join(CACHE_HOME_DIR, file),
+    path.join(CACHE_HOME_DIR, baseName),
+    path.join(BUNDLED_DATA_DIR, file)
+  ];
+  return candidates.find(p => fs.existsSync(p)) || path.join(BUNDLED_DATA_DIR, file);
+}
 
 function getSystemInfo() {
   let sysVer = '';
@@ -142,38 +157,6 @@ function normalizeCaskInfo(cask, sysInfo) {
   };
 }
 
-function getData(file) {
-  if (memoryCache.has(file)) {
-    return memoryCache.get(file);
-  }
-  try {
-    const data = JSON.parse(fs.readFileSync(path.join(DATA_DIR, file), 'utf8'));
-    memoryCache.set(file, data);
-    return data;
-  } catch (e) {
-    console.error(`Failed to read data file ${file}:`, e);
-    return [];
-  }
-}
-
-function getApps() {
-  return getData('apps.json');
-}
-
-function getCategories() {
-  return getData('categories.json');
-}
-
-function ensureCacheDir() {
-  try {
-    if (!fs.existsSync(CACHE_DIR)) {
-      fs.mkdirSync(CACHE_DIR, { recursive: true });
-    }
-  } catch (e) {
-    console.error('Failed to create cache dir:', e);
-  }
-}
-
 function getBrewPath() {
   const brewPaths = [
     '/opt/homebrew/bin/brew',
@@ -181,22 +164,16 @@ function getBrewPath() {
     '/usr/bin/brew',
     '/bin/brew'
   ];
-  for (const p of brewPaths) {
-    if (fs.existsSync(p)) return p;
-  }
-  return 'brew';
+  return brewPaths.find(p => fs.existsSync(p)) || 'brew';
 }
 
 function getEnvWithBrew() {
   const defaultPath = '/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin';
-  const env = {
+  return {
     ...process.env,
     PATH: process.env.PATH ? `${process.env.PATH}:${defaultPath}` : defaultPath,
     HOMEBREW_NO_AUTO_UPDATE: '1'
   };
-  delete env.HOMEBREW_NO_COLOR;
-  delete env.HOMEBREW_NO_EMOJI;
-  return env;
 }
 
 async function runBrew(args) {
@@ -212,6 +189,27 @@ async function runBrew(args) {
   }
 }
 
+function getData(file, forceReload = false) {
+  if (!forceReload && memoryCache.has(file)) return memoryCache.get(file);
+  try {
+    const targetFile = resolveDataFilePath(file);
+    const data = JSON.parse(fs.readFileSync(targetFile, 'utf8'));
+    memoryCache.set(file, data);
+    return data;
+  } catch (e) {
+    console.error(`Failed to read data file ${file}:`, e);
+    return [];
+  }
+}
+
+function getApps(forceReload = false) {
+  return getData('apps.json', forceReload);
+}
+
+function getCategories(forceReload = false) {
+  return getData('categories.json', forceReload);
+}
+
 async function getInstalled(onLog) {
   try {
     onLog?.('Checking installed casks...');
@@ -221,34 +219,19 @@ async function getInstalled(onLog) {
     const tokens = [];
     const versions = {};
 
-    const lines = stdout.trim().split('\n');
-    for (const line of lines) {
+    for (const line of stdout.trim().split('\n')) {
       const parts = line.trim().split(/\s+/);
-      if (parts.length >= 1 && parts[0]) {
-        const token = parts[0];
-        tokens.push(token);
-        if (parts.length >= 2) {
-          versions[token] = parts.slice(1).join(' ');
+      if (parts[0]) {
+        tokens.push(parts[0]);
+        if (parts.length > 1) {
+          versions[parts[0]] = parts.slice(1).join(' ');
         }
       }
     }
-
     return { tokens, versions };
   } catch (e) {
     console.error('Error fetching installed casks:', e);
     return { tokens: [], versions: {} };
-  }
-}
-
-async function fetchOutdatedCasks() {
-  try {
-    const stdout = await runBrew(['outdated', '--cask', '--json=v2']);
-    if (!stdout) return { casks: [] };
-    const data = JSON.parse(stdout);
-    return { casks: data.casks || [] };
-  } catch (e) {
-    console.error('Error fetching outdated casks:', e);
-    return { casks: [] };
   }
 }
 
@@ -270,76 +253,56 @@ async function getUpdates(force = false) {
     } catch (_) { }
   }
 
-  const fresh = await fetchOutdatedCasks();
-  memoryCache.set('updates', { data: fresh, timestamp: Date.now() });
-  ensureCacheDir();
+  let casks = [];
   try {
+    const stdout = await runBrew(['outdated', '--cask', '--json=v2']);
+    if (stdout) casks = JSON.parse(stdout).casks || [];
+  } catch (e) {
+    console.error('Error fetching outdated casks:', e);
+  }
+
+  const fresh = { casks };
+  memoryCache.set('updates', { data: fresh, timestamp: Date.now() });
+  try {
+    if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
     fs.writeFileSync(UPDATES_CACHE_FILE, JSON.stringify(fresh));
   } catch (_) { }
 
   return fresh;
 }
 
-function getCachedCaskInfo(token) {
-  return caskInfoCache.get(token) || null;
-}
+async function getInfo(tokenOrCask, sysInfo) {
+  if (!tokenOrCask) return null;
+  const info = sysInfo || getSystemInfo();
 
-function setCachedCaskInfo(token, data) {
-  caskInfoCache.set(token, data);
-}
-
-async function fetchCaskJson(token) {
-  try {
-    const stdout = await runBrew(['info', '--cask', '--json=v2', token]);
-    if (!stdout) return null;
-    const data = JSON.parse(stdout);
-    return (data.casks && data.casks[0]) || null;
-  } catch (e) {
-    console.error(`Error fetching cask json for ${token}:`, e);
-    return null;
+  if (typeof tokenOrCask === 'object') {
+    return normalizeCaskInfo(tokenOrCask, info);
   }
-}
 
-async function getCaskInfo(token) {
-  if (!token || typeof token !== 'string') return null;
-  const sanitized = token.replace(/[^a-zA-Z0-9_-]/g, '');
-  if (!sanitized) return null;
+  if (typeof tokenOrCask !== 'string') return null;
+  const token = tokenOrCask.replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!token) return null;
 
-  let cask = getCachedCaskInfo(sanitized);
+  let cask = caskInfoCache.get(token);
   if (!cask) {
-    const raw = await fetchCaskJson(sanitized);
-    if (raw) {
-      cask = normalizeCaskInfo(raw);
-      setCachedCaskInfo(sanitized, cask);
+    try {
+      const stdout = await runBrew(['info', '--cask', '--json=v2', token]);
+      if (stdout) {
+        const data = JSON.parse(stdout);
+        const raw = (data.casks && data.casks[0]) || null;
+        if (raw) {
+          cask = normalizeCaskInfo(raw, info);
+          caskInfoCache.set(token, cask);
+        }
+      }
+    } catch (e) {
+      console.error(`Error fetching cask info for ${token}:`, e);
     }
   }
-  return cask;
+  return cask || null;
 }
 
-/**
- * Resolves CLI arguments for a given action
- * @param {string} action
- * @param {string} token
- * @param {boolean} [zap=false]
- * @returns {string[] | null}
- */
-function getActionArgs(action, token, zap = false) {
-  const actions = {
-    install: ['install', '--force', '--cask', token],
-    upgrade: ['upgrade', '--force', '--cask', token],
-    uninstall: zap ? ['uninstall', '--force', '--zap', '--cask', token] : ['uninstall', '--force', '--cask', token],
-    refresh: ['update'],
-    cleanup: ['cleanup', '--prune=all']
-  };
-  return actions[action] || null;
-}
-
-/**
- * Launches an installed application via macOS /usr/bin/open
- * @param {string} appName
- * @returns {Promise<{ success: boolean, error?: string }>}
- */
-async function launchApp(appName) {
+async function launch(appName) {
   try {
     await execFileAsync('/usr/bin/open', ['-a', appName]);
     return { success: true };
@@ -349,29 +312,26 @@ async function launchApp(appName) {
   }
 }
 
-/**
- * Cleans Homebrew cache via brew cleanup --prune=all
- * @returns {Promise<{ success: boolean, stdout?: string, error?: string }>}
- */
-async function cleanCache() {
-  try {
-    const stdout = await runBrew(['cleanup', '--prune=all']);
-    return { success: true, stdout: stdout || '' };
-  } catch (e) {
-    return { success: false, error: e.message };
-  }
-}
+const ACTION_ARGS = {
+  install: (t) => ({ command: getBrewPath(), args: ['install', '--force', '--cask', t] }),
+  upgrade: (t) => ({ command: getBrewPath(), args: ['upgrade', '--force', '--cask', t] }),
+  uninstall: (t, zap) => ({
+    command: getBrewPath(),
+    args: zap ? ['uninstall', '--force', '--zap', '--cask', t] : ['uninstall', '--force', '--cask', t]
+  }),
+  refresh: () => ({ command: getBrewPath(), args: ['update'] }),
+  cleanup: () => ({ command: getBrewPath(), args: ['cleanup', '--prune=all'] }),
+  fetch: () => ({ command: '/bin/bash', args: [FETCH_SCRIPT], cwd: path.dirname(FETCH_SCRIPT) })
+};
 
-/**
- * Executes a Homebrew action via taskRunner
- */
 function runAction(data, callbacks = {}) {
   const cbs = typeof callbacks === 'function' ? { onComplete: callbacks } : (callbacks || {});
-  const { onLog, onComplete, onPrompt, onRefreshUpdates } = cbs;
+  const { onLog, onComplete, onPrompt, onRefreshUpdates, onRefreshData } = cbs;
   const { taskId, action, token, zap } = data || {};
 
-  const args = getActionArgs(action, token, zap);
-  if (!args) {
+  const getArgs = ACTION_ARGS[action];
+  const config = getArgs ? getArgs(token, zap) : null;
+  if (!config) {
     onComplete?.({ taskId, code: 1, error: 'Invalid action' });
     return;
   }
@@ -379,19 +339,28 @@ function runAction(data, callbacks = {}) {
   taskRunner.runTask(
     {
       taskId,
-      command: getBrewPath(),
-      args,
+      command: config.command,
+      args: config.args,
+      cwd: config.cwd,
       env: getEnvWithBrew()
     },
     {
       onLog,
       onPrompt,
       onComplete: ({ taskId: tid, code, error, cancelled }) => {
-        if (code === 0 && action === 'refresh') {
-          if (typeof onRefreshUpdates === 'function') {
-            onRefreshUpdates().catch(() => { });
-          } else {
-            getUpdates(true).catch(() => { });
+        if (code === 0) {
+          if (action === 'refresh') {
+            if (typeof onRefreshUpdates === 'function') {
+              onRefreshUpdates().catch(() => { });
+            } else {
+              getUpdates(true).catch(() => { });
+            }
+          } else if (action === 'fetch') {
+            memoryCache.delete('apps.json');
+            memoryCache.delete('categories.json');
+            if (typeof onRefreshData === 'function') {
+              onRefreshData().catch(() => { });
+            }
           }
         }
         onComplete?.({ taskId: tid, code, error, cancelled });
@@ -411,26 +380,10 @@ function writePtyInput(taskId, text) {
 module.exports = {
   getApps,
   getCategories,
-  getData,
-  getBrewPath,
-  getEnvWithBrew,
-  runBrew,
   getInstalled,
   getUpdates,
-  getCachedCaskInfo,
-  setCachedCaskInfo,
-  fetchCaskJson,
-  getCaskInfo,
-  getSystemInfo,
-  getCaskRequirements,
-  isRequirementMet,
-  getCaskArchCompatibility,
-  getCaskDependencies,
-  getCaskStatus,
-  normalizeCaskInfo,
-  getActionArgs,
-  launchApp,
-  cleanCache,
+  getInfo,
+  launch,
   runAction,
   cancelAction,
   writePtyInput

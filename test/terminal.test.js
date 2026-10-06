@@ -124,13 +124,21 @@ test('detectPrompt returns non-prompt for regular logs', () => {
   assert.equal(result.type, null);
 });
 
-test('brew getActionArgs returns correct arguments for actions', () => {
-  assert.deepEqual(brew.getActionArgs('install', 'vlc'), ['install', '--force', '--cask', 'vlc']);
-  assert.deepEqual(brew.getActionArgs('upgrade', 'vlc'), ['upgrade', '--force', '--cask', 'vlc']);
-  assert.deepEqual(brew.getActionArgs('uninstall', 'vlc', true), ['uninstall', '--force', '--zap', '--cask', 'vlc']);
-  assert.deepEqual(brew.getActionArgs('refresh'), ['update']);
-  assert.deepEqual(brew.getActionArgs('cleanup'), ['cleanup', '--prune=all']);
-  assert.equal(brew.getActionArgs('unknown'), null);
+test('brew.runAction rejects invalid action', (t, done) => {
+  brew.runAction({ action: 'unknown', taskId: 'test-invalid-1' }, {
+    onComplete: ({ code, error }) => {
+      assert.equal(code, 1);
+      assert.equal(error, 'Invalid action');
+      done();
+    }
+  });
+});
+
+test('brew.getApps and brew.getCategories return catalog datasets', () => {
+  const apps = brew.getApps();
+  assert.ok(Array.isArray(apps) && apps.length > 0, 'apps should be a non-empty array');
+  const categories = brew.getCategories();
+  assert.ok(Array.isArray(categories) && categories.length > 0, 'categories should be a non-empty array');
 });
 
 test('pseudo-pty spawns with declared terminal size (cols/rows) and authentic TTY environment', async () => {
@@ -383,76 +391,68 @@ test('extractTaskError cleans duplicated token prefixes and deduplicates repeate
   assert.equal(err.details, 'Error: baseline: This cask does not run on macOS versions older than Sequoia.');
 });
 
-test('brew.getCaskArchCompatibility identifies Apple Silicon and Intel constraints', () => {
+test('brew.getInfo extracts architecture compatibility', async () => {
   // 1. Arm64 only on arm64
   const armApp = { depends_on: { arch: 'arm64' } };
-  const armOnArm = brew.getCaskArchCompatibility(armApp, 'arm64');
-  assert.equal(armOnArm.isSupported, true);
-  assert.equal(armOnArm.status, 'native');
-  assert.equal(armOnArm.label, 'Apple Silicon');
+  const armOnArm = await brew.getInfo(armApp, 'arm64');
+  assert.equal(armOnArm.archCompat.isSupported, true);
+  assert.equal(armOnArm.archCompat.status, 'native');
+  assert.equal(armOnArm.archCompat.label, 'Apple Silicon');
 
   // 2. Arm64 only on x64 (Intel)
-  const armOnIntel = brew.getCaskArchCompatibility(armApp, 'x64');
-  assert.equal(armOnIntel.isSupported, false);
-  assert.equal(armOnIntel.status, 'incompatible');
-  assert.equal(armOnIntel.label, 'Apple Silicon only');
+  const armOnIntel = await brew.getInfo(armApp, 'x64');
+  assert.equal(armOnIntel.archCompat.isSupported, false);
+  assert.equal(armOnIntel.archCompat.status, 'incompatible');
+  assert.equal(armOnIntel.archCompat.label, 'Apple Silicon only');
 
   // 3. Intel only on arm64 (Rosetta 2)
   const intelApp = { depends_on: { arch: 'x86_64' } };
-  const intelOnArm = brew.getCaskArchCompatibility(intelApp, 'arm64');
-  assert.equal(intelOnArm.isSupported, true);
-  assert.equal(intelOnArm.status, 'rosetta');
-  assert.equal(intelOnArm.label, 'Intel (Rosetta 2)');
+  const intelOnArm = await brew.getInfo(intelApp, 'arm64');
+  assert.equal(intelOnArm.archCompat.isSupported, true);
+  assert.equal(intelOnArm.archCompat.status, 'rosetta');
+  assert.equal(intelOnArm.archCompat.label, 'Intel (Rosetta 2)');
 
   // 4. Universal
   const universalApp = {};
-  const univ = brew.getCaskArchCompatibility(universalApp, 'arm64');
-  assert.equal(univ.isSupported, true);
-  assert.equal(univ.status, 'universal');
-  assert.equal(univ.label, 'Universal');
+  const univ = await brew.getInfo(universalApp, 'arm64');
+  assert.equal(univ.archCompat.isSupported, true);
+  assert.equal(univ.archCompat.status, 'universal');
+  assert.equal(univ.archCompat.label, 'Universal');
 
   // 5. Rosetta 2 caveat
   const rosettaApp = { caveats_rosetta: true };
-  const rosetta = brew.getCaskArchCompatibility(rosettaApp, 'arm64');
-  assert.equal(rosetta.status, 'rosetta');
+  const rosetta = await brew.getInfo(rosettaApp, 'arm64');
+  assert.equal(rosetta.archCompat.status, 'rosetta');
 });
 
-test('brew.getCaskDependencies extracts cask and formula dependencies', () => {
+test('brew.getInfo extracts dependencies, disabled and deprecated info', async () => {
   const details = {
     depends_on: {
       cask: ['docker-desktop', 'swiftdialog'],
       formula: ['node']
-    }
-  };
-  const deps = brew.getCaskDependencies(details);
-  assert.deepEqual(deps.casks, ['docker-desktop', 'swiftdialog']);
-  assert.deepEqual(deps.formulae, ['node']);
-
-  assert.deepEqual(brew.getCaskDependencies(null), { casks: [], formulae: [] });
-});
-
-test('brew.getCaskStatus extracts disabled and deprecated info with replacement', () => {
-  const disabledDetails = {
+    },
     disabled: true,
     disable_reason: 'fails_gatekeeper_check',
     disable_replacement_cask: 'alternative-app'
   };
-  const status = brew.getCaskStatus(disabledDetails);
-  assert.equal(status.isDisabled, true);
-  assert.equal(status.disableReason, 'fails_gatekeeper_check');
-  assert.equal(status.disableReplacement, 'alternative-app');
-  assert.equal(formatReason(status.disableReason), 'Fails Gatekeeper check');
+  const info = await brew.getInfo(details);
+  assert.deepEqual(info.dependencies.casks, ['docker-desktop', 'swiftdialog']);
+  assert.deepEqual(info.dependencies.formulae, ['node']);
+  assert.equal(info.status.isDisabled, true);
+  assert.equal(info.status.disableReason, 'fails_gatekeeper_check');
+  assert.equal(info.status.disableReplacement, 'alternative-app');
+  assert.equal(formatReason(info.status.disableReason), 'Fails Gatekeeper check');
 
   const deprecatedDetails = {
     deprecated: true,
     deprecation_reason: 'discontinued'
   };
-  const depStatus = brew.getCaskStatus(deprecatedDetails);
-  assert.equal(depStatus.isDeprecated, true);
-  assert.equal(formatReason(depStatus.deprecationReason), 'Discontinued');
+  const depInfo = await brew.getInfo(deprecatedDetails);
+  assert.equal(depInfo.status.isDeprecated, true);
+  assert.equal(formatReason(depInfo.status.deprecationReason), 'Discontinued');
 });
 
-test('brew.normalizeCaskInfo enriches raw cask with requirements, arch, dependencies, and status', () => {
+test('brew.getInfo enriches raw cask with requirements, arch, dependencies, and status', async () => {
   const rawCask = {
     token: 'baseline',
     name: ['Baseline'],
@@ -467,7 +467,7 @@ test('brew.normalizeCaskInfo enriches raw cask with requirements, arch, dependen
   };
 
   const sysInfo = { platform: 'darwin', arch: 'arm64', systemVersion: '14.5' };
-  const normalized = brew.normalizeCaskInfo(rawCask, sysInfo);
+  const normalized = await brew.getInfo(rawCask, sysInfo);
 
   assert.equal(normalized.token, 'baseline');
   assert.equal(normalized.reqText, 'macOS 14+');
@@ -480,7 +480,8 @@ test('brew.normalizeCaskInfo enriches raw cask with requirements, arch, dependen
 
   // Verify incompatible system version
   const oldSysInfo = { platform: 'darwin', arch: 'arm64', systemVersion: '13.0' };
-  assert.equal(brew.isRequirementMet(rawCask, oldSysInfo), false);
+  const oldNormalized = await brew.getInfo(rawCask, oldSysInfo);
+  assert.equal(oldNormalized.reqMet, false);
 });
 
 

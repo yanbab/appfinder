@@ -37,12 +37,12 @@ export function NavGroup({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full px-2.5 py-1 flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase tracking-wider cursor-default select-none group transition-colors"
+        className="w-full px-2.5 py-1 flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase tracking-wider cursor-default select-none outline-none focus:outline-none bg-transparent hover:bg-transparent active:bg-transparent transition-none"
       >
         <span className="truncate">{resolvedTitle}</span>
         <ChevronRight
           className={cn(
-            "size-3 text-muted-foreground/70 group-hover:text-foreground dark:group-hover:text-white shrink-0 transition-transform duration-150 ease-out",
+            "size-3 text-muted-foreground/70 shrink-0 transition-transform duration-150 ease-out",
             isOpen ? "rotate-90" : "rotate-0"
           )}
         />

@@ -11,6 +11,7 @@ import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 export function Discover() {
   const {
     topInstalledItems,
+    recentItems,
     categories,
     selectTab,
     setOrder,
@@ -54,6 +55,22 @@ export function Discover() {
               <div className="h-3 w-12 bg-muted/50 rounded animate-pulse" />
             </div>
           ))}
+        </div>
+
+        {/* Recent Apps Skeleton */}
+        <div className="space-y-2">
+          <div className="h-4 w-20 bg-muted/60 rounded animate-pulse" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex items-center gap-3 p-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs">
+                <div className="size-12 rounded-[var(--radius-card)] bg-muted/70 animate-pulse shrink-0" />
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="h-4 w-28 bg-muted/70 rounded animate-pulse" />
+                  <div className="h-3 w-36 bg-muted/50 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Popular Apps Skeleton */}
@@ -131,6 +148,49 @@ export function Discover() {
           </span>
         </button>
       </div>
+
+      {/* Recent Apps Section */}
+      {recentItems && recentItems.length > 0 && (
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-muted-foreground">
+              {__('Recent')}
+            </h3>
+            <button
+              onClick={() => {
+                setOrder('date');
+                selectTab('all-apps');
+              }}
+              className="flex items-center gap-1 text-xs text-muted-foreground active:text-foreground cursor-default outline-none focus:outline-none"
+            >
+              <span>{__('Show All')}</span>
+              <ChevronRight className="size-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {recentItems.map((item) => (
+              <div
+                key={item.token}
+                onClick={() => openAppInfo(item)}
+                className="flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <AppIcon item={item} size="tile" className="size-12 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-[13px] text-foreground truncate leading-snug">
+                      {getAppName(item)}
+                    </h4>
+                    <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
+                      {item.desc || item.category || ''}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Popular Apps Section */}
       {topInstalledItems.length > 0 && (

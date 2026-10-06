@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as LucideIcons from 'lucide-react';
 
 // Eagerly load all SF Symbol SVGs from assets/icons
 const svgModules = import.meta.glob('@/assets/icons/*.svg', {
@@ -23,23 +22,26 @@ const ICON_ALIASES = {
   'check-circle-2': 'checkmark',
   'stop-circle': 'stop.circle',
   terminal: 'apple.terminal',
-  'terminal.fill': 'apple.terminal.fill',
-  upgrade: 'arrow.triangle.2.circlepath',
-  refresh: 'arrow.triangle.2.circlepath',
-  updates: 'arrow.triangle.2.circlepath',
-  'arrow.trianglehead.2.clockwise.rotate.90': 'arrow.triangle.2.circlepath',
-  install: 'arrow.down.circle',
-  open: 'arrow.up.right.square',
+  'terminal.fill': 'apple.terminal',
+  'apple.terminal.fill': 'apple.terminal',
+  upgrade: 'arrow.trianglehead.2.clockwise.rotate.90',
+  upgrades: 'arrow.trianglehead.2.clockwise.rotate.90',
+  update: 'arrow.trianglehead.2.clockwise.rotate.90',
+  refresh: 'arrow.trianglehead.2.clockwise.rotate.90',
+  'arrow.trianglehead.2.clockwise.rotate.90': 'arrow.trianglehead.2.clockwise.rotate.90',
+  'arrow.triangle.2.circlepath': 'arrow.trianglehead.2.clockwise.rotate.90',
+  install: 'arrow.down.to.line',
+  installed: 'arrow.down.to.line',
+  'arrow.down.circle': 'arrow.down.to.line',
+  open: 'play',
+  play: 'play',
+  'play.fill': 'play.fill',
+  sidebar: 'sidebar.left',
+  'sidebar.left': 'sidebar.left',
   delete: 'trash',
   uninstall: 'trash',
+  trash: 'trash',
 };
-
-function toPascalCase(str) {
-  if (!str) return '';
-  return str
-    .replace(/[-_](\w)/g, (_, c) => c.toUpperCase())
-    .replace(/^\w/, (c) => c.toUpperCase());
-}
 
 export function ShellIcon({ name, html, className = 'size-[18px]', ...props }) {
   if (html) {
@@ -64,13 +66,6 @@ export function ShellIcon({ name, html, className = 'size-[18px]', ...props }) {
           {...props}
         />
       );
-    }
-
-
-    const pascalName = toPascalCase(name);
-    const LucideIcon = LucideIcons[pascalName] || LucideIcons[name];
-    if (LucideIcon) {
-      return <LucideIcon className={className} {...props} />;
     }
   }
 

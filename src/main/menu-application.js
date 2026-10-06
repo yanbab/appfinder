@@ -77,6 +77,22 @@ function setupApplicationMenu() {
       role: 'fileMenu',
       label: __('File'),
       submenu: [
+        {
+          label: __('Check for New Applications...'),
+          accelerator: 'Option+Cmd+N',
+          click: () => sendToShell('shell:fetch-apps')
+        },
+        {
+          label: __('Check for Updates...'),
+          accelerator: 'Option+Cmd+U',
+          click: () => sendToShell('shell:check-updates')
+        },
+        { type: 'separator' },
+        {
+          label: __('Clear Downloaded Files...'),
+          click: () => sendToShell('shell:clear-cache')
+        },
+        { type: 'separator' },
         { role: 'close', label: __('Close Window') }
       ]
     },
@@ -186,12 +202,6 @@ function setupApplicationMenu() {
               }
             });
           }
-        },
-        { type: 'separator' },
-        {
-          label: __('Check for Updates...'),
-          accelerator: 'Option+Cmd+U',
-          click: () => sendToShell('shell:check-updates')
         },
         { type: 'separator' },
         { role: 'reload', label: __('Reload') },

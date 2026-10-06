@@ -93,7 +93,7 @@ async function main() {
         console.error(JSON.stringify({ error: 'Token required. Example: appfinder info <token>' }, null, 2));
         process.exit(1);
       }
-      const info = await backend.getCaskInfo(token);
+      const info = await backend.getInfo(token);
       console.log(JSON.stringify(info, null, 2));
       break;
     }
@@ -104,14 +104,7 @@ async function main() {
         console.error(JSON.stringify({ error: 'App name required. Example: appfinder open <appName>' }, null, 2));
         process.exit(1);
       }
-      const result = await backend.launchApp(appName);
-      console.log(JSON.stringify(result, null, 2));
-      break;
-    }
-
-
-    case 'cleancache': {
-      const result = await backend.cleanCache();
+      const result = await backend.launch(appName);
       console.log(JSON.stringify(result, null, 2));
       break;
     }
@@ -120,10 +113,12 @@ async function main() {
     case 'upgrade':
     case 'uninstall':
     case 'refresh':
-    case 'cleanup': {
+    case 'cleanup':
+    case 'cleancache': {
       const token = cmdArgs.find((a) => !a.startsWith('-'));
       const zap = cmdArgs.includes('--zap');
       const taskId = `cli-${Date.now()}`;
+      const actionName = command === 'cleancache' ? 'cleanup' : command;
 
       if (['install', 'upgrade', 'uninstall'].includes(command) && !token) {
         console.error(`Error: Token required for ${command}. Example: appfinder ${command} <token>`);
@@ -147,7 +142,7 @@ async function main() {
       }
 
       backend.runAction(
-        { taskId, action: command, token, zap },
+        { taskId, action: actionName, token, zap },
         {
           onLog: ({ text }) => {
             if (text) {
