@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.7] - 2026-10-06
+
+### Changes
+- Fixed CI builds
+
+---
+
 ## [0.9.6] - 2026-10-06
 
 ### Changes
