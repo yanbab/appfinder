@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.6] - 2026-10-06
+
+### Changes
+- React port, removed xterm.js and node-pty dependencies, backend refactor
+
+---
+
 ## [0.9.5] - 2026-09-27
 
 ### Changes
