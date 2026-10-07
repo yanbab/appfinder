@@ -28,7 +28,7 @@ export function AppSlider() {
     <div
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="relative overflow-hidden rounded-[var(--radius-card)] h-[210px] shadow-sm select-none"
+      className="relative overflow-hidden rounded-[calc(var(--radius-card)*2)] h-[210px] shadow-sm select-none"
     >
       {featuredItems.map((item, idx) => {
         const isActive = idx === slideIndex;
@@ -41,7 +41,7 @@ export function AppSlider() {
             }`}
           >
             {/* Ambient Zoomed-in Icon Background */}
-            <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 rounded-[var(--radius-card)]">
+            <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 rounded-[calc(var(--radius-card)*2)]">
               {item.iconUrl ? (
                 <img
                   className="absolute top-1/2 left-1/2 w-[140%] h-[140%] -translate-x-1/2 -translate-y-1/2 scale-[3.5] object-cover blur-[48px] saturate-[240%] brightness-[0.8] opacity-90"

@@ -32,12 +32,21 @@ export function Discover(): React.JSX.Element {
 
   const [showAllCategories, setShowAllCategories] = useState(false);
 
+  const getCategoryDisplayName = (categoryName?: string) => {
+    if (!categoryName) return '';
+    const found = categories.find(
+      (c) => c.name.toLowerCase() === categoryName.toLowerCase() || (c.displayName && c.displayName.toLowerCase() === categoryName.toLowerCase())
+    );
+    return __(found?.displayName || categoryName);
+  };
+
   // Full skeleton during initial load to completely prevent layout jumping
   if (loading || !featuredItems || featuredItems.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 select-none max-w-[var(--content-max-width)] mx-auto w-full">
-        {/* Featured Hero Skeleton */}
-        <div className="relative overflow-hidden rounded-[var(--radius-card)] p-6 min-h-[210px] bg-card shadow-2xs flex items-center">
+      <div className="flex-1 overflow-y-auto p-4 select-none">
+        <div className="max-w-[var(--content-max-width)] mx-auto w-full space-y-4">
+          {/* Featured Hero Skeleton */}
+          <div className="relative overflow-hidden rounded-[calc(var(--radius-card)*2)] p-6 min-h-[210px] bg-card shadow-2xs flex items-center">
           <div className="flex items-center gap-6 w-full min-w-0">
             <div className="size-28 sm:size-32 rounded-[var(--radius-card)] bg-muted/70 animate-pulse shrink-0" />
             <div className="min-w-0 flex-1 space-y-2.5">
@@ -108,13 +117,15 @@ export function Discover(): React.JSX.Element {
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4 max-w-[var(--content-max-width)] mx-auto w-full">
-      {/* Featured Carousel Banner */}
-      <AppSlider />
+    <div className="flex-1 overflow-y-auto p-4 select-none">
+      <div className="max-w-[var(--content-max-width)] mx-auto w-full space-y-4">
+        {/* Featured Carousel Banner */}
+        <AppSlider />
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-3 gap-2">
@@ -188,7 +199,7 @@ export function Discover(): React.JSX.Element {
                       {getAppName(item)}
                     </h4>
                     <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
-                      {item.desc || item.category || ''}
+                      {getCategoryDisplayName(item.category)}
                     </p>
                   </div>
                 </div>
@@ -231,7 +242,7 @@ export function Discover(): React.JSX.Element {
                       {getAppName(item)}
                     </h4>
                     <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
-                      {item.desc || item.category || ''}
+                      {getCategoryDisplayName(item.category)}
                     </p>
                   </div>
                 </div>
@@ -278,6 +289,7 @@ export function Discover(): React.JSX.Element {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
