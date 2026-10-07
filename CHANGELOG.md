@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.9] - 2026-10-07
+
+### Changes
+- fix: fix Vite configuration files and update release and dev scripts
+
+---
+
 ## [0.9.8] - 2026-10-07
 
 ### Changes
