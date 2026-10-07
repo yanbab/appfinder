@@ -116,7 +116,15 @@ export function setupIpcMain(): void {
   });
 
   // External & Dialogs
-  ipcMain.handle('external:open', async (_, url) => shell.openExternal(url));
+  ipcMain.handle('external:open', async (_, url) => {
+    if (typeof url !== 'string') return;
+    try {
+      const parsed = new URL(url);
+      if (['https:', 'http:'].includes(parsed.protocol)) {
+        return await shell.openExternal(url);
+      }
+    } catch (_) { }
+  });
   ipcMain.handle('dialog:error', async (_, title, content) => dialog.showErrorBox(title, content));
   ipcMain.handle('dialog:message', async (event, options) => {
     if (options.icon) options.icon = nativeImage.createFromDataURL(options.icon);
