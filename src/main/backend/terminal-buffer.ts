@@ -1,13 +1,19 @@
 /**
  * Strip ANSI escape codes from string
- * @param {string} str
- * @returns {string}
  */
-function stripAnsi(str) {
+export function stripAnsi(str: string): string {
   if (!str) return '';
   return str
     .replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '')
     .replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+}
+
+export interface TerminalBufferWriteResult {
+  line: string;
+  text: string;
+  plainText: string;
+  fullRaw: string;
+  fullPlain: string;
 }
 
 /**
@@ -15,15 +21,20 @@ function stripAnsi(str) {
  * It resolves ANSI cursor line resets (\r, \x1b[0G, \x1b[K), handles cursor-up (\x1b[A),
  * and commits lines on line feeds (\n).
  */
-class TerminalBuffer {
-  constructor(maxLines = 2000) {
+export class TerminalBuffer {
+  maxLines: number;
+  lines: string[];
+  currentLine: string;
+  pendingOverwrite: boolean;
+
+  constructor(maxLines: number = 2000) {
     this.maxLines = maxLines;
     this.lines = [];
     this.currentLine = '';
     this.pendingOverwrite = false;
   }
 
-  clear() {
+  clear(): void {
     this.lines = [];
     this.currentLine = '';
     this.pendingOverwrite = false;
@@ -31,17 +42,15 @@ class TerminalBuffer {
 
   /**
    * Ingests a raw chunk of output from the terminal process.
-   * @param {string} raw
-   * @returns {{ line: string, text: string, plainText: string, fullRaw: string, fullPlain: string }}
    */
-  write(raw) {
+  write(raw: string): TerminalBufferWriteResult {
     if (!raw) {
       return {
         line: this.getActiveLine(),
         text: this.toString(),
         plainText: this.toPlainText(),
         fullRaw: this.toString(),
-        fullPlain: this.toPlainText()
+        fullPlain: this.toPlainText(),
       };
     }
 
@@ -64,7 +73,7 @@ class TerminalBuffer {
       const ch = text[i];
       if (ch === '\x02') {
         if (this.lines.length > 0) {
-          this.currentLine = this.lines.pop();
+          this.currentLine = this.lines.pop()!;
           this.pendingOverwrite = true;
         }
       } else if (ch === '\r') {
@@ -95,11 +104,11 @@ class TerminalBuffer {
       text: str,
       plainText: plain,
       fullRaw: str,
-      fullPlain: plain
+      fullPlain: plain,
     };
   }
 
-  getActiveLine() {
+  getActiveLine(): string {
     let rawLine = this.currentLine;
     if (!rawLine || !rawLine.trim()) {
       for (let j = this.lines.length - 1; j >= 0; j--) {
@@ -112,16 +121,13 @@ class TerminalBuffer {
     return (rawLine || '').trimEnd();
   }
 
-  toPlainText() {
+  toPlainText(): string {
     return stripAnsi(this.toString());
   }
 
-  toString() {
+  toString(): string {
     return this.currentLine ? [...this.lines, this.currentLine].join('\n') : this.lines.join('\n');
   }
 }
 
-module.exports = {
-  TerminalBuffer,
-  stripAnsi
-};
+

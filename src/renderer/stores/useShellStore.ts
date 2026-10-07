@@ -1,9 +1,38 @@
 import { create } from './createStore';
 import { useAppStore, selectFeaturedItems } from './useAppStore';
 
-const infoCache = new Map();
+const infoCache = new Map<string, any>();
 
-export const useShellStore = create((set, get) => ({
+export interface ShellStoreState {
+  currentTab: string;
+  viewMode: string;
+  showSidebar: boolean;
+  showTerminal: boolean;
+  alwaysShowStatusBar: boolean;
+  selectedApp: any | null;
+  appDetails: any | null;
+  loadingAppDetails: boolean;
+  slideIndex: number;
+  messages: Record<string, string>;
+
+  selectTab: (tab: string) => void;
+  setViewMode: (viewMode: string) => void;
+  setShowSidebar: (showSidebar: boolean) => void;
+  toggleSidebar: () => void;
+  setShowTerminal: (showTerminal: boolean) => void;
+  toggleTerminal: () => void;
+  setAlwaysShowStatusBar: (alwaysShowStatusBar: boolean) => void;
+  openAppInfo: (appOrToken: any) => Promise<void>;
+  closeAppInfo: () => void;
+  setSlideIndex: (slideIndex: number) => void;
+  nextSlide: () => void;
+  prevSlide: () => void;
+  setMessages: (messages: Record<string, string>) => void;
+  __: (key: string, ...args: any[]) => string;
+  getPageTitle: () => string;
+}
+
+export const useShellStore = create<ShellStoreState>((set, get) => ({
   // State
   currentTab: 'discover',
   viewMode: typeof localStorage !== 'undefined' ? localStorage.getItem('appfinder-view-mode') || 'list' : 'list',
@@ -17,7 +46,7 @@ export const useShellStore = create((set, get) => ({
   messages: {},
 
   // Navigation & View Actions
-  selectTab: (tab) => {
+  selectTab: (tab: string) => {
     set({
       currentTab: tab,
       selectedApp: null,
@@ -29,14 +58,14 @@ export const useShellStore = create((set, get) => ({
     }
   },
 
-  setViewMode: (viewMode) => {
+  setViewMode: (viewMode: string) => {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('appfinder-view-mode', viewMode);
     }
     set({ viewMode });
   },
 
-  setShowSidebar: (showSidebar) => {
+  setShowSidebar: (showSidebar: boolean) => {
     set({ showSidebar });
     window.ipc?.sidebarChanged?.(showSidebar);
   },
@@ -47,12 +76,12 @@ export const useShellStore = create((set, get) => ({
     window.ipc?.sidebarChanged?.(next);
   },
 
-  setShowTerminal: (showTerminal) => set({ showTerminal }),
+  setShowTerminal: (showTerminal: boolean) => set({ showTerminal }),
   toggleTerminal: () => set((state) => ({ showTerminal: !state.showTerminal })),
-  setAlwaysShowStatusBar: (alwaysShowStatusBar) => set({ alwaysShowStatusBar }),
+  setAlwaysShowStatusBar: (alwaysShowStatusBar: boolean) => set({ alwaysShowStatusBar }),
 
   // App Inspector Drawer Actions
-  openAppInfo: async (appOrToken) => {
+  openAppInfo: async (appOrToken: any) => {
     const token = typeof appOrToken === 'string' ? appOrToken : appOrToken?.token;
     const items = useAppStore.getState().items;
     const catalogItem = items.find((c) => c.token === token);
@@ -84,7 +113,7 @@ export const useShellStore = create((set, get) => ({
   },
 
   // Carousel
-  setSlideIndex: (slideIndex) => set({ slideIndex }),
+  setSlideIndex: (slideIndex: number) => set({ slideIndex }),
   nextSlide: () => {
     const featured = selectFeaturedItems(useAppStore.getState().items);
     if (featured.length <= 1) return;
@@ -97,12 +126,12 @@ export const useShellStore = create((set, get) => ({
   },
 
   // Localization
-  setMessages: (messages) => {
+  setMessages: (messages: Record<string, string>) => {
     set({ messages });
     useAppStore.getState().syncCategoriesWithMessages(messages);
   },
 
-  __: (key, ...args) => {
+  __: (key: string, ...args: any[]): string => {
     const messages = get().messages;
     let text = messages && messages[key] !== undefined ? messages[key] : key;
     if (args.length > 0) {
@@ -113,7 +142,7 @@ export const useShellStore = create((set, get) => ({
     return text;
   },
 
-  getPageTitle: () => {
+  getPageTitle: (): string => {
     const { currentTab, __ } = get();
     const categories = useAppStore.getState().categories;
     if (currentTab === 'discover') return __('Explore');

@@ -1,4 +1,5 @@
 export { create, createStore } from './createStore';
+export type { StateCreator, StoreApi, UseStore } from './createStore';
 export {
   useAppStore,
   selectFilteredItems,
@@ -8,6 +9,9 @@ export {
   CHUNK_SIZE,
   FEATURED_TOKENS
 } from './useAppStore';
+export type { AppStoreState, UpdateInfo } from './useAppStore';
 export { useTermStore } from './useTermStore';
+export type { TermStoreState } from './useTermStore';
 export { useShellStore } from './useShellStore';
+export type { ShellStoreState } from './useShellStore';
 export { initStoreListeners } from './initStoreListeners';

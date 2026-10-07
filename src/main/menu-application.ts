@@ -1,13 +1,13 @@
-const { app, Menu, shell } = require('electron');
-const { __ } = require('./i18n');
-const { getConfig } = require('./config');
-const { createSettingsWindow } = require('./window-settings');
-const { getShellWindow, createShellWindow } = require('./window-shell');
+import { app, Menu, MenuItem, MenuItemConstructorOptions, shell, BrowserWindow } from 'electron';
+import { __ } from './i18n';
+import { getConfig, updateConfig } from './config';
+import { createSettingsWindow } from './window-settings';
+import { getShellWindow } from './window-shell';
 
 const websiteUrl = 'https://yanbab.github.io/appfinder';
 const githubUrl = 'https://github.com/yanbab/appfinder';
 
-function sendToShell(channel, ...args) {
+function sendToShell(channel: string, ...args: any[]): void {
   const win = getShellWindow();
   if (win && !win.isDestroyed()) {
     if (!win.isVisible()) {
@@ -24,7 +24,7 @@ function sendToShell(channel, ...args) {
 let isSidebarVisible = true;
 let isStatusbarVisible = false;
 
-function updateSidebarChecked(visible) {
+export function updateSidebarChecked(visible: boolean): void {
   isSidebarVisible = visible;
   const menu = Menu.getApplicationMenu();
   if (menu) {
@@ -35,7 +35,7 @@ function updateSidebarChecked(visible) {
   }
 }
 
-function updateStatusbarChecked(visible) {
+export function updateStatusbarChecked(visible: boolean): void {
   isStatusbarVisible = visible;
   const menu = Menu.getApplicationMenu();
   if (menu) {
@@ -46,13 +46,11 @@ function updateStatusbarChecked(visible) {
   }
 }
 
-function setupApplicationMenu() {
+export function setupApplicationMenu(): void {
   const config = getConfig();
-  const isDebug = !!config.debug || process.env.NODE_ENV === 'development' || !app.isPackaged;
   isStatusbarVisible = !!config.alwaysShowStatusBar;
 
-
-  const template = [
+  const template: (MenuItemConstructorOptions | MenuItem)[] = [
     {
       label: app.name,
       submenu: [
@@ -193,9 +191,7 @@ function setupApplicationMenu() {
           accelerator: 'CmdOrCtrl+/',
           click: (menuItem) => {
             isStatusbarVisible = menuItem.checked;
-            const { updateConfig } = require('./config');
             const updated = updateConfig({ alwaysShowStatusBar: menuItem.checked });
-            const { BrowserWindow } = require('electron');
             BrowserWindow.getAllWindows().forEach((win) => {
               if (!win.isDestroyed()) {
                 win.webContents.send('config:updated', updated);
@@ -214,10 +210,10 @@ function setupApplicationMenu() {
       role: 'help',
       label: __('Help'),
       submenu: [{
-        label: __('Website', app.name),
+        label: __('Website'),
         click: async () => shell.openExternal(websiteUrl)
       }, {
-        label: __('GitHub Repository', app.name),
+        label: __('GitHub Repository'),
         click: async () => shell.openExternal(githubUrl)
       }]
     }
@@ -227,8 +223,4 @@ function setupApplicationMenu() {
   Menu.setApplicationMenu(menu);
 }
 
-module.exports = {
-  setupApplicationMenu,
-  updateSidebarChecked,
-  updateStatusbarChecked
-};
+

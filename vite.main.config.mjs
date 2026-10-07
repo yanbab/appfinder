@@ -12,8 +12,8 @@ export default defineConfig({
     minify: true,
     lib: {
       entry: {
-        main: path.resolve(__dirname, 'src/main/main.js'),
-        preload: path.resolve(__dirname, 'src/main/preload.js')
+        main: path.resolve(__dirname, 'src/main/main.ts'),
+        preload: path.resolve(__dirname, 'src/main/preload.ts')
       },
       formats: ['cjs']
     },

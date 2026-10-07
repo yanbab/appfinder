@@ -1,36 +1,37 @@
 // Config
 
-const fs = require('fs');
-const path = require('path');
-const { CONFIG_DIR } = require('./path');
+import fs from 'fs';
+import path from 'path';
+import { CONFIG_DIR } from './path';
+import type { AppConfig } from '../types/cask';
 
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 
-const defaults = {
+const defaults: AppConfig = {
   zap: false,
   alwaysShowStatusBar: false,
   debug: true,
-  language: 'system'
+  language: 'system',
 };
 
-let config = null;
+let config: AppConfig | null = null;
 
-function setupConfig() {
+export function setupConfig(): AppConfig {
   try {
     const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
     config = { ...defaults, ...JSON.parse(raw) };
   } catch {
     config = { ...defaults };
   }
-  return config;
+  return config!;
 }
 
-function getConfig() {
+export function getConfig(): AppConfig {
   if (!config) setupConfig();
-  return config;
+  return config!;
 }
 
-function updateConfig(newConfig) {
+export function updateConfig(newConfig: Partial<AppConfig>): AppConfig {
   config = { ...getConfig(), ...newConfig };
   try {
     fs.mkdirSync(CONFIG_DIR, { recursive: true });
@@ -41,8 +42,4 @@ function updateConfig(newConfig) {
   return config;
 }
 
-module.exports = {
-  setupConfig,
-  getConfig,
-  updateConfig
-};
+

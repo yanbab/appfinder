@@ -7,7 +7,7 @@ let isInitialized = false;
 /**
  * Binds Electron IPC listeners to update stores and triggers initial data loads.
  */
-export function initStoreListeners() {
+export function initStoreListeners(): void {
   if (isInitialized || typeof window === 'undefined' || !window.ipc) return;
   isInitialized = true;
 
@@ -65,11 +65,11 @@ export function initStoreListeners() {
   }
 
   if (window.ipc.onToggleSidebar) {
-    window.ipc.onToggleSidebar((show) => shellStore.setShowSidebar(show));
+    window.ipc.onToggleSidebar((show) => shellStore.setShowSidebar(show ?? !shellStore.showSidebar));
   }
 
   if (window.ipc.onUpdatesRefreshed) {
-    window.ipc.onUpdatesRefreshed((data) => {
+    window.ipc.onUpdatesRefreshed(() => {
       appStore.refreshUpdates(false);
     });
   }

@@ -1,19 +1,18 @@
 // Settings window 
 
-const { BrowserWindow } = require('electron');
-const { PRELOAD_PATH, RENDERER_PATH } = require('./path');
-const { __ } = require('./i18n');
+import { BrowserWindow } from 'electron';
+import { PRELOAD_PATH, RENDERER_PATH } from './path';
+import { __ } from './i18n';
 
-let settingsWindow = null;
+let settingsWindow: BrowserWindow | null = null;
 
-function createSettingsWindow(parentWindow) {
+export function createSettingsWindow(parentWindow?: BrowserWindow): BrowserWindow {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
     settingsWindow.focus();
     return settingsWindow;
   }
   settingsWindow = new BrowserWindow({
-    title: __('Settings', 'Settings'),
-    name: 'settings',
+    title: __('Settings'),
     width: 380,
     height: 200,
     acceptFirstMouse: true,
@@ -25,7 +24,6 @@ function createSettingsWindow(parentWindow) {
     parent: parentWindow || undefined,
     modal: false,
     show: false,
-    windowStatePersistence: true,
     webPreferences: {
       preload: PRELOAD_PATH,
       contextIsolation: true,
@@ -46,7 +44,6 @@ function createSettingsWindow(parentWindow) {
   return settingsWindow;
 }
 
-module.exports = {
-  createSettingsWindow,
-  openSettingsWindow: createSettingsWindow
-};
+export const openSettingsWindow = createSettingsWindow;
+
+

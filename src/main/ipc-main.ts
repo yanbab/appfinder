@@ -1,10 +1,11 @@
-const { ipcMain, shell, dialog, systemPreferences, app, BrowserWindow, nativeImage } = require('electron');
-const i18n = require('./i18n');
-const Backend = require('./backend/brew');
-const { getConfig, updateConfig } = require('./config');
-const { createSettingsWindow } = require('./window-settings');
+import { ipcMain, shell, dialog, systemPreferences, app, BrowserWindow, nativeImage } from 'electron';
+import i18n from './i18n';
+import * as Backend from './backend/brew';
+import { getConfig, updateConfig } from './config';
+import { createSettingsWindow } from './window-settings';
+import { updateSidebarChecked, updateStatusbarChecked, setupApplicationMenu } from './menu-application';
 
-function broadcast(channel, ...args) {
+function broadcast(channel: string, ...args: any[]): void {
   BrowserWindow.getAllWindows().forEach(win => {
     if (!win.isDestroyed()) {
       win.webContents.send(channel, ...args);
@@ -12,7 +13,7 @@ function broadcast(channel, ...args) {
   });
 }
 
-function setupIpcMain() {
+export function setupIpcMain(): void {
   // Cask Queries & Actions
   ipcMain.handle('cask:get-data', async () => Backend.getApps());
   ipcMain.handle('cask:get-categories', async () => Backend.getCategories());
@@ -24,12 +25,12 @@ function setupIpcMain() {
   ipcMain.on('cask:run-action', (event, data) => {
     console.log('[IPC-MAIN RUN ACTION]:', data.taskId);
     Backend.runAction(data, {
-      onLog: (logData) => {
+      onLog: (logData: any) => {
         if (!event.sender.isDestroyed()) {
           event.sender.send('task:log', logData);
         }
       },
-      onPrompt: async ({ taskId, type, isRetry, isDependency, targetApp, dependencies, prompt, details, respond }) => {
+      onPrompt: async ({ taskId, type, isRetry, isDependency, targetApp, dependencies, prompt, details, respond }: any) => {
         console.log('[IPC-MAIN PROMPT DETECTED]:', { taskId, type, isRetry, isDependency, targetApp, dependencies, prompt });
         if (type === 'confirm') {
           try {
@@ -39,9 +40,9 @@ function setupIpcMain() {
               : (BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0]);
 
             const allApps = Backend.getApps();
-            const findAppName = (tokenOrName) => {
+            const findAppName = (tokenOrName: string) => {
               if (!tokenOrName) return '';
-              const found = Array.isArray(allApps) ? allApps.find(c => c.token === tokenOrName || c.name === tokenOrName) : null;
+              const found = Array.isArray(allApps) ? allApps.find((c: any) => c.token === tokenOrName || c.name === tokenOrName) : null;
               return found?.name || tokenOrName;
             };
 
@@ -74,7 +75,7 @@ function setupIpcMain() {
           }
         }
       },
-      onComplete: ({ taskId, code, error, cancelled }) => {
+      onComplete: ({ taskId, code, error, cancelled }: any) => {
         console.log('[IPC-MAIN TASK COMPLETE]:', taskId, code, error, cancelled);
         if (code === 0 && (data?.action === 'install' || data?.action === 'uninstall')) {
           if (app?.dock?.bounce) {
@@ -95,7 +96,7 @@ function setupIpcMain() {
   });
 
   ipcMain.on('cask:cancel-action', (event, taskId) => {
-    Backend.cancelAction(taskId, (result) => {
+    Backend.cancelAction(taskId, (result: any) => {
       broadcast('cleanup:status', 'complete');
       if (!event.sender.isDestroyed()) {
         event.reply('task:complete', result);
@@ -119,7 +120,8 @@ function setupIpcMain() {
   ipcMain.handle('dialog:error', async (_, title, content) => dialog.showErrorBox(title, content));
   ipcMain.handle('dialog:message', async (event, options) => {
     if (options.icon) options.icon = nativeImage.createFromDataURL(options.icon);
-    return await dialog.showMessageBox(BrowserWindow.fromWebContents(event.sender), options);
+    const win = BrowserWindow.fromWebContents(event.sender);
+    return win ? await dialog.showMessageBox(win, options) : await dialog.showMessageBox(options);
   });
 
   // System Preferences & Accent Color
@@ -140,7 +142,10 @@ function setupIpcMain() {
     } catch (_) { }
   }
 
-  ipcMain.on('settings:open', (event) => createSettingsWindow(event?.sender ? BrowserWindow.fromWebContents(event.sender) : null));
+  ipcMain.on('settings:open', (event) => {
+    const win = event?.sender ? BrowserWindow.fromWebContents(event.sender) : null;
+    createSettingsWindow(win ?? undefined);
+  });
   ipcMain.on('window:set-content-size', (event, width, height) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win && !win.isDestroyed() && typeof width === 'number' && typeof height === 'number') {
@@ -149,7 +154,6 @@ function setupIpcMain() {
   });
 
   ipcMain.on('shell:sidebar-changed', (_, visible) => {
-    const { updateSidebarChecked } = require('./menu-application');
     updateSidebarChecked(visible);
   });
 
@@ -159,7 +163,7 @@ function setupIpcMain() {
       Backend.runAction(
         { taskId: `cleanup-${Date.now()}`, action: 'cleanup' },
         {
-          onComplete: (res) => {
+          onComplete: (res: any) => {
             broadcast('cleanup:status', 'complete', res);
             resolve({ success: res.code === 0, ...res });
           }
@@ -175,7 +179,6 @@ function setupIpcMain() {
     const updated = updateConfig(newConfig);
     broadcast('config:updated', updated);
     if (typeof newConfig.alwaysShowStatusBar === 'boolean') {
-      const { updateStatusbarChecked } = require('./menu-application');
       updateStatusbarChecked(newConfig.alwaysShowStatusBar);
     }
     if (newConfig.language && newConfig.language !== oldConfig.language) {
@@ -187,7 +190,6 @@ function setupIpcMain() {
         lang = availableCodes.includes(code) ? code : 'en';
       }
       i18n.setLocale(lang);
-      const { setupApplicationMenu } = require('./menu-application');
       setupApplicationMenu();
       broadcast('i18n:changed');
     }
@@ -195,6 +197,4 @@ function setupIpcMain() {
   });
 }
 
-module.exports = {
-  setupIpcMain
-};
+

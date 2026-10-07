@@ -1,12 +1,13 @@
 import { create } from './createStore';
+import type { CaskItem, CategoryItem } from '../../types/cask';
 
 export const CHUNK_SIZE = 50;
 export const FEATURED_TOKENS = new Set([
   'onlyoffice', 'iina', 'visual-studio-code', 'figma', 'rectangle', 'spotify', 'raycast', 'obsidian', 'zed'
 ]);
 
-export function sortCategories(cats, messages) {
-  const translate = (key) => (messages && messages[key] !== undefined) ? messages[key] : key;
+export function sortCategories(cats: CategoryItem[], messages?: Record<string, string>): CategoryItem[] {
+  const translate = (key: string) => (messages && messages[key] !== undefined) ? messages[key] : key;
   return [...cats].sort((a, b) => {
     if (a.name === 'other') return 1;
     if (b.name === 'other') return -1;
@@ -16,9 +17,14 @@ export function sortCategories(cats, messages) {
   });
 }
 
-export function parseUpdatesMap(upds) {
+export interface UpdateInfo {
+  installedVersion: string | null;
+  currentVersion: string;
+}
+
+export function parseUpdatesMap(upds: any): Record<string, UpdateInfo> {
   const casks = upds?.casks || (Array.isArray(upds) ? upds : []);
-  const map = {};
+  const map: Record<string, UpdateInfo> = {};
   for (const item of casks) {
     const token = item.token || item.name;
     map[token] = {
@@ -29,7 +35,32 @@ export function parseUpdatesMap(upds) {
   return map;
 }
 
-export const useAppStore = create((set, get) => ({
+export interface AppStoreState {
+  items: CaskItem[];
+  categories: CategoryItem[];
+  rawCategories: CategoryItem[];
+  installed: string[];
+  installedVersions: Record<string, string>;
+  outdatedMap: Record<string, UpdateInfo>;
+  lastCheckedTime: Date | null;
+  loading: boolean;
+  search: string;
+  order: string;
+  displayedCount: number;
+
+  setSearch: (search: string) => void;
+  setOrder: (order: string) => void;
+  setDisplayedCount: (displayedCount: number) => void;
+  loadMore: () => void;
+  setItems: (items: CaskItem[]) => void;
+  setCategories: (categories: CategoryItem[]) => void;
+  initCatalog: () => Promise<void>;
+  syncCategoriesWithMessages: (messages: Record<string, string>) => void;
+  refreshInstalled: () => Promise<void>;
+  refreshUpdates: (force?: boolean) => Promise<void>;
+}
+
+export const useAppStore = create<AppStoreState>((set, get) => ({
   // State
   items: [],
   categories: [],
@@ -44,12 +75,12 @@ export const useAppStore = create((set, get) => ({
   displayedCount: CHUNK_SIZE,
 
   // Actions
-  setSearch: (search) => set({ search, displayedCount: CHUNK_SIZE }),
-  setOrder: (order) => set({ order }),
-  setDisplayedCount: (displayedCount) => set({ displayedCount }),
+  setSearch: (search: string) => set({ search, displayedCount: CHUNK_SIZE }),
+  setOrder: (order: string) => set({ order }),
+  setDisplayedCount: (displayedCount: number) => set({ displayedCount }),
   loadMore: () => set((state) => ({ displayedCount: state.displayedCount + CHUNK_SIZE })),
-  setItems: (items) => set({ items }),
-  setCategories: (categories) => set({ categories }),
+  setItems: (items: CaskItem[]) => set({ items }),
+  setCategories: (categories: CategoryItem[]) => set({ categories }),
 
   initCatalog: async () => {
     if (!window.ipc) return;
@@ -72,7 +103,7 @@ export const useAppStore = create((set, get) => ({
     }
   },
 
-  syncCategoriesWithMessages: (messages) => {
+  syncCategoriesWithMessages: (messages: Record<string, string>) => {
     const { rawCategories } = get();
     if (rawCategories.length > 0) {
       set({ categories: sortCategories(rawCategories, messages) });
@@ -90,7 +121,7 @@ export const useAppStore = create((set, get) => ({
     } catch (_) {}
   },
 
-  refreshUpdates: async (force = false) => {
+  refreshUpdates: async (force: boolean = false) => {
     if (!window.ipc?.getUpdates) return;
     try {
       const upds = await window.ipc.getUpdates(force);
@@ -103,12 +134,12 @@ export const useAppStore = create((set, get) => ({
 }));
 
 // Memoized/Pure selector helpers
-export function selectFilteredItems(state, currentTab) {
+export function selectFilteredItems(state: AppStoreState, currentTab: string): CaskItem[] {
   const { items, search, order, installed, outdatedMap, categories } = state;
-  let list = [];
+  let list: CaskItem[] = [];
 
   if (currentTab === 'discover') {
-    list = items.filter(c => c.count > 0);
+    list = items.filter(c => (c.count || 0) > 0);
   } else if (currentTab === 'all-apps') {
     list = items.filter(c => c.category !== 'font');
   } else if (currentTab === 'installed') {
@@ -164,17 +195,17 @@ export function selectFilteredItems(state, currentTab) {
   return list;
 }
 
-export function selectFeaturedItems(items) {
+export function selectFeaturedItems(items: CaskItem[]): CaskItem[] {
   return items.filter(c => FEATURED_TOKENS.has(c.token));
 }
 
-export function selectTopInstalledItems(items) {
+export function selectTopInstalledItems(items: CaskItem[]): CaskItem[] {
   const sorted = items
-    .filter(c => c.count > 0 && c.iconUrl && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
+    .filter(c => (c.count || 0) > 0 && c.iconUrl && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
     .sort((a, b) => (b.count || 0) - (a.count || 0));
 
-  const top = [];
-  const seen = new Set();
+  const top: CaskItem[] = [];
+  const seen = new Set<string>();
   for (const item of sorted) {
     const cat = item.category || 'other';
     if (!seen.has(cat)) {
@@ -186,13 +217,13 @@ export function selectTopInstalledItems(items) {
   return top;
 }
 
-export function selectRecentItems(items) {
+export function selectRecentItems(items: CaskItem[]): CaskItem[] {
   const sorted = items
     .filter(c => c.added && c.iconUrl && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
     .sort((a, b) => (b.added || '').localeCompare(a.added || ''));
 
-  const top = [];
-  const seen = new Set();
+  const top: CaskItem[] = [];
+  const seen = new Set<string>();
   for (const item of sorted) {
     const cat = item.category || 'other';
     if (!seen.has(cat)) {

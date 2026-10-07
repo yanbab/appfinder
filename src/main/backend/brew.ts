@@ -1,31 +1,37 @@
-const { execFile } = require('child_process');
-const { promisify } = require('util');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const taskRunner = require('./task-runner');
-const { fetchCatalog } = require('./fetcher');
-
-const { CONFIG_DIR, CACHE_DIR, DATA_DIR } = require('../path');
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import * as taskRunner from './task-runner';
+import { fetchCatalog } from './fetcher';
+import { CONFIG_DIR, CACHE_DIR, DATA_DIR } from '../path';
+import type { CaskItem, CategoryItem } from '../../types/cask';
 
 const execFileAsync = promisify(execFile);
 
 // Cache definitions
-const memoryCache = new Map();
-const caskInfoCache = new Map();
-const activeFetches = new Map();
+const memoryCache = new Map<string, any>();
+const caskInfoCache = new Map<string, any>();
+const activeFetches = new Map<string, AbortController>();
 const UPDATES_CACHE_FILE = path.join(CONFIG_DIR, 'updates.json');
 const UPDATES_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
-const CODE_NAMES = {
+const CODE_NAMES: Record<string, string> = {
   high_sierra: '10.13', mojave: '10.14', catalina: '10.15',
   big_sur: '11', monterey: '12', ventura: '13', sonoma: '14', sequoia: '15', tahoe: '16'
 };
 
-function getSystemInfo() {
+export interface SystemInfo {
+  platform: string;
+  arch: string;
+  systemVersion: string;
+}
+
+export function getSystemInfo(): SystemInfo {
   let sysVer = '';
   try {
-    sysVer = typeof process.getSystemVersion === 'function' ? process.getSystemVersion() : '';
+    sysVer = typeof (process as any).getSystemVersion === 'function' ? (process as any).getSystemVersion() : '';
     if (!sysVer && process.platform === 'darwin') {
       const dMajor = parseInt(os.release().split('.')[0], 10);
       sysVer = dMajor >= 20 ? String(dMajor - 9) : (dMajor >= 5 ? `10.${dMajor - 4}` : '15');
@@ -38,18 +44,19 @@ function getSystemInfo() {
   };
 }
 
-function parseVer(v) {
+export function parseVer(v: string): number[] {
   const s = String(v || '').replace(/^[:]/, '').toLowerCase().trim();
   const resolved = CODE_NAMES[s] || s;
   return String(resolved).split('.').map(n => parseInt(n, 10) || 0);
 }
 
-function compareVer(v1, v2) {
-  const [a1, b1 = 0] = parseVer(v1), [a2, b2 = 0] = parseVer(v2);
+export function compareVer(v1: string, v2: string): number {
+  const [a1, b1 = 0] = parseVer(v1);
+  const [a2, b2 = 0] = parseVer(v2);
   return a1 !== a2 ? a1 - a2 : b1 - b2;
 }
 
-function getCaskRequirements(cask) {
+export function getCaskRequirements(cask: any): string | null {
   const macos = cask?.depends_on?.macos;
   if (!macos) return null;
   if (typeof macos === 'string') return `macOS ${macos}`;
@@ -63,8 +70,8 @@ function getCaskRequirements(cask) {
   return 'macOS';
 }
 
-function isRequirementMet(cask, sysInfo) {
-  const info = typeof sysInfo === 'string' ? { systemVersion: sysInfo } : (sysInfo || getSystemInfo());
+export function isRequirementMet(cask: any, sysInfo?: SystemInfo | string): boolean {
+  const info = typeof sysInfo === 'string' ? { systemVersion: sysInfo, platform: 'darwin', arch: 'arm64' } : (sysInfo || getSystemInfo());
   if ((info.platform || 'darwin') !== 'darwin') return false;
   const macos = cask?.depends_on?.macos;
   if (!macos || !info.systemVersion) return true;
@@ -87,12 +94,17 @@ function isRequirementMet(cask, sysInfo) {
   });
 }
 
-function getCaskArchCompatibility(cask, sysInfo) {
-  const info = typeof sysInfo === 'string' ? { arch: sysInfo } : (sysInfo || getSystemInfo());
+export function getCaskArchCompatibility(cask: any, sysInfo?: SystemInfo | string): {
+  requiredArch: string | null;
+  isSupported: boolean;
+  status: string;
+  label: string;
+} {
+  const info = typeof sysInfo === 'string' ? { arch: sysInfo, platform: 'darwin', systemVersion: '15' } : (sysInfo || getSystemInfo());
   const currentArch = info.arch === 'x64' ? 'x64' : 'arm64';
   const archField = JSON.stringify(cask?.depends_on?.arch || '').toLowerCase();
 
-  let requiredArch = null;
+  let requiredArch: string | null = null;
   if (archField.includes('arm')) requiredArch = 'arm64';
   else if (archField.includes('intel') || archField.includes('x86_64') || archField.includes('x64')) requiredArch = 'x64';
 
@@ -111,15 +123,22 @@ function getCaskArchCompatibility(cask, sysInfo) {
   return { requiredArch: null, isSupported: true, status: 'universal', label: 'Universal' };
 }
 
-function getCaskDependencies(cask) {
-  const toArr = (v) => Array.isArray(v) ? v : (v ? [v] : []);
+export function getCaskDependencies(cask: any): { casks: string[]; formulae: string[] } {
+  const toArr = (v: any) => Array.isArray(v) ? v : (v ? [v] : []);
   return {
     casks: toArr(cask?.depends_on?.cask),
     formulae: toArr(cask?.depends_on?.formula)
   };
 }
 
-function getCaskStatus(cask) {
+export function getCaskStatus(cask: any): {
+  isDisabled: boolean;
+  disableReason: string | null;
+  disableReplacement: string | null;
+  isDeprecated: boolean;
+  deprecationReason: string | null;
+  deprecationReplacement: string | null;
+} {
   return {
     isDisabled: Boolean(cask?.disabled),
     disableReason: cask?.disable_reason || cask?.disable_args?.because || null,
@@ -130,7 +149,7 @@ function getCaskStatus(cask) {
   };
 }
 
-function normalizeCaskInfo(cask, sysInfo) {
+export function normalizeCaskInfo(cask: any, sysInfo?: SystemInfo): any {
   if (!cask) return null;
   const info = sysInfo || getSystemInfo();
   return {
@@ -143,7 +162,7 @@ function normalizeCaskInfo(cask, sysInfo) {
   };
 }
 
-function getBrewPath() {
+export function getBrewPath(): string {
   const brewPaths = [
     '/opt/homebrew/bin/brew',
     '/usr/local/bin/brew',
@@ -153,7 +172,7 @@ function getBrewPath() {
   return brewPaths.find(p => fs.existsSync(p)) || 'brew';
 }
 
-function getEnvWithBrew() {
+export function getEnvWithBrew(): NodeJS.ProcessEnv {
   const defaultPath = '/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin';
   return {
     ...process.env,
@@ -162,20 +181,20 @@ function getEnvWithBrew() {
   };
 }
 
-async function runBrew(args) {
+export async function runBrew(args: string[]): Promise<string | null> {
   try {
     const { stdout } = await execFileAsync(getBrewPath(), args, {
       env: getEnvWithBrew(),
       maxBuffer: 10 * 1024 * 1024
     });
-    return stdout;
+    return stdout as string;
   } catch (error) {
     console.error(`Brew command failed: brew ${args.join(' ')}`, error);
     return null;
   }
 }
 
-function readJsonSafely(filePath) {
+function readJsonSafely(filePath: string): any {
   if (!fs.existsSync(filePath)) return null;
   const stat = fs.statSync(filePath);
   if (stat.size === 0) return null;
@@ -183,7 +202,7 @@ function readJsonSafely(filePath) {
   return JSON.parse(content);
 }
 
-function getData(file, forceReload = false) {
+function getData(file: string, forceReload: boolean = false): any {
   if (!forceReload && memoryCache.has(file)) return memoryCache.get(file);
 
   const cachedFile = path.join(CACHE_DIR, file);
@@ -197,7 +216,7 @@ function getData(file, forceReload = false) {
         memoryCache.set(file, data);
         return data;
       }
-    } catch (err) {
+    } catch (err: any) {
       console.warn(`[BREW] Corrupted cache file detected at "${cachedFile}": ${err.message}. Removing corrupted cache file.`);
       try {
         fs.unlinkSync(cachedFile);
@@ -212,29 +231,29 @@ function getData(file, forceReload = false) {
       memoryCache.set(file, bundledData);
       return bundledData;
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error(`[BREW] Failed to read bundled data file "${bundledFile}":`, err.message);
   }
 
   return [];
 }
 
-function getApps(forceReload = false) {
+export function getApps(forceReload: boolean = false): CaskItem[] {
   return getData('apps.json', forceReload);
 }
 
-function getCategories(forceReload = false) {
+export function getCategories(forceReload: boolean = false): CategoryItem[] {
   return getData('categories.json', forceReload);
 }
 
-async function getInstalled(onLog) {
+export async function getInstalled(onLog?: (msg: string) => void): Promise<{ tokens: string[]; versions: Record<string, string> }> {
   try {
     onLog?.('Checking installed casks...');
     const stdout = await runBrew(['list', '--cask', '--versions']);
     if (!stdout) return { tokens: [], versions: {} };
 
-    const tokens = [];
-    const versions = {};
+    const tokens: string[] = [];
+    const versions: Record<string, string> = {};
 
     for (const line of stdout.trim().split('\n')) {
       const parts = line.trim().split(/\s+/);
@@ -252,7 +271,7 @@ async function getInstalled(onLog) {
   }
 }
 
-async function getUpdates(force = false) {
+export async function getUpdates(force: boolean = false): Promise<{ casks: any[] }> {
   if (!force) {
     const mem = memoryCache.get('updates');
     if (mem && (Date.now() - mem.timestamp < UPDATES_CACHE_DURATION)) {
@@ -270,7 +289,7 @@ async function getUpdates(force = false) {
     } catch (_) { }
   }
 
-  let casks = [];
+  let casks: any[] = [];
   try {
     const stdout = await runBrew(['outdated', '--cask', '--json=v2']);
     if (stdout) casks = JSON.parse(stdout).casks || [];
@@ -288,7 +307,7 @@ async function getUpdates(force = false) {
   return fresh;
 }
 
-async function getInfo(tokenOrCask, sysInfo) {
+export async function getInfo(tokenOrCask: any, sysInfo?: SystemInfo): Promise<any> {
   if (!tokenOrCask) return null;
   const info = sysInfo || getSystemInfo();
 
@@ -319,17 +338,17 @@ async function getInfo(tokenOrCask, sysInfo) {
   return cask || null;
 }
 
-async function launch(appName) {
+export async function launch(appName: string): Promise<{ success: boolean; error?: string }> {
   try {
     await execFileAsync('/usr/bin/open', ['-a', appName]);
     return { success: true };
-  } catch (err) {
+  } catch (err: any) {
     console.error(`Failed to launch app "${appName}":`, err.message);
     return { success: false, error: err.message };
   }
 }
 
-const ACTION_ARGS = {
+const ACTION_ARGS: Record<string, (t: string, zap?: boolean) => { command: string; args: string[]; cwd?: string }> = {
   install: (t) => ({ command: getBrewPath(), args: ['install', '--force', '--cask', t] }),
   upgrade: (t) => ({ command: getBrewPath(), args: ['upgrade', '--force', '--cask', t] }),
   uninstall: (t, zap) => ({
@@ -340,7 +359,7 @@ const ACTION_ARGS = {
   cleanup: () => ({ command: getBrewPath(), args: ['cleanup', '--prune=all'] })
 };
 
-function runAction(data, callbacks = {}) {
+export function runAction(data: any, callbacks: any = {}): void {
   const cbs = typeof callbacks === 'function' ? { onComplete: callbacks } : (callbacks || {});
   const { onLog, onComplete, onPrompt, onRefreshUpdates, onRefreshData } = cbs;
   const { taskId, action, token, zap } = data || {};
@@ -403,10 +422,10 @@ function runAction(data, callbacks = {}) {
   );
 }
 
-function cancelAction(taskId, onComplete) {
+export function cancelAction(taskId: string, onComplete?: (res: any) => void): void {
   if (activeFetches.has(taskId)) {
     const controller = activeFetches.get(taskId);
-    controller.abort();
+    controller?.abort();
     activeFetches.delete(taskId);
     onComplete?.({ taskId, code: -1, cancelled: true });
     return;
@@ -414,18 +433,8 @@ function cancelAction(taskId, onComplete) {
   taskRunner.cancelTask(taskId, onComplete);
 }
 
-function writePtyInput(taskId, text) {
+export function writePtyInput(taskId: string, text: string): void {
   taskRunner.writeTaskInput(taskId, text);
 }
 
-module.exports = {
-  getApps,
-  getCategories,
-  getInstalled,
-  getUpdates,
-  getInfo,
-  launch,
-  runAction,
-  cancelAction,
-  writePtyInput
-};
+

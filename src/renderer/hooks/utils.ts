@@ -1,7 +1,7 @@
-import { clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-export function cn(...inputs) {
+export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
@@ -19,7 +19,7 @@ const initialsPalette = [
   '#888888',
 ];
 
-export function getAppName(item) {
+export function getAppName(item: any): string {
   if (!item) return "";
   const name = item.name || item.token || "";
   if (item.token && item.token.includes("@")) {
@@ -31,7 +31,7 @@ export function getAppName(item) {
   return name;
 }
 
-export function name2initials(name) {
+export function name2initials(name: string): string {
   if (!name) return "";
   const words = name.trim().split(/\s+/).filter(Boolean);
   if (words.length >= 2) {
@@ -44,7 +44,7 @@ export function name2initials(name) {
   return clean[0].toUpperCase() + clean[1].toLowerCase();
 }
 
-export function name2color(name) {
+export function name2color(name: string): string {
   if (!name) return initialsPalette[0];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -54,20 +54,20 @@ export function name2color(name) {
   return initialsPalette[index];
 }
 
-export function formatVersion(v) {
+export function formatVersion(v: any): string {
   if (!v) return '?';
-  v = String(v).split(',')[0].trim();
-  return v.split('-')[0].trim();
+  const str = String(v).split(',')[0].trim();
+  return str.split('-')[0].trim();
 }
 
-export function stripAnsi(str) {
+export function stripAnsi(str: string): string {
   if (!str) return '';
   return str
     .replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '')
     .replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
 }
 
-export function formatCountK(count) {
+export function formatCountK(count: any): string {
   if (!count || isNaN(count)) return '0';
   const num = Number(count);
   if (num < 1000) return num.toLocaleString();
@@ -76,10 +76,10 @@ export function formatCountK(count) {
   return `${(num / 1000000).toFixed(1).replace(/\.0$/, '')} M`;
 }
 
-export function formatDate(dateVal, __) {
+export function formatDate(dateVal: any, __?: (key: string) => string): string {
   if (!dateVal) return '—';
   try {
-    let d;
+    let d: Date;
     let hasTime = true;
     if (typeof dateVal === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateVal.trim())) {
       const [y, m, day] = dateVal.trim().split('-').map(Number);
@@ -91,8 +91,8 @@ export function formatDate(dateVal, __) {
     if (isNaN(d.getTime())) return String(dateVal);
 
     const now = new Date();
-    const isSameDay = (d1, d2) => d1.toDateString() === d2.toDateString();
-    const translate = typeof __ === 'function' ? __ : (s => s);
+    const isSameDay = (d1: Date, d2: Date) => d1.toDateString() === d2.toDateString();
+    const translate = typeof __ === 'function' ? __ : ((s: string) => s);
 
     if (isSameDay(d, now)) {
       return hasTime
@@ -113,10 +113,10 @@ export function formatDate(dateVal, __) {
   }
 }
 
-export function formatReason(reason, __) {
+export function formatReason(reason: string, __?: (key: string) => string): string {
   if (!reason) return '';
-  const translate = typeof __ === 'function' ? __ : (s => s);
-  const map = {
+  const translate = typeof __ === 'function' ? __ : ((s: string) => s);
+  const map: Record<string, string> = {
     fails_gatekeeper_check: translate('Fails Gatekeeper check'),
     discontinued: translate('Discontinued'),
     no_longer_maintained: translate('No longer maintained'),
@@ -127,7 +127,12 @@ export function formatReason(reason, __) {
   return map[reason] || reason.replace(/_/g, ' ');
 }
 
-export function detectPrompt(text) {
+export function detectPrompt(text: string): {
+  isRetry: boolean;
+  isPasswordPrompt: boolean;
+  isInteractivePrompt: boolean;
+  isConfirmPrompt: boolean;
+} {
   const clean = stripAnsi(text);
   const isRetry = /sorry, try again|incorrect password|authentication failure/i.test(clean);
   const isPasswordPrompt = /password\s*[:?]|passphrase\s*[:?]|mot de passe\s*[:?]|(?:sudo|admin).*(?:password|passphrase)/i.test(clean);
@@ -136,7 +141,7 @@ export function detectPrompt(text) {
   return { isRetry, isPasswordPrompt, isInteractivePrompt, isConfirmPrompt };
 }
 
-export async function getIconDataUrl(url) {
+export async function getIconDataUrl(url: string): Promise<string | null> {
   if (!url) return null;
   if (url.startsWith('data:')) return url;
   try {
@@ -144,7 +149,7 @@ export async function getIconDataUrl(url) {
     const blob = await response.blob();
     return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
+      reader.onloadend = () => resolve(reader.result as string);
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(blob);
     });
@@ -153,16 +158,22 @@ export async function getIconDataUrl(url) {
   }
 }
 
-export function extractTaskError(logText, action, appName, catalog, __) {
-  const translate = typeof __ === 'function' ? __ : (s => s);
-  const actionKeys = {
+export function extractTaskError(
+  logText: string,
+  action?: string,
+  appName: string = 'Task',
+  catalog?: Record<string, string>,
+  __?: (key: string) => string
+): { title: string; details: string; isFullDiskAccess: boolean } {
+  const translate = typeof __ === 'function' ? __ : ((s: string) => s);
+  const actionKeys: Record<string, string> = {
     install: '%s installation failed',
     uninstall: '%s removal failed',
     cleanup: '%s cleanup failed',
     upgrade: '%s update failed'
   };
 
-  const failedTitleKey = actionKeys[action] || '%s failed';
+  const failedTitleKey = (action && actionKeys[action]) || '%s failed';
   const rawFailedTitle = translate(failedTitleKey) || failedTitleKey;
   const title = rawFailedTitle.includes('%s') ? rawFailedTitle.replace('%s', appName) : `${appName} failed`;
 
@@ -184,11 +195,9 @@ export function extractTaskError(logText, action, appName, catalog, __) {
     /error/i.test(l) || /permission denied/i.test(l) || /operation not permitted/i.test(l) ||
     /access/i.test(l) || /sudo/i.test(l) || /failed/i.test(l)
   )).map(l => {
-    // Clean up duplicated token repetitions like "Error: token: token: message" -> "Error: token: message"
     return l.replace(/^(Error:\s*)([a-zA-Z0-9_-]+):\s*\2:\s*/i, '$1$2: ');
   });
 
-  // Deduplicate identical error lines
   const uniqueErrorLines = errorLines.filter((line, index, self) => self.indexOf(line) === index);
 
   const nonProgressLines = lines.filter(l => !l.startsWith('==>'));
@@ -196,7 +205,7 @@ export function extractTaskError(logText, action, appName, catalog, __) {
     : nonProgressLines.length > 0 ? nonProgressLines[nonProgressLines.length - 1]
       : lines.length > 0 ? lines[lines.length - 1] : defaultError;
 
-  let matchedKey = null;
+  let matchedKey: string | null = null;
   if (catalog) {
     for (const key of Object.keys(catalog)) {
       if (key && key.length > 5 && rawError.includes(key)) {
@@ -210,20 +219,12 @@ export function extractTaskError(logText, action, appName, catalog, __) {
 
 const STATUS_KEYWORDS = ['Downloading', 'Downloaded', 'Verifying', 'Verified', 'Extracting'];
 
-/**
- * Filters and formats a terminal log line for display in the status bar.
- * Returns null if the line should not be displayed in the status bar.
- *
- * @param {string} rawLine
- * @returns {string|null}
- */
-export function formatStatusBarMessage(rawLine) {
+export function formatStatusBarMessage(rawLine: string): string | null {
   if (!rawLine || typeof rawLine !== 'string') return null;
 
   const clean = stripAnsi(rawLine).trim();
   if (!clean) return null;
 
-  // 1. Check for download/progress keywords: include keyword and rest of line
   for (const kw of STATUS_KEYWORDS) {
     const idx = clean.indexOf(kw);
     if (idx !== -1) {
@@ -232,7 +233,6 @@ export function formatStatusBarMessage(rawLine) {
     }
   }
 
-  // 2. Check if line begins with "==>": show text after "==> "
   if (clean.startsWith('==>')) {
     const textAfter = clean.replace(/^==>\s*/, '').trim();
     return textAfter || null;
@@ -240,4 +240,3 @@ export function formatStatusBarMessage(rawLine) {
 
   return null;
 }
-

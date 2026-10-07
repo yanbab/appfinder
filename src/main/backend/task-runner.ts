@@ -1,27 +1,76 @@
-const pty = require('./pseudo-pty');
-const { TerminalBuffer, stripAnsi } = require('./terminal-buffer');
+import * as pty from './pseudo-pty';
+import { TerminalBuffer, stripAnsi } from './terminal-buffer';
 
-const activeTasks = new Map();
+export interface PromptDetectionResult {
+  isPrompt: boolean;
+  type: 'password' | 'confirm' | null;
+  isRetry: boolean;
+  isDependency: boolean;
+  targetApp: string;
+  dependencies: string;
+  prompt: string;
+  details: string;
+}
+
+export interface RunTaskOptions {
+  taskId: string;
+  command: string;
+  args?: string[];
+  shell?: string;
+  shellArgs?: string[];
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+}
+
+export interface TaskLogCallbackPayload {
+  taskId: string;
+  type: string;
+  text: string;
+  line: string;
+  raw: string;
+  plainText: string;
+}
+
+export interface TaskPromptCallbackPayload {
+  taskId: string;
+  type: string;
+  isRetry: boolean;
+  isDependency: boolean;
+  targetApp: string;
+  dependencies: string;
+  prompt: string;
+  details: string;
+  respond: (answer: string, userCancelled?: boolean) => void;
+}
+
+export interface TaskCompleteCallbackPayload {
+  taskId: string;
+  code: number;
+  error?: string | null;
+  cancelled?: boolean;
+}
+
+export interface RunTaskCallbacks {
+  onLog?: (payload: TaskLogCallbackPayload) => void;
+  onPrompt?: (payload: TaskPromptCallbackPayload) => void;
+  onComplete?: (payload: TaskCompleteCallbackPayload) => void;
+}
+
+interface ActiveTask {
+  pty: pty.PseudoTerminal;
+  write: (data: string) => void;
+  kill: (signal?: NodeJS.Signals | number) => void;
+}
+
+const activeTasks = new Map<string, ActiveTask>();
 
 const PROMPTS = {
   PASSWORD: /(?:password\s*[:?]|passphrase\s*[:?]|mot de passe\s*[:?]|(?:sudo|admin).*(?:password|passphrase))/i,
   RETRY: /(?:sorry, try again|incorrect password|authentication failure)/i,
-  CONFIRM: /(?:\[y\/n\]|\(y\/n\)|press (?:return|enter) to continue)/i
+  CONFIRM: /(?:\[y\/n\]|\(y\/n\)|press (?:return|enter) to continue)/i,
 };
 
-/**
- * Detects interactive prompts (confirmations, passwords) in terminal output chunks.
- *
- * @param {string} text - Raw or stripped terminal chunk
- * @returns {{
- *   isPrompt: boolean,
- *   type: 'password' | 'confirm' | null,
- *   isRetry: boolean,
- *   prompt: string,
- *   details: string
- * }}
- */
-function detectPrompt(text) {
+export function detectPrompt(text: string): PromptDetectionResult {
   if (!text) {
     return { isPrompt: false, type: null, isRetry: false, isDependency: false, targetApp: '', dependencies: '', prompt: '', details: '' };
   }
@@ -32,7 +81,6 @@ function detectPrompt(text) {
     return { isPrompt: false, type: null, isRetry: false, isDependency: false, targetApp: '', dependencies: '', prompt: '', details: '' };
   }
 
-  // An active interactive prompt must be in the tail (last 2 non-empty lines) of the output
   const tailLines = lines.slice(-2);
   const promptLine = tailLines.slice().reverse().find(l =>
     PROMPTS.CONFIRM.test(l) || PROMPTS.PASSWORD.test(l)
@@ -46,10 +94,9 @@ function detectPrompt(text) {
     return { isPrompt: false, type: null, isRetry: false, isDependency: false, targetApp: '', dependencies: '', prompt: '', details: '' };
   }
 
-  // Check for dependency confirmation
   let isDependency = false;
   let targetApp = '';
-  const depList = [];
+  const depList: string[] = [];
 
   const depHeaderIdx = lines.findIndex(l => /Would install \d+ dependenc/i.test(l));
   if (depHeaderIdx !== -1) {
@@ -89,25 +136,14 @@ function detectPrompt(text) {
     targetApp,
     dependencies,
     prompt: promptLine || lines[lines.length - 1] || '',
-    details: detailLines
+    details: detailLines,
   };
 }
 
-/**
- * Runs a command using pseudo-terminal wrapper with streaming output into TerminalBuffer.
- *
- * @param {object} options
- * @param {string} options.taskId - Unique task identifier
- * @param {string} options.command - Executable path or full shell command string
- * @param {string[]} [options.args] - Command arguments (if provided, spawned directly)
- * @param {string} [options.cwd] - Working directory
- * @param {object} [options.env] - Environment variables
- * @param {object} [callbacks]
- * @param {Function} [callbacks.onLog] - Log callback ({ taskId, type, text, line, raw, plainText })
- * @param {Function} [callbacks.onPrompt] - Prompt callback ({ taskId, type, isRetry, isDependency, targetApp, dependencies, prompt, details, respond })
- * @param {Function} [callbacks.onComplete] - Completion callback ({ taskId, code, error, cancelled })
- */
-function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callbacks = {}) {
+export function runTask(
+  { taskId, command, args, shell, shellArgs, cwd, env }: RunTaskOptions,
+  callbacks: RunTaskCallbacks = {}
+): void {
   const { onLog, onComplete, onPrompt } = callbacks;
 
   const [execCmd, execArgs] = Array.isArray(args)
@@ -116,26 +152,26 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
 
   console.log(`[TASK-RUNNER (${taskId})]:`, execCmd, execArgs);
 
-  let term;
+  let term: pty.PseudoTerminal;
   try {
     term = pty.spawn(execCmd, execArgs, {
       cwd,
       env,
       cols: 80,
-      rows: 24
+      rows: 24,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(`[TASK-RUNNER SPAWN ERROR (${taskId})]:`, err);
     onComplete?.({ taskId, code: 1, error: err.message, cancelled: false });
     return;
   }
 
   const buffer = new TerminalBuffer();
-  const handledPrompts = new Set();
+  const handledPrompts = new Set<string>();
   let waitingForPrompt = false;
   let isCancelledByUser = false;
 
-  term.onData((raw) => {
+  term.onData((raw: string) => {
     if (raw) {
       const { line, text, plainText } = buffer.write(raw);
       onLog?.({ taskId, type: 'stdout', text, line, raw, plainText });
@@ -155,14 +191,14 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
               dependencies: promptInfo.dependencies,
               prompt: promptInfo.prompt,
               details: promptInfo.details,
-              respond: (answer, userCancelled = false) => {
+              respond: (answer: string, userCancelled: boolean = false) => {
                 handledPrompts.add(promptKey);
                 waitingForPrompt = false;
                 if (userCancelled || answer === 'n\r' || answer === 'n') {
                   isCancelledByUser = true;
                 }
                 term.write(answer);
-              }
+              },
             });
           }
         }
@@ -171,7 +207,7 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
   });
 
   let finished = false;
-  const finish = (code, error = null, cancelled = false) => {
+  const finish = (code: number, error: string | null = null, cancelled: boolean = false) => {
     if (finished) return;
     finished = true;
     waitingForPrompt = false;
@@ -181,7 +217,7 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
     onComplete?.({ taskId, code: code ?? 0, error, cancelled: finalCancelled });
   };
 
-  term.on('error', (err) => {
+  term.on('error', (err: any) => {
     console.error(`[TASK-RUNNER CHILD ERROR (${taskId})]:`, err);
     finish(1, err.message);
   });
@@ -192,15 +228,18 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
 
   activeTasks.set(taskId, {
     pty: term,
-    write: (data) => term.write(data),
-    kill: (signal = 'SIGTERM') => {
+    write: (data: string) => term.write(data),
+    kill: (signal: NodeJS.Signals | number = 'SIGTERM') => {
       isCancelledByUser = true;
       term.kill(signal);
-    }
+    },
   });
 }
 
-function cancelTask(taskId, onComplete) {
+export function cancelTask(
+  taskId: string,
+  onComplete?: (payload: { taskId: string; code: number; cancelled: boolean }) => void
+): void {
   const task = activeTasks.get(taskId);
   if (task) {
     try {
@@ -218,19 +257,12 @@ function cancelTask(taskId, onComplete) {
   onComplete?.({ taskId, code: -1, cancelled: true });
 }
 
-function writeTaskInput(taskId, text) {
+export function writeTaskInput(taskId: string, text: string): void {
   activeTasks.get(taskId)?.write?.(text);
 }
 
-function isTaskActive(taskId) {
+export function isTaskActive(taskId: string): boolean {
   return activeTasks.has(taskId);
 }
 
-module.exports = {
-  runTask,
-  cancelTask,
-  writeTaskInput,
-  isTaskActive,
-  detectPrompt,
-  getDefaultShell: pty.getDefaultShell
-};
+

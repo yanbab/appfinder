@@ -21,7 +21,8 @@
     "build:intel": "npm run build:react && npm run build:main && electron-builder build --mac --x64",
     "build:main": "vite build --config vite.main.config.mjs",
     "build:react": "vite build --config vite.renderer.config.mjs",
-    "test": "node --test 'test/**/*.test.js'",
+    "type-check": "tsc --noEmit",
+    "test": "node --import tsx --test 'test/**/*.test.js'",
     "release": "node scripts/release-github.js"
   },
   "keywords": [
@@ -45,6 +46,8 @@
     "react-dom": "^19.3.0",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
     "vite": "^8.3.1"
   },
   "build": {

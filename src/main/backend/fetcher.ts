@@ -5,16 +5,17 @@
 // directly in Node.js without requiring bash, curl, or external subprocesses.
 //
 
-const fs = require('fs');
-const path = require('path');
-const { CACHE_DIR } = require('../path');
+import fs from 'fs';
+import path from 'path';
+import { CACHE_DIR } from '../path';
+import type { CaskItem, CategoryItem } from '../../types/cask';
 
-const FETCH_DIR = path.join(CACHE_DIR, 'fetch');
-const CACHED_APPS_FILE = path.join(CACHE_DIR, 'apps.json');
-const CACHED_CATEGORIES_FILE = path.join(CACHE_DIR, 'categories.json');
-const ICON_BASE_URL = 'https://cdn.jsdelivr.net/gh/alielsokary/CaskFlow@icons/';
+export const FETCH_DIR: string = path.join(CACHE_DIR, 'fetch');
+export const CACHED_APPS_FILE: string = path.join(CACHE_DIR, 'apps.json');
+export const CACHED_CATEGORIES_FILE: string = path.join(CACHE_DIR, 'categories.json');
+export const ICON_BASE_URL: string = 'https://cdn.jsdelivr.net/gh/alielsokary/CaskFlow@icons/';
 
-const CATEGORIES_DEF = [
+export const CATEGORIES_DEF: CategoryItem[] = [
   { "name": "developerTools", "displayName": "Developer Tools", "symbolName": "hammer" },
   { "name": "browsers", "displayName": "Browsers", "symbolName": "globe" },
   { "name": "communication", "displayName": "Communication", "symbolName": "message" },
@@ -36,7 +37,7 @@ const CATEGORIES_DEF = [
   { "name": "other", "displayName": "Other", "symbolName": "square.grid.2x2" }
 ];
 
-async function downloadJson(url, destPath, signal) {
+async function downloadJson(url: string, destPath: string, signal?: AbortSignal): Promise<any> {
   const res = await fetch(url, { signal, headers: { 'User-Agent': 'AppFinder' } });
   if (!res.ok) {
     throw new Error(`Failed to download ${url}: HTTP ${res.status}`);
@@ -48,13 +49,18 @@ async function downloadJson(url, destPath, signal) {
   return data;
 }
 
-function processAppsData(casksRaw, categoriesRaw, downloadsRaw, addedRaw) {
+export function processAppsData(
+  casksRaw: any[],
+  categoriesRaw?: any,
+  downloadsRaw?: any,
+  addedRaw?: any
+): CaskItem[] {
   const tokenToCategory = categoriesRaw?.tokenToCategory || {};
   const downloadsFormulae = downloadsRaw?.formulae || {};
   const iconTokensSet = new Set(categoriesRaw?.iconTokens || []);
   const addedDates = addedRaw?.tokenAddedDates || {};
 
-  return casksRaw.map(c => {
+  return casksRaw.map((c: any) => {
     const token = c.token;
     const catInfo = tokenToCategory[token] || { primary: 'other', secondary: [] };
     let primaryCat = catInfo.primary || 'other';
@@ -69,7 +75,7 @@ function processAppsData(casksRaw, categoriesRaw, downloadsRaw, addedRaw) {
       count = parseInt(String(countStr).replace(/,/g, ''), 10) || 0;
     }
 
-    let appValue = null;
+    let appValue: string | null = null;
     if (c.artifacts && Array.isArray(c.artifacts)) {
       for (const art of c.artifacts) {
         if (art.app && Array.isArray(art.app) && art.app[0]) {
@@ -79,14 +85,14 @@ function processAppsData(casksRaw, categoriesRaw, downloadsRaw, addedRaw) {
       }
     }
 
-    let secondCategory = null;
-    let thirdCategory = null;
+    let secondCategory: string | undefined = undefined;
+    let thirdCategory: string | undefined = undefined;
     if (catInfo.secondary && Array.isArray(catInfo.secondary)) {
       if (catInfo.secondary[0]) secondCategory = catInfo.secondary[0];
       if (catInfo.secondary[1]) thirdCategory = catInfo.secondary[1];
     }
 
-    const caskItem = {
+    const caskItem: CaskItem = {
       token: c.token,
       name: c.name && c.name[0] ? c.name[0] : c.token,
       desc: c.desc,
@@ -108,14 +114,17 @@ function processAppsData(casksRaw, categoriesRaw, downloadsRaw, addedRaw) {
   });
 }
 
-/**
- * Fetches and updates apps and categories data files.
- * @param {Object} options
- * @param {Function} [options.onLog] - Callback for streaming progress
- * @param {AbortSignal} [options.signal] - Abort signal for cancellation
- * @returns {Promise<{ apps: Array, categories: Array }>}
- */
-async function fetchCatalog({ onLog, signal } = {}) {
+export interface FetchCatalogOptions {
+  onLog?: (msg: string) => void;
+  signal?: AbortSignal;
+}
+
+export interface FetchCatalogResult {
+  apps: CaskItem[];
+  categories: CategoryItem[];
+}
+
+export async function fetchCatalog({ onLog, signal }: FetchCatalogOptions = {}): Promise<FetchCatalogResult> {
   if (!fs.existsSync(FETCH_DIR)) {
     fs.mkdirSync(FETCH_DIR, { recursive: true });
   }
@@ -149,10 +158,4 @@ async function fetchCatalog({ onLog, signal } = {}) {
   return { apps: processedApps, categories: CATEGORIES_DEF };
 }
 
-module.exports = {
-  fetchCatalog,
-  processAppsData,
-  CATEGORIES_DEF,
-  CACHE_DIR,
-  FETCH_DIR
-};
+

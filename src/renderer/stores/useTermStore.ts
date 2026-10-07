@@ -2,13 +2,39 @@ import { create } from './createStore';
 import { useAppStore } from './useAppStore';
 import { useShellStore } from './useShellStore';
 import { getAppName, getIconDataUrl, extractTaskError, formatStatusBarMessage } from '../hooks/utils';
+import type { TaskLogEvent, TaskPromptEvent, TaskCompleteEvent } from '../../types/ipc';
 
-const terminalSubscribers = new Set();
-let updateQueue = [];
+type TerminalSubscriber = (text: string, clear?: boolean) => void;
+
+const terminalSubscribers = new Set<TerminalSubscriber>();
+let updateQueue: string[] = [];
 let isUpdatingAll = false;
 let errorLog = '';
 
-export const useTermStore = create((set, get) => ({
+export interface TermStoreState {
+  runningTasks: Record<string, string>;
+  activeTaskId: string | null;
+  activeTaskToken: string | null;
+  activeTaskAction: string | null;
+  drawerTitle: string;
+  showPasswordModal: boolean;
+  terminalHistory: string;
+
+  registerTerminalSubscriber: (cb: TerminalSubscriber) => () => void;
+  clearTerminal: () => void;
+  executeTask: (action: string, token?: string, zap?: boolean, remainingCount?: number | null) => void;
+  processNextQueuedUpdate: () => void;
+  startAction: (action: string, token?: string, appName?: string) => Promise<void>;
+  cancelAction: () => void;
+  submitPassword: (pass: string) => void;
+  cancelPassword: () => void;
+  handleTaskLog: (data: TaskLogEvent) => void;
+  handleStatusLog: (text: string) => void;
+  handleTaskPrompt: (prompt: TaskPromptEvent) => void;
+  handleTaskComplete: (data: TaskCompleteEvent) => void;
+}
+
+export const useTermStore = create<TermStoreState>((set, get) => ({
   // State
   runningTasks: {},
   activeTaskId: null,
@@ -19,7 +45,7 @@ export const useTermStore = create((set, get) => ({
   terminalHistory: '',
 
   // Terminal actions
-  registerTerminalSubscriber: (cb) => {
+  registerTerminalSubscriber: (cb: TerminalSubscriber) => {
     terminalSubscribers.add(cb);
     const history = get().terminalHistory;
     if (history) cb(history);
@@ -32,7 +58,7 @@ export const useTermStore = create((set, get) => ({
   },
 
   // Task execution
-  executeTask: (action, token, zap = false, remainingCount = null) => {
+  executeTask: (action: string, token: string = '', zap: boolean = false, remainingCount: number | null = null) => {
     get().clearTerminal();
     errorLog = '';
     const taskId = `cask-${action}-${token || Date.now()}`;
@@ -68,17 +94,19 @@ export const useTermStore = create((set, get) => ({
       return;
     }
     const nextToken = updateQueue.shift();
-    get().executeTask('upgrade', nextToken, false, updateQueue.length + 1);
+    if (nextToken) {
+      get().executeTask('upgrade', nextToken, false, updateQueue.length + 1);
+    }
   },
 
-  startAction: async (action, token, appName) => {
+  startAction: async (action: string, token: string = '', appName?: string) => {
     const { items, outdatedMap } = useAppStore.getState();
     const __ = useShellStore.getState().__;
 
     if (action === 'open') {
       const cask = items.find((c) => c.token === token);
       const app = appName || (cask ? (cask.app || cask.name) : null);
-      window.ipc?.openApp?.(token, app);
+      window.ipc?.openApp?.(token, app ?? undefined);
       return;
     }
 
@@ -121,7 +149,7 @@ export const useTermStore = create((set, get) => ({
       const cask = items.find((c) => c.token === token);
       const name = cask ? getAppName(cask) : token;
       if (window.ipc?.showMessage) {
-        const config = (await window.ipc?.getConfig?.()) || {};
+        const config = (await window.ipc?.getConfig?.()) || { zap: false };
         const title = __('Confirm Delete');
         const rawMsg = __('Are you sure you want to delete %s?') || 'Are you sure you want to delete %s?';
         const message = rawMsg.includes('%s') ? rawMsg.replace('%s', name) : `Are you sure you want to delete ${name}?`;
@@ -168,7 +196,7 @@ export const useTermStore = create((set, get) => ({
     });
   },
 
-  submitPassword: (pass) => {
+  submitPassword: (pass: string) => {
     set({ showPasswordModal: false });
     const currentId = get().activeTaskId;
     if (currentId) {
@@ -181,7 +209,7 @@ export const useTermStore = create((set, get) => ({
   },
 
   // IPC Event Handlers
-  handleTaskLog: (data) => {
+  handleTaskLog: (data: TaskLogEvent) => {
     const text = data.text || '';
     errorLog = text;
     set({ terminalHistory: text });
@@ -192,7 +220,7 @@ export const useTermStore = create((set, get) => ({
     }
   },
 
-  handleStatusLog: (text) => {
+  handleStatusLog: (text: string) => {
     if (!text) return;
     set((state) => {
       const updated = state.terminalHistory ? `${state.terminalHistory}\n${text}` : text;
@@ -201,13 +229,13 @@ export const useTermStore = create((set, get) => ({
     });
   },
 
-  handleTaskPrompt: ({ type }) => {
+  handleTaskPrompt: ({ type }: TaskPromptEvent) => {
     if (type === 'password') {
       set({ showPasswordModal: true });
     }
   },
 
-  handleTaskComplete: (data) => {
+  handleTaskComplete: (data: TaskCompleteEvent) => {
     const { activeTaskToken, activeTaskAction } = get();
     const __ = useShellStore.getState().__;
 
@@ -241,8 +269,10 @@ export const useTermStore = create((set, get) => ({
       isUpdatingAll = false;
       updateQueue = [];
       if (!data.cancelled && data.code !== 130) {
-        const rawErr = data.error || (errorLog ? extractTaskError(errorLog, activeTaskToken) : null);
-        const errDetail = rawErr || __('No error details recorded.');
+        const rawErr: any = data.error || (errorLog ? extractTaskError(errorLog, activeTaskToken || '') : null);
+        const errDetail: string = typeof rawErr === 'object' && rawErr !== null
+          ? (rawErr.details || rawErr.title || JSON.stringify(rawErr))
+          : String(rawErr || __('No error details recorded.'));
         const alertTitle = __(`%s ${activeTaskAction === 'install' ? 'installation' : activeTaskAction === 'uninstall' ? 'removal' : activeTaskAction === 'upgrade' ? 'update' : 'cleanup'} failed`, activeTaskToken || 'Task');
         window.ipc?.showErrorDialog?.(alertTitle, errDetail);
       }
