@@ -7,13 +7,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   build: {
     target: 'node20',
-    outDir: path.resolve(__dirname, '../../dist/vite-main'),
+    outDir: path.resolve(__dirname, 'dist/vite-main'),
     emptyOutDir: true,
     minify: true,
     lib: {
       entry: {
-        main: path.resolve(__dirname, 'main.js'),
-        preload: path.resolve(__dirname, 'preload.js')
+        main: path.resolve(__dirname, 'src/main/main.js'),
+        preload: path.resolve(__dirname, 'src/main/preload.js')
       },
       formats: ['cjs']
     },

@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function startDev() {
   const server = await createServer({
-    configFile: path.resolve(__dirname, '../src/renderer/vite.config.mjs'),
+    configFile: path.resolve(__dirname, '../vite.renderer.config.mjs'),
     server: {
       port: 5173,
       strictPort: false,

@@ -12,5 +12,5 @@
     },
     "lib": ["DOM", "DOM.Iterable", "ESNext"]
   },
-  "include": ["**/*", "vite.config.mjs"]
+  "include": ["**/*", "../../vite.renderer.config.mjs"]
 }
