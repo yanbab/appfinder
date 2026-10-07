@@ -1,0 +1,14 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "src/types/index.ts",
+    "src/main/preload.ts",
+    "src/main/backend/brew.ts",
+    "src/main/backend/task-runner.ts",
+    "src/renderer/stores/index.ts",
+    "src/renderer/hooks/utils.ts"
+  ],
+  "readme": "none",
+  "githubPages": false,
+  "cleanOutputDir": true
+}

@@ -39,29 +39,45 @@ export function initStoreListeners(): void {
     });
   });
 
-  window.ipc.on('shell:select-tab', (tab) => shellStore.selectTab(tab));
-  window.ipc.on('shell:focus-search', () => {
-    shellStore.closeAppInfo();
-    shellStore.setShowSidebar(true);
-    setTimeout(() => document.getElementById('search-input')?.focus(), 50);
-  });
-  window.ipc.on('shell:set-order', (order) => appStore.setOrder(order));
-  window.ipc.on('shell:set-view-mode', (mode) => shellStore.setViewMode(mode));
-  window.ipc.on('shell:toggle-sidebar', (show) => shellStore.setShowSidebar(show ?? !shellStore.showSidebar));
-  window.ipc.on('shell:clear-cache', () => termStore.startAction('cleanup'));
-  window.ipc.on('shell:check-updates', () => {
-    shellStore.selectTab('updates');
-    termStore.startAction('refresh', 'refresh');
-  });
-  window.ipc.on('shell:fetch-apps', () => {
-    termStore.startAction('fetch', 'fetch');
-  });
-
-  window.ipc.on('cask:updates-refreshed', () => appStore.refreshUpdates(false));
   window.ipc.on('cask:data-refreshed', () => appStore.initCatalog());
 
   window.ipc.on('task:log', (data) => termStore.handleTaskLog(data));
-  window.ipc.on('status:log', (text) => termStore.handleStatusLog(text));
   window.ipc.on('task:prompt', (prompt) => termStore.handleTaskPrompt(prompt));
   window.ipc.on('task:complete', (data) => termStore.handleTaskComplete(data));
+
+  // 3. Consolidated Native Application Menu Handler
+  window.ipc.on('menu:click', ({ command, value }) => {
+    switch (command) {
+      case 'select-tab':
+        if (value) shellStore.selectTab(value);
+        break;
+      case 'focus-search':
+        shellStore.closeAppInfo();
+        shellStore.setShowSidebar(true);
+        setTimeout(() => document.getElementById('search-input')?.focus(), 50);
+        break;
+      case 'set-order':
+        if (value) appStore.setOrder(value);
+        break;
+      case 'set-view-mode':
+        if (value) shellStore.setViewMode(value);
+        break;
+      case 'toggle-sidebar':
+        shellStore.setShowSidebar(value ?? !shellStore.showSidebar);
+        break;
+      case 'clear-cache':
+        termStore.startAction('cleanup');
+        break;
+      case 'check-updates':
+        shellStore.selectTab('updates');
+        termStore.startAction('refresh', 'refresh');
+        break;
+      case 'fetch-apps':
+        termStore.startAction('fetch', 'fetch');
+        break;
+      default:
+        console.warn(`[menu:click] Unhandled command: ${command}`);
+        break;
+    }
+  });
 }

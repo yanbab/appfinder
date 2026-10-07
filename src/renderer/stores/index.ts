@@ -11,7 +11,7 @@ export {
 } from './useAppStore';
 export type { AppStoreState, UpdateInfo } from './useAppStore';
 export { useTermStore } from './useTermStore';
-export type { TermStoreState } from './useTermStore';
+export type { TermStoreState, TerminalSubscriber } from './useTermStore';
 export { useShellStore } from './useShellStore';
 export type { ShellStoreState } from './useShellStore';
 export { initStoreListeners } from './initStoreListeners';

@@ -23,6 +23,8 @@
     "build:react": "vite build --config vite.renderer.config.mjs",
     "type-check": "tsc --noEmit",
     "test": "node --import tsx --test 'test/**/*.test.js'",
+    "docs": "typedoc --plugin typedoc-plugin-markdown --out _doc/api",
+    "docs:html": "typedoc --out _doc/html",
     "release": "node scripts/release-github.js"
   },
   "keywords": [
@@ -47,7 +49,9 @@
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2",
+    "typedoc": "^0.28.20",
+    "typedoc-plugin-markdown": "^4.13.1",
+    "typescript": "^5.9.3",
     "vite": "^8.3.1"
   },
   "build": {

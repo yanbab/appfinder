@@ -3,7 +3,7 @@ import { ShellIcon } from './ShellIcon';
 import { useShellStore } from '@/stores';
 import { cn } from '@/hooks/utils';
 
-export interface NavGroupProps extends HTMLAttributes<HTMLDivElement> {
+export interface NavGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   title?: ReactNode;
   children?: ReactNode;
   defaultOpen?: boolean;

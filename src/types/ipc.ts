@@ -4,15 +4,19 @@ export interface TaskLogEvent {
   taskId: string;
   text?: string;
   stream?: string;
+  line?: string;
   [key: string]: any;
 }
 
 export interface TaskPromptEvent {
-  id: string;
+  id?: string;
+  taskId?: string;
   type: string;
+  prompt?: string;
   message?: string;
   targetApp?: string;
-  dependencies?: string[];
+  dependencies?: string;
+  isRetry?: boolean;
   [key: string]: any;
 }
 
@@ -24,37 +28,28 @@ export interface TaskCompleteEvent {
   [key: string]: any;
 }
 
+export interface MenuClickEvent {
+  command: string;
+  value?: any;
+}
+
 export type Unsubscribe = () => void;
 
 export interface IpcEventMap {
   'task:log': TaskLogEvent;
   'task:prompt': TaskPromptEvent;
   'task:complete': TaskCompleteEvent;
-  'status:log': any;
-  'cask:updates-refreshed': any;
   'cask:data-refreshed': void;
-  'cleanup:status': any;
   'config:updated': AppConfig;
   'i18n:changed': void;
-  'shell:select-tab': string;
-  'shell:focus-search': void;
-  'shell:check-updates': void;
-  'shell:fetch-apps': void;
-  'shell:clear-cache': void;
-  'shell:set-order': string;
-  'shell:set-view-mode': string;
-  'shell:toggle-sidebar': boolean | undefined;
-  'system:accent-color-changed': string;
+  'system:accent-color-changed': string | null;
   'context-menu:action': { action: string; token?: string } | string;
+  'menu:click': MenuClickEvent;
 }
 
 export type IpcEventName = keyof IpcEventMap;
 
 export interface IpcBridge {
-  systemVersion: string;
-  platform: string;
-  arch: string;
-
   // Queries (Request-Response)
   getCasks: () => Promise<CaskItem[]>;
   getCategories: () => Promise<CategoryItem[]>;
@@ -73,8 +68,7 @@ export interface IpcBridge {
   openExternal: (url: string) => Promise<any>;
   showErrorDialog: (title: string, content: string) => Promise<any>;
   showMessage: (options: any) => Promise<any>;
-  getAccentColor: () => Promise<string>;
-  clearCaches: () => Promise<any>;
+  getAccentColor: () => Promise<string | null>;
 
   // Actions (Send to Main)
   runAction: (taskId: string, action: string, token: string, zap?: boolean, appName?: string) => void;

@@ -4,7 +4,7 @@ import { useShellStore } from './useShellStore';
 import { getAppName, getIconDataUrl, extractTaskError, formatStatusBarMessage } from '../hooks/utils';
 import type { TaskLogEvent, TaskPromptEvent, TaskCompleteEvent } from '../../types/ipc';
 
-type TerminalSubscriber = (text: string, clear?: boolean) => void;
+export type TerminalSubscriber = (text: string, clear?: boolean) => void;
 
 const terminalSubscribers = new Set<TerminalSubscriber>();
 let updateQueue: string[] = [];

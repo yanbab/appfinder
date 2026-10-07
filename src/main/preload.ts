@@ -34,42 +34,11 @@ const invoke = async (channel: string, ...args: any[]): Promise<any> => {
 let cachedConfig: AppConfig | null = null;
 let pendingConfigPromise: Promise<AppConfig> | null = null;
 
-let systemVersion: string = '';
-let platform: string = 'darwin';
-let arch: string = 'arm64';
-
-try {
-  if (typeof process !== 'undefined') {
-    if (typeof (process as any).getSystemVersion === 'function') {
-      systemVersion = (process as any).getSystemVersion();
-    }
-    if (process.platform) {
-      platform = process.platform;
-    }
-    if (process.arch) {
-      arch = process.arch;
-    }
-    if (!systemVersion && platform === 'darwin') {
-      const os = require('os');
-      const dMajor = parseInt(os.release().split('.')[0], 10);
-      if (dMajor >= 20) {
-        systemVersion = String(dMajor - 9);
-      } else if (dMajor >= 5) {
-        systemVersion = '10.' + (dMajor - 4);
-      }
-    }
-  }
-} catch { }
-
 ipcRenderer.on('config:updated', (_: any, newConfig: AppConfig) => {
   cachedConfig = newConfig;
 });
 
 const ipcApi: IpcBridge = {
-  systemVersion,
-  platform,
-  arch,
-
   getCasks: () => invoke('cask:get-data'),
   getCategories: () => invoke('cask:get-categories'),
   getCaskInfo: (token: string) => invoke('cask:get-info', token),
@@ -107,7 +76,6 @@ const ipcApi: IpcBridge = {
     ipcRenderer.send('cask:run-action', { taskId, action, token, zap, appName }),
   cancelAction: (taskId: string) => ipcRenderer.send('cask:cancel-action', taskId),
   writePtyInput: (taskId: string, text: string) => ipcRenderer.send('cask:write-pty-input', { taskId, text }),
-  clearCaches: () => invoke('settings:clear-caches'),
 
   getAccentColor: () => invoke('system:get-accent-color'),
   setContentSize: (width: number, height: number) => ipcRenderer.send('window:set-content-size', width, height),

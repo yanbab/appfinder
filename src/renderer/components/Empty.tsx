@@ -1,7 +1,7 @@
 import React, { type ReactNode, type HTMLAttributes } from 'react';
 import { ShellIcon } from './ShellIcon';
 
-export interface EmptyProps extends HTMLAttributes<HTMLDivElement> {
+export interface EmptyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   icon?: string | ReactNode;
   title?: ReactNode;
   subtitle?: ReactNode;

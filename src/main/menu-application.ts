@@ -78,17 +78,17 @@ export function setupApplicationMenu(): void {
         {
           label: __('Check for New Applications...'),
           accelerator: 'Option+Cmd+N',
-          click: () => sendToShell('shell:fetch-apps')
+          click: () => sendToShell('menu:click', { command: 'fetch-apps' })
         },
         {
           label: __('Check for Updates...'),
           accelerator: 'Option+Cmd+U',
-          click: () => sendToShell('shell:check-updates')
+          click: () => sendToShell('menu:click', { command: 'check-updates' })
         },
         { type: 'separator' },
         {
           label: __('Clear Downloaded Files...'),
-          click: () => sendToShell('shell:clear-cache')
+          click: () => sendToShell('menu:click', { command: 'clear-cache' })
         },
         { type: 'separator' },
         { role: 'close', label: __('Close Window') }
@@ -116,39 +116,39 @@ export function setupApplicationMenu(): void {
         {
           label: __('as Icons'),
           accelerator: 'CmdOrCtrl+1',
-          click: () => sendToShell('shell:set-view-mode', 'grid')
+          click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'grid' })
         },
         {
           label: __('as List'),
           accelerator: 'CmdOrCtrl+2',
-          click: () => sendToShell('shell:set-view-mode', 'list')
+          click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'list' })
         },
         { type: 'separator' },
         {
           label: __('Search'),
           accelerator: 'CmdOrCtrl+F',
-          click: () => sendToShell('shell:focus-search')
+          click: () => sendToShell('menu:click', { command: 'focus-search' })
         },
         { type: 'separator' },
         {
           label: __('Explore'),
           accelerator: 'Option+Cmd+1',
-          click: () => sendToShell('shell:select-tab', 'discover')
+          click: () => sendToShell('menu:click', { command: 'select-tab', value: 'discover' })
         },
         {
           label: __('All Apps'),
           accelerator: 'Option+Cmd+2',
-          click: () => sendToShell('shell:select-tab', 'all-apps')
+          click: () => sendToShell('menu:click', { command: 'select-tab', value: 'all-apps' })
         },
         {
           label: __('Installed'),
           accelerator: 'Option+Cmd+3',
-          click: () => sendToShell('shell:select-tab', 'installed')
+          click: () => sendToShell('menu:click', { command: 'select-tab', value: 'installed' })
         },
         {
           label: __('Updates'),
           accelerator: 'Option+Cmd+4',
-          click: () => sendToShell('shell:select-tab', 'updates')
+          click: () => sendToShell('menu:click', { command: 'select-tab', value: 'updates' })
         },
         { type: 'separator' },
         {
@@ -156,17 +156,17 @@ export function setupApplicationMenu(): void {
           submenu: [
             {
               label: __('Popular'),
-              click: () => sendToShell('shell:set-order', 'popularity'),
+              click: () => sendToShell('menu:click', { command: 'set-order', value: 'popularity' }),
               accelerator: 'Control+Option+1'
             },
             {
               label: __('Recent'),
-              click: () => sendToShell('shell:set-order', 'date'),
+              click: () => sendToShell('menu:click', { command: 'set-order', value: 'date' }),
               accelerator: 'Control+Option+2'
             },
             {
               label: __('A-Z'),
-              click: () => sendToShell('shell:set-order', 'name'),
+              click: () => sendToShell('menu:click', { command: 'set-order', value: 'name' }),
               accelerator: 'Control+Option+3'
             }
           ]
@@ -180,7 +180,7 @@ export function setupApplicationMenu(): void {
           accelerator: 'Option+Cmd+S',
           click: (menuItem) => {
             isSidebarVisible = menuItem.checked;
-            sendToShell('shell:toggle-sidebar', menuItem.checked);
+            sendToShell('menu:click', { command: 'toggle-sidebar', value: menuItem.checked });
           }
         },
         {
