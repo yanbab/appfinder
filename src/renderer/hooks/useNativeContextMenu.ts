@@ -20,7 +20,7 @@ export function useNativeContextMenu() {
       const selection = window.getSelection();
       const selectedText = selection ? selection.toString().trim() : '';
 
-      const searchInput = target.closest('#search-input') || (target.tagName === 'INPUT' ? target : null) as HTMLElement | null;
+      const searchInput = (target.closest('#search-input') || (target.tagName === 'INPUT' ? target : null)) as HTMLElement | null;
       const link = target.closest('a[href]:not([href="#"]):not([href^="javascript:"])') as HTMLAnchorElement | null;
       const selectableEl = target.closest('.selectable-text, .info-app-title, .info-app-desc, .info-app-version, .info-caveats-text');
       const card = target.closest('[data-token]') as HTMLElement | null;

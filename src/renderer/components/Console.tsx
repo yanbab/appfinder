@@ -7,9 +7,9 @@ export function Console() {
   const registerTerminalSubscriber = useTermStore((s) => s.registerTerminalSubscriber);
   const activeTaskId = useTermStore((s) => s.activeTaskId);
 
-  const [logs, setLogs] = useState('');
-  const containerRef = useRef(null);
-  const endRef = useRef(null);
+  const [logs, setLogs] = useState<string>('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
 
   // Subscribe to live terminal log events
   useEffect(() => {

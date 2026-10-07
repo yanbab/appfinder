@@ -21,7 +21,7 @@ export function useAppItemState(item?: CaskItem | null) {
     install: () => token && startAction('install', token),
     upgrade: () => token && startAction('upgrade', token),
     uninstall: () => token && startAction('uninstall', token),
-    open: () => token && startAction('open', token, item?.app),
+    open: () => token && startAction('open', token, item?.app || undefined),
   };
 }
 

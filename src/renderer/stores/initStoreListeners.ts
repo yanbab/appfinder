@@ -16,7 +16,7 @@ export function initStoreListeners(): void {
   const shellStore = useShellStore.getState();
 
   // 1. Initial data fetching
-  const fetchMessages = window.ipc.getMessages || window.ipc.getTranslations || window.ipc.getI18nCatalog;
+  const fetchMessages = window.ipc.getMessages;
   fetchMessages?.().then((msgs) => {
     if (msgs) shellStore.setMessages(msgs);
   });

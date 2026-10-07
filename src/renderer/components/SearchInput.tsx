@@ -3,14 +3,18 @@ import { useAppStore, useShellStore } from '@/stores';
 import { ShellIcon } from './ShellIcon';
 import { Input } from './Input';
 
-export function SearchInput({ className = '' }) {
+export interface SearchInputProps {
+  className?: string;
+}
+
+export function SearchInput({ className = '' }: SearchInputProps) {
   const search = useAppStore((s) => s.search);
   const setSearch = useAppStore((s) => s.setSearch);
   const currentTab = useShellStore((s) => s.currentTab);
   const selectTab = useShellStore((s) => s.selectTab);
   const __ = useShellStore((s) => s.__);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setSearch(val);
     if (val && val.trim() && currentTab === 'discover') {
@@ -31,6 +35,7 @@ export function SearchInput({ className = '' }) {
       />
       {search && (
         <button
+          type="button"
           onClick={() => setSearch('')}
           className="absolute right-2 size-4 rounded-full bg-muted-foreground/40 hover:bg-muted-foreground/60 active:bg-muted-foreground/80 text-background flex items-center justify-center cursor-default transition-colors"
           title={__('Clear search')}

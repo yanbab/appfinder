@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, type ReactNode, type HTMLAttributes } from 'react';
 import { ShellIcon } from './ShellIcon';
 import { useShellStore } from '@/stores';
 import { cn } from '@/hooks/utils';
+
+export interface NavGroupProps extends HTMLAttributes<HTMLDivElement> {
+  title?: ReactNode;
+  children?: ReactNode;
+  defaultOpen?: boolean;
+  className?: string;
+}
 
 export function NavGroup({
   title,
@@ -9,8 +16,8 @@ export function NavGroup({
   defaultOpen = true,
   className,
   ...props
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+}: NavGroupProps) {
+  const [isOpen, setIsOpen] = useState<boolean>(defaultOpen);
   const __ = useShellStore((s) => s.__);
 
   const hasTitle = Boolean(title && (typeof title === 'string' ? title.trim() : true));

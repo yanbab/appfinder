@@ -1,5 +1,14 @@
-import React from 'react';
+import React, { type ReactNode, type HTMLAttributes } from 'react';
 import { ShellIcon } from './ShellIcon';
+
+export interface EmptyProps extends HTMLAttributes<HTMLDivElement> {
+  icon?: string | ReactNode;
+  title?: ReactNode;
+  subtitle?: ReactNode;
+  children?: ReactNode;
+  className?: string;
+  loading?: boolean;
+}
 
 export function Empty({
   icon = 'magnifyingglass',
@@ -9,7 +18,7 @@ export function Empty({
   className = '',
   loading = false,
   ...props
-}) {
+}: EmptyProps) {
   const isSpinner = loading || icon === 'loader-2' || icon === 'loader' || icon === 'loading';
 
   return (

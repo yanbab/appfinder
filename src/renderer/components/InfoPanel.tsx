@@ -33,17 +33,65 @@ export function InfoPanel() {
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
   const isOpen = Boolean(selectedApp);
 
+  // Steal focus on open & restore previous focus on close
   useEffect(() => {
     if (isOpen) {
-      previousActiveElementRef.current = document.activeElement as HTMLElement;
-      setTimeout(() => {
-        dialogRef.current?.focus?.();
-      }, 50);
+      previousActiveElementRef.current = document.activeElement as HTMLElement | null;
+      // Focus the dialog container itself
+      const focusTimer = setTimeout(() => {
+        dialogRef.current?.focus();
+      }, 30);
+      return () => clearTimeout(focusTimer);
     } else if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
       previousActiveElementRef.current.focus();
       previousActiveElementRef.current = null;
     }
-  }, [isOpen]);
+  }, [isOpen, selectedApp?.token]);
+
+  // Global Escape key listener to close panel
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAppInfo();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown, true);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown, true);
+  }, [isOpen, closeAppInfo]);
+
+  // Click / pointerdown outside panel listener to close panel
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePointerDownOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // Ignore clicks inside the info panel dialog
+      if (dialogRef.current && dialogRef.current.contains(target)) {
+        return;
+      }
+
+      closeAppInfo();
+    };
+
+    // Small timeout ensures the opening click event doesn't immediately trigger close
+    const timer = setTimeout(() => {
+      window.addEventListener('mousedown', handlePointerDownOutside, true);
+      window.addEventListener('touchstart', handlePointerDownOutside, true);
+    }, 10);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('mousedown', handlePointerDownOutside, true);
+      window.removeEventListener('touchstart', handlePointerDownOutside, true);
+    };
+  }, [isOpen, closeAppInfo]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Escape') {
@@ -126,25 +174,36 @@ export function InfoPanel() {
   })();
 
   return (
-    <dialog
-      ref={dialogRef}
-      open={isOpen}
-      onCancel={(e) => {
-        e.preventDefault();
-        closeAppInfo();
-      }}
-      onKeyDown={handleKeyDown}
-      aria-label={name || __('Infos')}
-      data-drawer-content="true"
-      className="fixed inset-y-0 right-0 z-40 m-0 h-full w-[260px] max-w-[260px] bg-background border-l border-border select-none flex flex-col p-0 outline-none shadow-2xl animate-in slide-in-from-right duration-200"
-    >
-      {/* Header with Close Button on the Left */}
-      <div className="app-header h-[52px] shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
+    <>
+      {/* Backdrop overlay */}
+      <div
+        className="fixed inset-0 z-40 bg-black/40 animate-in fade-in duration-150"
+        onClick={closeAppInfo}
+        aria-hidden="true"
+      />
+
+      <dialog
+        ref={dialogRef}
+        open={isOpen}
+        tabIndex={-1}
+        onCancel={(e) => {
+          e.preventDefault();
+          closeAppInfo();
+        }}
+        onKeyDown={handleKeyDown}
+        aria-label={name || __('Infos')}
+        className="info-panel-dialog animate-in slide-in-from-right duration-200"
+        style={{ backgroundColor: 'var(--background)' }}
+        data-drawer-content="true"
+      >
+        {/* Header with Close Button on the Left */}
+        <div className="app-header h-[52px] shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
         <div className="flex items-center gap-2 min-w-0 flex-1 h-full [-webkit-app-region:drag]">
           <Button
             icon={<ShellIcon name="xmark" className="size-[18px]" />}
             onClick={closeAppInfo}
-            className="rounded-sm shrink-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-app-region:no-drag]"
+            className="rounded-sm shrink-0 !outline-none !ring-0 focus:!outline-none focus-visible:!outline-none [-webkit-app-region:no-drag]"
+            style={{ outline: 'none', boxShadow: 'none' }}
             title={__('Close')}
             aria-label={__('Close')}
           />
@@ -384,7 +443,8 @@ export function InfoPanel() {
         )}
       </div>
     </dialog>
-  );
+  </>
+);
 }
 
 export default InfoPanel;
