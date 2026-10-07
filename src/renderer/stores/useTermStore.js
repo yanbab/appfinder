@@ -1,4 +1,4 @@
-import { createStore } from './createStore';
+import { create } from './createStore';
 import { useAppStore } from './useAppStore';
 import { useShellStore } from './useShellStore';
 import { getAppName, getIconDataUrl, extractTaskError, formatStatusBarMessage } from '../hooks/utils';
@@ -8,7 +8,7 @@ let updateQueue = [];
 let isUpdatingAll = false;
 let errorLog = '';
 
-export const useTermStore = createStore((set, get) => ({
+export const useTermStore = create((set, get) => ({
   // State
   runningTasks: {},
   activeTaskId: null,

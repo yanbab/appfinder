@@ -1,9 +1,9 @@
-import { createStore } from './createStore';
+import { create } from './createStore';
 import { useAppStore, selectFeaturedItems } from './useAppStore';
 
 const infoCache = new Map();
 
-export const useShellStore = createStore((set, get) => ({
+export const useShellStore = create((set, get) => ({
   // State
   currentTab: 'discover',
   viewMode: typeof localStorage !== 'undefined' ? localStorage.getItem('appfinder-view-mode') || 'list' : 'list',

@@ -1,4 +1,4 @@
-export { createStore } from './createStore';
+export { create, createStore } from './createStore';
 export {
   useAppStore,
   selectFilteredItems,

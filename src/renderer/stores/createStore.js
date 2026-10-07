@@ -8,7 +8,7 @@ import { useSyncExternalStore } from 'react';
  * @param {(set: (partial: Partial<T> | ((state: T) => Partial<T>)) => void, get: () => T) => T} createState
  * @returns {((selector?: (state: T) => any) => any) & { getState: () => T, setState: Function, subscribe: Function }}
  */
-export function createStore(createState) {
+export function create(createState) {
   let state;
   const listeners = new Set();
 
@@ -43,3 +43,6 @@ export function createStore(createState) {
   Object.assign(useStore, api);
   return useStore;
 }
+
+export const createStore = create;
+export default create;

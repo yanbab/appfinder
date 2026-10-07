@@ -82,7 +82,8 @@
       "output": "dist/electron-builder"
     },
     "files": [
-      "src/**/*",
+      "src/main/**/*",
+      "src/locales/**/*",
       "data/**/*",
       "dist/vite/**/*",
       "package.json"

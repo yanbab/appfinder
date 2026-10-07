@@ -1,4 +1,4 @@
-import { createStore } from './createStore';
+import { create } from './createStore';
 
 export const CHUNK_SIZE = 50;
 export const FEATURED_TOKENS = new Set([
@@ -29,7 +29,7 @@ export function parseUpdatesMap(upds) {
   return map;
 }
 
-export const useAppStore = createStore((set, get) => ({
+export const useAppStore = create((set, get) => ({
   // State
   items: [],
   categories: [],
