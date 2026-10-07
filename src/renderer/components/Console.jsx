@@ -61,5 +61,5 @@ export function Console() {
   );
 }
 
-// Backward-compatible alias
 export const TerminalDrawer = Console;
+export default Console;

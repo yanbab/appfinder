@@ -61,3 +61,5 @@ export function AppIcon({ item, size = "md", className }) {
     </div>
   );
 }
+
+export default AppIcon;

@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useAppStore, useShellStore, selectFilteredItems } from '@/stores';
-import { AppItemGrid } from '@/components/shell/components/AppItemGrid';
-import { AppItemList } from '@/components/shell/components/AppItemList';
+import { AppItemGrid } from './AppItemGrid';
+import { AppItemList } from './AppItemList';
 import { Empty } from './Empty';
 
 export function AppList({ header, footer }) {
@@ -44,7 +44,6 @@ export function AppList({ header, footer }) {
     );
   }
 
-
   return (
     <div
       ref={containerRef}
@@ -74,5 +73,5 @@ export function AppList({ header, footer }) {
   );
 }
 
-// Backward-compatible alias
 export const AppsListView = AppList;
+export default AppList;

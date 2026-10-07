@@ -1,13 +1,14 @@
 import React from 'react';
 import { useShellStore, useTermStore, useAppStore } from '@/stores';
-import { AppIcon, ShellButton, ShellIcon } from '@/components/shell/components';
-
+import { AppIcon } from './AppIcon';
+import { ShellButton } from './ShellButton';
+import { ShellIcon } from './ShellIcon';
 import {
   Drawer,
   DrawerContent,
   DrawerTitle,
   DrawerDescription,
-} from '@/components/ui/drawer';
+} from './Drawer';
 import {
   getAppName,
   formatVersion,
@@ -40,7 +41,6 @@ export function InfoPanel() {
   React.useEffect(() => {
     if (isOpen) {
       previousActiveElementRef.current = document.activeElement;
-      // Focus panel container for keyboard events without outlining close button
       setTimeout(() => {
         panelRef.current?.focus?.();
       }, 50);
@@ -253,7 +253,7 @@ export function InfoPanel() {
             )}
           </div>
 
-          {/* Metadata Section in Card: Website, categories, token, added, count, platform, arch */}
+          {/* Metadata Section in Card */}
           <div className="rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
             {/* 1. Website / Homepage */}
             <div className="flex items-center justify-between py-0.5">
@@ -271,7 +271,7 @@ export function InfoPanel() {
               )}
             </div>
 
-            {/* 2. Categories (up to 3) */}
+            {/* 2. Categories */}
             {appCategories.length > 0 && (
               <div className="flex items-start justify-between py-0.5 gap-2">
                 <span className="text-muted-foreground shrink-0">{appCategories.length > 1 ? __('Categories') : __('Category')}</span>
@@ -303,7 +303,7 @@ export function InfoPanel() {
               </div>
             )}
 
-            {/* 5. Count / Monthly Installs */}
+            {/* 5. Count */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Monthly Installs')}</span>
               <div className="flex items-center gap-1 text-foreground">
@@ -386,7 +386,7 @@ export function InfoPanel() {
             )}
           </div>
 
-          {/* Caveats / Warnings: Under Info Card */}
+          {/* Caveats / Warnings */}
           {caskStatus.isDisabled && (
             <div className="p-2.5 rounded-[var(--radius-card)] border border-destructive/40 bg-destructive/10 text-destructive space-y-1 overflow-hidden">
               <div className="flex items-center gap-1.5 font-semibold text-xs text-destructive">
@@ -454,5 +454,5 @@ export function InfoPanel() {
   );
 }
 
-// Backward-compatible alias
 export const InfoDrawer = InfoPanel;
+export default InfoPanel;

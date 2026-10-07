@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useShellStore, useAppStore, useTermStore } from '@/stores';
 import { AppIcon } from './AppIcon';
 import { ShellIcon } from './ShellIcon';
-import { Button } from '@/components/ui/button';
+import { Button } from './Button';
 import { getAppName, name2color } from '@/hooks/utils';
 
 export function AppItemSlider() {
@@ -134,3 +134,4 @@ export function AppItemSlider() {
 }
 
 export const AppItemDiscoverSlider = AppItemSlider;
+export default AppItemSlider;

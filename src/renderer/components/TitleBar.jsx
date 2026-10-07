@@ -1,6 +1,7 @@
 import React from 'react';
 import { useShellStore, useAppStore } from '@/stores';
-import { ShellButton, ShellIcon } from '@/components/shell/components';
+import { ShellButton } from './ShellButton';
+import { ShellIcon } from './ShellIcon';
 
 export function TitleBar() {
   const currentTab = useShellStore((s) => s.currentTab);
@@ -83,3 +84,5 @@ export function TitleBar() {
     </header>
   );
 }
+
+export default TitleBar;

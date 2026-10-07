@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShellIcon } from '@/components/shell/components/ShellIcon';
+import { ShellIcon } from './ShellIcon';
 
 export function Empty({
   icon = 'magnifyingglass',
@@ -50,3 +50,5 @@ export function Empty({
     </div>
   );
 }
+
+export default Empty;

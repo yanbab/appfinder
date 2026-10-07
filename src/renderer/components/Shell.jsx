@@ -1,14 +1,14 @@
 import React from 'react';
 import { useShellStore, useAppStore } from '@/stores';
-import {
-  Sidebar,
-  TitleBar,
-  StatusBar,
-  InfoPanel,
-  PasswordModal,
-  Console,
-} from '@/components/shell/views';
-import { Discover, AppList, AppListUpdates } from '@/components/shell/pages';
+import { Sidebar } from './Sidebar';
+import { TitleBar } from './TitleBar';
+import { StatusBar } from './StatusBar';
+import { InfoPanel } from './InfoPanel';
+import { PasswordModal } from './PasswordModal';
+import { Console } from './Console';
+import { Discover } from './Discover';
+import { AppList } from './AppList';
+import { AppListUpdates } from './AppListUpdates';
 
 import { useNativeContextMenu } from '@/hooks/useNativeContextMenu';
 import { useKeyboardNav } from '@/hooks/useKeyboardNav';

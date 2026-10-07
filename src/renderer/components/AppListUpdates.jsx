@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { useAppStore, useTermStore, useShellStore, selectFilteredItems } from '@/stores';
 import { AppList } from './AppList';
 import { Empty } from './Empty';
-import { ShellButton, ShellIcon } from '@/components/shell/components';
+import { ShellButton } from './ShellButton';
+import { ShellIcon } from './ShellIcon';
 
 function formatLastChecked(date, __) {
   if (!date) return __('Never');
@@ -112,6 +113,5 @@ export function AppListUpdates() {
   return <AppList header={header} footer={footer} />;
 }
 
-// Backward-compatible alias
 export const AppListUpdatesView = AppListUpdates;
 export default AppListUpdates;

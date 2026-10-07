@@ -49,7 +49,7 @@ export function AppItemGrid({ item }) {
         </div>
       </div>
 
-      {/* Single Icon Action Button (0px gap with column, no card hover highlight) */}
+      {/* Single Icon Action Button */}
       <div
         className="shrink-0 flex items-center"
         onClick={(e) => e.stopPropagation()}
@@ -112,5 +112,5 @@ export function AppItemGrid({ item }) {
   );
 }
 
-// Backward-compatible alias
 export const AppCard = AppItemGrid;
+export default AppItemGrid;

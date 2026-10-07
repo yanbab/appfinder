@@ -1,7 +1,21 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
+import React, { type ReactNode } from 'react';
+import { Button, type ButtonProps } from './Button';
 import { useShellStore } from '@/stores';
 import { cn } from '@/hooks/utils';
+
+export interface ShellButtonProps extends Omit<ButtonProps, 'title'> {
+  icon?: ReactNode;
+  children?: ReactNode;
+  text?: ReactNode;
+  title?: ReactNode;
+  tooltip?: ReactNode;
+  variant?: string;
+  size?: string;
+  badge?: ReactNode;
+  className?: string;
+  active?: boolean;
+  selected?: boolean;
+}
 
 export function ShellButton({
   icon,
@@ -16,7 +30,7 @@ export function ShellButton({
   active,
   selected,
   ...props
-}) {
+}: ShellButtonProps) {
   const __ = useShellStore((s) => s.__);
 
   const content = children || text;
@@ -24,7 +38,7 @@ export function ShellButton({
 
   const rawTitle = title || tooltip;
   const resolvedTitle = rawTitle
-    ? (typeof rawTitle === 'string' ? __(rawTitle) : rawTitle)
+    ? (typeof rawTitle === 'string' ? __(rawTitle) : String(rawTitle))
     : undefined;
 
   // Dedicated sidebar button implementation
@@ -92,7 +106,7 @@ export function ShellButton({
     <Button
       variant={resolvedVariant}
       size={resolvedSize}
-      title={isIconOnly ? resolvedTitle : title}
+      title={isIconOnly ? resolvedTitle : (typeof title === 'string' ? title : undefined)}
       className={cn(
         iconOnlyStyles,
         activeStyles,

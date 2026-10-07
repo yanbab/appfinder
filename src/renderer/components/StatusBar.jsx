@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTermStore, useShellStore } from '@/stores';
-import { ShellButton, ShellIcon } from '@/components/shell/components';
+import { ShellButton } from './ShellButton';
+import { ShellIcon } from './ShellIcon';
 
 export function StatusBar() {
   const activeTaskId = useTermStore((s) => s.activeTaskId);
@@ -56,3 +57,5 @@ export function StatusBar() {
     </footer>
   );
 }
+
+export default StatusBar;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppStore, useShellStore } from '@/stores';
-import { ShellIcon } from '@/components/shell/components';
-import { Input } from '@/components/ui/input';
+import { ShellIcon } from './ShellIcon';
+import { Input } from './Input';
 
 export function SearchInput({ className = '' }) {
   const search = useAppStore((s) => s.search);
@@ -41,3 +41,5 @@ export function SearchInput({ className = '' }) {
     </div>
   );
 }
+
+export default SearchInput;

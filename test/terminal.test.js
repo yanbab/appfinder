@@ -8,7 +8,7 @@ let formatStatusBarMessage;
 let extractTaskError;
 let formatReason;
 test.before(async () => {
-  const utils = await import('../src/renderer/hooks/utils.js');
+  const utils = await import('../src/renderer/hooks/utils.ts');
   formatStatusBarMessage = utils.formatStatusBarMessage;
   extractTaskError = utils.extractTaskError;
   formatReason = utils.formatReason;

@@ -1,5 +1,6 @@
 import React, { Component, type ReactNode, type ErrorInfo } from 'react';
-import { ShellButton, ShellIcon } from '@/components/shell/components';
+import { ShellButton } from './ShellButton';
+import { ShellIcon } from './ShellIcon';
 
 export interface ErrorProps {
   children?: ReactNode;

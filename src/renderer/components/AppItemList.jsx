@@ -125,5 +125,5 @@ export function AppItemList({ item }) {
   );
 }
 
-// Backward-compatible alias
 export const AppRow = AppItemList;
+export default AppItemList;

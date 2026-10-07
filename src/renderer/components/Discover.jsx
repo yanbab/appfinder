@@ -6,9 +6,9 @@ import {
   selectTopInstalledItems,
   selectRecentItems
 } from '@/stores';
-import { AppIcon } from '@/components/shell/components/AppIcon';
-import { ShellIcon } from '@/components/shell/components';
-import { AppItemSlider } from '@/components/shell/components/AppItemSlider';
+import { AppIcon } from './AppIcon';
+import { ShellIcon } from './ShellIcon';
+import { AppItemSlider } from './AppItemSlider';
 import { getAppName } from '@/hooks/utils';
 
 export function Discover() {
@@ -281,5 +281,5 @@ export function Discover() {
   );
 }
 
-// Backward-compatible alias
 export const DiscoverView = Discover;
+export default Discover;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTermStore, useShellStore, useAppStore } from '@/stores';
-import { ShellButton, ShellIcon } from '@/components/shell/components';
-import { Input } from '@/components/ui/input';
+import { ShellButton } from './ShellButton';
+import { ShellIcon } from './ShellIcon';
+import { Input } from './Input';
 import { getAppName } from '@/hooks/utils';
 
 export function PasswordModal() {
@@ -149,3 +150,5 @@ export function PasswordModal() {
     </dialog>
   );
 }
+
+export default PasswordModal;

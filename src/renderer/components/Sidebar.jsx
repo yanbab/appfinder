@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { useShellStore, useAppStore, selectFilteredItems } from '@/stores';
-import { ShellButton, ShellIcon, NavGroup } from '@/components/shell/components';
+import { ShellButton } from './ShellButton';
+import { ShellIcon } from './ShellIcon';
+import { NavGroup } from './NavGroup';
 import { SearchInput } from './SearchInput';
 
 export function Sidebar() {
@@ -106,6 +108,5 @@ export function Sidebar() {
   );
 }
 
-// Backward-compatible alias
 export const CategoryList = Sidebar;
 export default Sidebar;

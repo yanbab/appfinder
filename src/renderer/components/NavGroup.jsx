@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShellIcon } from '@/components/shell/components/ShellIcon';
+import { ShellIcon } from './ShellIcon';
 import { useShellStore } from '@/stores';
 import { cn } from '@/hooks/utils';
 
