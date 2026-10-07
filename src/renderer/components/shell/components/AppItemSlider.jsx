@@ -1,22 +1,20 @@
 import React, { useEffect } from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShellStore, useAppStore, useTermStore } from '@/stores';
 import { AppIcon } from './AppIcon';
 import { Button } from '@/components/ui/button';
 import { getAppName, name2color } from '@/hooks/utils';
 import { Loader2 } from 'lucide-react';
 
 export function AppItemSlider() {
-  const {
-    featuredItems,
-    slideIndex,
-    nextSlide,
-    openAppInfo,
-    installed,
-    runningTasks,
-    outdatedMap,
-    startAction,
-    __,
-  } = useShell();
+  const featuredItems = useAppStore((s) => s.featuredItems);
+  const slideIndex = useShellStore((s) => s.slideIndex);
+  const nextSlide = useShellStore((s) => s.nextSlide);
+  const openAppInfo = useShellStore((s) => s.openAppInfo);
+  const __ = useShellStore((s) => s.__);
+  const installed = useAppStore((s) => s.installed);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
+  const runningTasks = useTermStore((s) => s.runningTasks);
+  const startAction = useTermStore((s) => s.startAction);
 
   const [isPaused, setIsPaused] = React.useState(false);
 

@@ -56,12 +56,10 @@ function getCasks() {
         let thirdCategory = null;
         if (catInfo.secondary && Array.isArray(catInfo.secondary)) {
             if (catInfo.secondary[0]) {
-                const secCatKey = catInfo.secondary[0];
-                secondCategory = categoriesMap[secCatKey] ? categoriesMap[secCatKey].displayName : secCatKey;
+                secondCategory = catInfo.secondary[0];
             }
             if (catInfo.secondary[1]) {
-                const thirdCatKey = catInfo.secondary[1];
-                thirdCategory = categoriesMap[thirdCatKey] ? categoriesMap[thirdCatKey].displayName : thirdCatKey;
+                thirdCategory = catInfo.secondary[1];
             }
         }
 

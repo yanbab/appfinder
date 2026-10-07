@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useTermStore, useShellStore, useAppStore } from '@/stores';
 import { ShellButton, ShellIcon } from '@/components/shell/components';
 import { Input } from '@/components/ui/input';
 import { getAppName } from '@/hooks/utils';
 
 export function PasswordModal() {
-  const {
-    showPasswordModal,
-    submitPassword,
-    cancelPassword,
-    activeTaskToken,
-    activeTaskAction,
-    items,
-    __,
-  } = useShell();
+  const showPasswordModal = useTermStore((s) => s.showPasswordModal);
+  const submitPassword = useTermStore((s) => s.submitPassword);
+  const cancelPassword = useTermStore((s) => s.cancelPassword);
+  const activeTaskToken = useTermStore((s) => s.activeTaskToken);
+  const activeTaskAction = useTermStore((s) => s.activeTaskAction);
+
+  const items = useAppStore((s) => s.items);
+  const __ = useShellStore((s) => s.__);
 
   const [password, setPassword] = useState('');
   const dialogRef = useRef(null);

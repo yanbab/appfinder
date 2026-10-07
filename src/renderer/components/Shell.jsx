@@ -1,5 +1,5 @@
 import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShellStore, useAppStore } from '@/stores';
 import {
   Sidebar,
   TitleBar,
@@ -14,7 +14,9 @@ import { useNativeContextMenu } from '@/hooks/useNativeContextMenu';
 import { useKeyboardNav } from '@/hooks/useKeyboardNav';
 
 export function Shell() {
-  const { currentTab, search, showTerminal } = useShell();
+  const currentTab = useShellStore((s) => s.currentTab);
+  const showTerminal = useShellStore((s) => s.showTerminal);
+  const search = useAppStore((s) => s.search);
 
   // Keyboard navigation & Native context menus
   useKeyboardNav();

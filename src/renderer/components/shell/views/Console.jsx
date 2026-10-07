@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useTermStore, useShellStore } from '@/stores';
 
 export function Console() {
-  const {
-    showTerminal,
-    registerTerminalSubscriber,
-    activeTaskId,
-    __,
-  } = useShell();
+  const showTerminal = useShellStore((s) => s.showTerminal);
+  const __ = useShellStore((s) => s.__);
+  const registerTerminalSubscriber = useTermStore((s) => s.registerTerminalSubscriber);
+  const activeTaskId = useTermStore((s) => s.activeTaskId);
 
   const [logs, setLogs] = useState('');
   const containerRef = useRef(null);

@@ -116,12 +116,19 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
 
   console.log(`[TASK-RUNNER (${taskId})]:`, execCmd, execArgs);
 
-  const term = pty.spawn(execCmd, execArgs, {
-    cwd,
-    env,
-    cols: 80,
-    rows: 24
-  });
+  let term;
+  try {
+    term = pty.spawn(execCmd, execArgs, {
+      cwd,
+      env,
+      cols: 80,
+      rows: 24
+    });
+  } catch (err) {
+    console.error(`[TASK-RUNNER SPAWN ERROR (${taskId})]:`, err);
+    onComplete?.({ taskId, code: 1, error: err.message, cancelled: false });
+    return;
+  }
 
   const buffer = new TerminalBuffer();
   const handledPrompts = new Set();
@@ -196,17 +203,19 @@ function runTask({ taskId, command, args, shell, shellArgs, cwd, env }, callback
 function cancelTask(taskId, onComplete) {
   const task = activeTasks.get(taskId);
   if (task) {
-    task.kill('SIGTERM');
-    setTimeout(() => {
-      if (activeTasks.has(taskId)) {
-        task.kill('SIGKILL');
-        activeTasks.delete(taskId);
-      }
-    }, 1500);
+    try {
+      task.kill('SIGTERM');
+      setTimeout(() => {
+        if (activeTasks.has(taskId)) {
+          try { task.kill('SIGKILL'); } catch (_) {}
+          activeTasks.delete(taskId);
+        }
+      }, 1500);
+    } catch (_) {}
 
     activeTasks.delete(taskId);
-    onComplete?.({ taskId, code: -1, cancelled: true });
   }
+  onComplete?.({ taskId, code: -1, cancelled: true });
 }
 
 function writeTaskInput(taskId, text) {

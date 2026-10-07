@@ -1,20 +1,22 @@
-import React, { useRef } from 'react';
-import { useShell } from '@/hooks/useShell';
+import React, { useRef, useMemo } from 'react';
+import { useAppStore, useShellStore, selectFilteredItems } from '@/stores';
 import { AppItemGrid } from '@/components/shell/components/AppItemGrid';
 import { AppItemList } from '@/components/shell/components/AppItemList';
 import { Empty } from './Empty';
 
 export function AppList({ header, footer }) {
-  const {
-    displayedItems,
-    filteredCount,
-    loadMore,
-    loading,
-    currentTab,
-    updatesCount,
-    viewMode,
-    __,
-  } = useShell();
+  const currentTab = useShellStore((s) => s.currentTab);
+  const viewMode = useShellStore((s) => s.viewMode);
+  const __ = useShellStore((s) => s.__);
+
+  const loading = useAppStore((s) => s.loading);
+  const displayedCount = useAppStore((s) => s.displayedCount);
+  const loadMore = useAppStore((s) => s.loadMore);
+  const appState = useAppStore();
+
+  const filteredItems = useMemo(() => selectFilteredItems(appState, currentTab), [appState, currentTab]);
+  const filteredCount = filteredItems.length;
+  const displayedItems = useMemo(() => filteredItems.slice(0, displayedCount), [filteredItems, displayedCount]);
 
   const containerRef = useRef(null);
 

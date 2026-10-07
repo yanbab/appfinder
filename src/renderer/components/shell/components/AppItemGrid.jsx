@@ -1,5 +1,5 @@
 import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShellStore, useAppStore } from '@/stores';
 import { useAppItemState } from '@/hooks/useAppItemState';
 import { AppIcon } from './AppIcon';
 import { ShellButton } from './ShellButton';
@@ -8,7 +8,10 @@ import { getAppName, formatVersion } from '@/hooks/utils';
 import { Loader2 } from 'lucide-react';
 
 export function AppItemGrid({ item }) {
-  const { openAppInfo, selectedApp, outdatedMap, currentTab } = useShell();
+  const openAppInfo = useShellStore((s) => s.openAppInfo);
+  const selectedApp = useShellStore((s) => s.selectedApp);
+  const currentTab = useShellStore((s) => s.currentTab);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
   const { isRunning, isInstalled, isOutdated, canOpen, install, upgrade, uninstall, open } = useAppItemState(item);
 
   const isSelected = selectedApp?.token === item.token;

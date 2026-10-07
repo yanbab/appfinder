@@ -4,7 +4,9 @@ import "./styles/index.css";
 import { Shell } from "./components/Shell.jsx";
 import { Settings } from "./components/Settings.jsx";
 import { ThemeProvider } from "@/hooks/useTheme.jsx";
-import { ShellProvider } from "@/hooks/useShell.jsx";
+import { initStoreListeners } from "@/stores";
+
+initStoreListeners();
 
 const params = new URLSearchParams(window.location.search);
 const isSettings = params.get("view") === "settings" || window.location.hash === "#settings";
@@ -14,13 +16,7 @@ if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
       <ThemeProvider>
-        {isSettings ? (
-          <Settings />
-        ) : (
-          <ShellProvider>
-            <Shell />
-          </ShellProvider>
-        )}
+        {isSettings ? <Settings /> : <Shell />}
       </ThemeProvider>
     </StrictMode>
   );

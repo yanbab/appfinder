@@ -1,7 +1,10 @@
-import { useShell } from './useShell';
+import { useAppStore, useTermStore } from '@/stores';
 
 export function useAppItemState(item) {
-  const { installed, outdatedMap, runningTasks, startAction } = useShell();
+  const installed = useAppStore((s) => s.installed);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
+  const runningTasks = useTermStore((s) => s.runningTasks);
+  const startAction = useTermStore((s) => s.startAction);
 
   const isRunning = Boolean(runningTasks?.[item?.token]);
   const isInstalled = Boolean(installed?.includes(item?.token));

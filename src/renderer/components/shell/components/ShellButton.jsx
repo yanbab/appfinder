@@ -1,8 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useShell } from '@/hooks/useShell';
+import { useShellStore } from '@/stores';
 import { cn } from '@/hooks/utils';
-
 
 export function ShellButton({
   icon,
@@ -18,13 +17,7 @@ export function ShellButton({
   selected,
   ...props
 }) {
-  let __ = (k) => k;
-  try {
-    const shell = useShell();
-    if (shell?.__) __ = shell.__;
-  } catch {
-    // fallback if used outside ShellProvider
-  }
+  const __ = useShellStore((s) => s.__);
 
   const content = children || text;
   const isSelected = Boolean(active || selected);

@@ -1,28 +1,34 @@
-import React, { useState } from 'react';
-import { useShell } from '@/hooks/useShell';
+import React, { useState, useMemo } from 'react';
+import {
+  useAppStore,
+  useShellStore,
+  selectFeaturedItems,
+  selectTopInstalledItems,
+  selectRecentItems
+} from '@/stores';
 import { AppIcon } from '@/components/shell/components/AppIcon';
 import { ShellIcon } from '@/components/shell/components';
 import { AppItemSlider } from '@/components/shell/components/AppItemSlider';
-
-
 import { getAppName } from '@/hooks/utils';
 import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 
 export function Discover() {
-  const {
-    topInstalledItems,
-    recentItems,
-    categories,
-    selectTab,
-    setOrder,
-    openAppInfo,
-    allAppsCount,
-    installed,
-    updatesCount,
-    loading,
-    featuredItems,
-    __,
-  } = useShell();
+  const selectTab = useShellStore((s) => s.selectTab);
+  const openAppInfo = useShellStore((s) => s.openAppInfo);
+  const __ = useShellStore((s) => s.__);
+
+  const items = useAppStore((s) => s.items);
+  const categories = useAppStore((s) => s.categories);
+  const installed = useAppStore((s) => s.installed);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
+  const loading = useAppStore((s) => s.loading);
+  const setOrder = useAppStore((s) => s.setOrder);
+
+  const featuredItems = useMemo(() => selectFeaturedItems(items), [items]);
+  const topInstalledItems = useMemo(() => selectTopInstalledItems(items), [items]);
+  const recentItems = useMemo(() => selectRecentItems(items), [items]);
+  const allAppsCount = useMemo(() => items.filter((c) => c.category !== 'font').length, [items]);
+  const updatesCount = useMemo(() => Object.keys(outdatedMap).length, [outdatedMap]);
 
   const [showAllCategories, setShowAllCategories] = useState(false);
 

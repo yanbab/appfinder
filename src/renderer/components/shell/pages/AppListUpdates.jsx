@@ -1,5 +1,5 @@
-import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import React, { useMemo } from 'react';
+import { useAppStore, useTermStore, useShellStore, selectFilteredItems } from '@/stores';
 import { AppList } from './AppList';
 import { Empty } from './Empty';
 import { ShellButton, ShellIcon } from '@/components/shell/components';
@@ -33,14 +33,14 @@ function formatLastChecked(date, __) {
 }
 
 export function AppListUpdates() {
-  const {
-    filteredCount,
-    startAction,
-    runningTasks,
-    isRefreshing,
-    lastCheckedTime,
-    __,
-  } = useShell();
+  const lastCheckedTime = useAppStore((s) => s.lastCheckedTime);
+  const appState = useAppStore();
+  const runningTasks = useTermStore((s) => s.runningTasks);
+  const startAction = useTermStore((s) => s.startAction);
+  const __ = useShellStore((s) => s.__);
+
+  const filteredItems = useMemo(() => selectFilteredItems(appState, 'updates'), [appState]);
+  const filteredCount = filteredItems.length;
 
   const isRefreshRunning = Boolean(runningTasks['refresh']) || isRefreshing;
   const formattedLastChecked = formatLastChecked(lastCheckedTime, __);

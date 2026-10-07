@@ -1,0 +1,205 @@
+import { createStore } from './createStore';
+
+export const CHUNK_SIZE = 50;
+export const FEATURED_TOKENS = new Set([
+  'onlyoffice', 'iina', 'visual-studio-code', 'figma', 'rectangle', 'spotify', 'raycast', 'obsidian', 'zed'
+]);
+
+export function sortCategories(cats, messages) {
+  const translate = (key) => (messages && messages[key] !== undefined) ? messages[key] : key;
+  return [...cats].sort((a, b) => {
+    if (a.name === 'other') return 1;
+    if (b.name === 'other') return -1;
+    if (a.name === 'font') return 1;
+    if (b.name === 'font') return -1;
+    return translate(a.displayName || '').localeCompare(translate(b.displayName || ''));
+  });
+}
+
+export function parseUpdatesMap(upds) {
+  const casks = upds?.casks || (Array.isArray(upds) ? upds : []);
+  const map = {};
+  for (const item of casks) {
+    const token = item.token || item.name;
+    map[token] = {
+      installedVersion: item.installed_versions?.[0] || item.installed_version || null,
+      currentVersion: item.current_version || item.latest_version
+    };
+  }
+  return map;
+}
+
+export const useAppStore = createStore((set, get) => ({
+  // State
+  items: [],
+  categories: [],
+  rawCategories: [],
+  installed: [],
+  installedVersions: {},
+  outdatedMap: {},
+  lastCheckedTime: null,
+  loading: true,
+  search: '',
+  order: 'popularity',
+  displayedCount: CHUNK_SIZE,
+
+  // Actions
+  setSearch: (search) => set({ search, displayedCount: CHUNK_SIZE }),
+  setOrder: (order) => set({ order }),
+  setDisplayedCount: (displayedCount) => set({ displayedCount }),
+  loadMore: () => set((state) => ({ displayedCount: state.displayedCount + CHUNK_SIZE })),
+  setItems: (items) => set({ items }),
+  setCategories: (categories) => set({ categories }),
+
+  initCatalog: async () => {
+    if (!window.ipc) return;
+    try {
+      const [cats, casks] = await Promise.all([
+        window.ipc.getCategories?.(),
+        window.ipc.getCasks?.()
+      ]);
+      set({
+        rawCategories: cats || [],
+        categories: cats || [],
+        items: casks || [],
+        loading: false
+      });
+      get().refreshInstalled();
+      get().refreshUpdates(false);
+    } catch (e) {
+      console.error('[useAppStore] initCatalog failed:', e);
+      set({ loading: false });
+    }
+  },
+
+  syncCategoriesWithMessages: (messages) => {
+    const { rawCategories } = get();
+    if (rawCategories.length > 0) {
+      set({ categories: sortCategories(rawCategories, messages) });
+    }
+  },
+
+  refreshInstalled: async () => {
+    if (!window.ipc?.getInstalled) return;
+    try {
+      const inst = await window.ipc.getInstalled();
+      set({
+        installed: Array.isArray(inst) ? inst : (inst?.tokens || inst?.list || []),
+        installedVersions: inst?.versions || {}
+      });
+    } catch (_) {}
+  },
+
+  refreshUpdates: async (force = false) => {
+    if (!window.ipc?.getUpdates) return;
+    try {
+      const upds = await window.ipc.getUpdates(force);
+      set({
+        outdatedMap: parseUpdatesMap(upds),
+        lastCheckedTime: new Date()
+      });
+    } catch (_) {}
+  }
+}));
+
+// Memoized/Pure selector helpers
+export function selectFilteredItems(state, currentTab) {
+  const { items, search, order, installed, outdatedMap, categories } = state;
+  let list = [];
+
+  if (currentTab === 'discover') {
+    list = items.filter(c => c.count > 0);
+  } else if (currentTab === 'all-apps') {
+    list = items.filter(c => c.category !== 'font');
+  } else if (currentTab === 'installed') {
+    list = items.filter(c => installed.includes(c.token));
+  } else if (currentTab === 'updates') {
+    list = items.filter(c => outdatedMap[c.token] !== undefined);
+  } else {
+    const catObj = categories.find(c => c.name === currentTab || (c.displayName && c.displayName.toLowerCase() === currentTab.toLowerCase()));
+    const targetName = currentTab.toLowerCase();
+    const targetDisplay = (catObj?.displayName || '').toLowerCase();
+
+    list = items.filter(item => {
+      const itemCats = [item.category, item.secondCategory, item.thirdCategory, item.secondaryCategory, ...(item.categories || [])];
+      return itemCats.some(c => {
+        if (!c) return false;
+        const s = String(c).toLowerCase().trim();
+        if (s === targetName || (targetDisplay && s === targetDisplay)) return true;
+        const m = categories.find(cat => cat.name?.toLowerCase() === s || cat.displayName?.toLowerCase() === s);
+        return m && (m.name?.toLowerCase() === targetName || (targetDisplay && m.displayName?.toLowerCase() === targetDisplay));
+      });
+    });
+  }
+
+  if (search && search.trim()) {
+    const q = search.trim().toLowerCase();
+    list = list.filter(c =>
+      (c.name && c.name.toLowerCase().includes(q)) ||
+      (c.token && c.token.toLowerCase().includes(q)) ||
+      (c.app && c.app.toLowerCase().includes(q)) ||
+      (c.desc && c.desc.toLowerCase().includes(q))
+    );
+    list.sort((a, b) => {
+      const aName = (a.name || a.token).toLowerCase();
+      const bName = (b.name || b.token).toLowerCase();
+      const aStarts = aName.startsWith(q) || a.token.toLowerCase().startsWith(q);
+      const bStarts = bName.startsWith(q) || b.token.toLowerCase().startsWith(q);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+      if (order === 'popularity') return (b.count || 0) - (a.count || 0);
+      if (order === 'date') return (b.added || '').localeCompare(a.added || '');
+      return aName.localeCompare(bName);
+    });
+  } else {
+    if (order === 'popularity') {
+      list.sort((a, b) => (b.count || 0) - (a.count || 0));
+    } else if (order === 'date') {
+      list.sort((a, b) => (b.added || '').localeCompare(a.added || ''));
+    } else if (order === 'name') {
+      list.sort((a, b) => (a.name || a.token).localeCompare(b.name || b.token));
+    }
+  }
+
+  return list;
+}
+
+export function selectFeaturedItems(items) {
+  return items.filter(c => FEATURED_TOKENS.has(c.token));
+}
+
+export function selectTopInstalledItems(items) {
+  const sorted = items
+    .filter(c => c.count > 0 && c.iconUrl && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
+    .sort((a, b) => (b.count || 0) - (a.count || 0));
+
+  const top = [];
+  const seen = new Set();
+  for (const item of sorted) {
+    const cat = item.category || 'other';
+    if (!seen.has(cat)) {
+      seen.add(cat);
+      top.push(item);
+      if (top.length >= 6) break;
+    }
+  }
+  return top;
+}
+
+export function selectRecentItems(items) {
+  const sorted = items
+    .filter(c => c.added && c.iconUrl && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
+    .sort((a, b) => (b.added || '').localeCompare(a.added || ''));
+
+  const top = [];
+  const seen = new Set();
+  for (const item of sorted) {
+    const cat = item.category || 'other';
+    if (!seen.has(cat)) {
+      seen.add(cat);
+      top.push(item);
+      if (top.length >= 6) break;
+    }
+  }
+  return top;
+}

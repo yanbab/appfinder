@@ -25,11 +25,11 @@ echo "==> Updating analytics (365d)..."
 curl -s -L -o "$FETCH_DIR/365d.json" https://formulae.brew.sh/api/analytics/cask-install/homebrew-cask/365d.json
 
 # Get categories
-echo "==> Updating categories..."
+echo "==> Updating CaskFlow applications..."
 curl -s -L -o "$FETCH_DIR/categories.json" https://github.com/alielsokary/CaskFlow/releases/latest/download/categories.json
 
 # Get dates
-echo "==> Updating recent applications..."
+echo "==> Updating CaskFlow dates..."
 curl -s -L -o "$FETCH_DIR/added_dates.json" https://github.com/alielsokary/CaskFlow/releases/latest/download/added_dates.json
 
 # Get apps.json

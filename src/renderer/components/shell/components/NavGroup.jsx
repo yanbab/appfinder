@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { useShell } from '@/hooks/useShell';
+import { useShellStore } from '@/stores';
 import { cn } from '@/hooks/utils';
 
 export function NavGroup({
@@ -11,13 +11,7 @@ export function NavGroup({
   ...props
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  let __ = (k) => k;
-  try {
-    const shell = useShell();
-    if (shell?.__) __ = shell.__;
-  } catch {
-    // fallback if outside ShellProvider
-  }
+  const __ = useShellStore((s) => s.__);
 
   const hasTitle = Boolean(title && (typeof title === 'string' ? title.trim() : true));
 

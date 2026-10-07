@@ -1,29 +1,19 @@
 import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShellStore, useAppStore } from '@/stores';
 import { ShellButton, ShellIcon } from '@/components/shell/components';
 import { LayoutGrid, List } from 'lucide-react';
 
 export function TitleBar() {
-  const {
-    currentTab,
-    categories,
-    order,
-    setOrder,
-    viewMode,
-    setViewMode,
-    toggleSidebar,
-    showSidebar,
-    __,
-  } = useShell();
+  const currentTab = useShellStore((s) => s.currentTab);
+  const viewMode = useShellStore((s) => s.viewMode);
+  const setViewMode = useShellStore((s) => s.setViewMode);
+  const showSidebar = useShellStore((s) => s.showSidebar);
+  const toggleSidebar = useShellStore((s) => s.toggleSidebar);
+  const getPageTitle = useShellStore((s) => s.getPageTitle);
+  const __ = useShellStore((s) => s.__);
 
-  const getPageTitle = () => {
-    if (currentTab === 'discover') return __('Explore');
-    if (currentTab === 'all-apps') return __('All Apps');
-    if (currentTab === 'installed') return __('Installed');
-    if (currentTab === 'updates') return __('Updates');
-    const cat = categories.find(c => c.name === currentTab);
-    return cat ? __(cat.displayName) : __('Explore');
-  };
+  const order = useAppStore((s) => s.order);
+  const setOrder = useAppStore((s) => s.setOrder);
 
   return (
     <header className="app-header h-[52px] shrink-0 flex items-center justify-between border-b border-border bg-card select-none [-webkit-app-region:drag] z-10 gap-3 px-3.5">

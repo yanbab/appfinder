@@ -1,22 +1,20 @@
 import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useTermStore, useShellStore } from '@/stores';
 import { ShellButton, ShellIcon } from '@/components/shell/components';
 import { Loader2 } from 'lucide-react';
 
 export function StatusBar() {
-  const {
-    activeTaskId,
-    drawerTitle,
-    cancelAction,
-    showTerminal,
-    toggleTerminal,
-    showDrawer,
-    alwaysShowStatusBar,
-    __,
-  } = useShell();
+  const activeTaskId = useTermStore((s) => s.activeTaskId);
+  const drawerTitle = useTermStore((s) => s.drawerTitle);
+  const cancelAction = useTermStore((s) => s.cancelAction);
+
+  const showTerminal = useShellStore((s) => s.showTerminal);
+  const toggleTerminal = useShellStore((s) => s.toggleTerminal);
+  const alwaysShowStatusBar = useShellStore((s) => s.alwaysShowStatusBar);
+  const __ = useShellStore((s) => s.__);
 
   // If there's no active task and alwaysShowStatusBar is false, and drawer is hidden
-  const isVisible = showDrawer || alwaysShowStatusBar || activeTaskId || showTerminal;
+  const isVisible = Boolean(activeTaskId) || alwaysShowStatusBar || showTerminal;
   if (!isVisible) return null;
 
   return (

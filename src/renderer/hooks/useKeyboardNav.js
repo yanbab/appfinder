@@ -1,26 +1,30 @@
-import { useEffect } from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useEffect, useMemo } from 'react';
+import { useShellStore, useAppStore, useTermStore, selectFilteredItems } from '@/stores';
 
 export function useKeyboardNav() {
-  const {
-    currentTab,
-    selectTab,
-    categories,
-    search,
-    setSearch,
-    showSidebar,
-    setShowSidebar,
-    selectedApp,
-    closeAppInfo,
-    openAppInfo,
-    showPasswordModal,
-    displayedItems,
-    filteredCount,
-    loadMore,
-    nextSlide,
-    prevSlide,
-    setViewMode,
-  } = useShell();
+  const currentTab = useShellStore((s) => s.currentTab);
+  const selectTab = useShellStore((s) => s.selectTab);
+  const showSidebar = useShellStore((s) => s.showSidebar);
+  const setShowSidebar = useShellStore((s) => s.setShowSidebar);
+  const selectedApp = useShellStore((s) => s.selectedApp);
+  const closeAppInfo = useShellStore((s) => s.closeAppInfo);
+  const openAppInfo = useShellStore((s) => s.openAppInfo);
+  const nextSlide = useShellStore((s) => s.nextSlide);
+  const prevSlide = useShellStore((s) => s.prevSlide);
+  const setViewMode = useShellStore((s) => s.setViewMode);
+
+  const categories = useAppStore((s) => s.categories);
+  const search = useAppStore((s) => s.search);
+  const setSearch = useAppStore((s) => s.setSearch);
+  const displayedCount = useAppStore((s) => s.displayedCount);
+  const loadMore = useAppStore((s) => s.loadMore);
+  const appState = useAppStore();
+
+  const showPasswordModal = useTermStore((s) => s.showPasswordModal);
+
+  const filteredItems = useMemo(() => selectFilteredItems(appState, currentTab), [appState, currentTab]);
+  const filteredCount = filteredItems.length;
+  const displayedItems = useMemo(() => filteredItems.slice(0, displayedCount), [filteredItems, displayedCount]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {

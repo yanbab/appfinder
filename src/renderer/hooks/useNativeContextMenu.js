@@ -1,9 +1,13 @@
 import { useEffect } from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useAppStore, useTermStore } from '@/stores';
 import { getAppName } from '@/hooks/utils';
 
 export function useNativeContextMenu() {
-  const { items, installed, outdatedMap, runningTasks, startAction } = useShell();
+  const items = useAppStore((s) => s.items);
+  const installed = useAppStore((s) => s.installed);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
+  const runningTasks = useTermStore((s) => s.runningTasks);
+  const startAction = useTermStore((s) => s.startAction);
 
   useEffect(() => {
     const handleContextMenu = (e) => {

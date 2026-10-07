@@ -148,7 +148,7 @@ async function main() {
 
   console.log(`\n📌 Committing and tagging release...`);
   run(`git add package.json CHANGELOG.md data/`);
-  
+
   // Commit if anything is staged
   const staged = runOutput('git diff --cached --name-only');
   if (staged) {

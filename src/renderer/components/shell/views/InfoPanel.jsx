@@ -1,5 +1,5 @@
 import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShellStore, useTermStore, useAppStore } from '@/stores';
 import { AppIcon, ShellButton, ShellIcon } from '@/components/shell/components';
 
 import {
@@ -18,21 +18,21 @@ import {
 import { X, ExternalLink, AlertTriangle, AlertOctagon, Info, Check, Loader2, ArrowDown } from 'lucide-react';
 
 export function InfoPanel() {
-  const {
-    selectedApp,
-    closeAppInfo,
-    openAppInfo,
-    items,
-    appDetails,
-    loadingAppDetails,
-    installed,
-    installedVersions,
-    outdatedMap,
-    runningTasks,
-    categories,
-    startAction,
-    __,
-  } = useShell();
+  const selectedApp = useShellStore((s) => s.selectedApp);
+  const appDetails = useShellStore((s) => s.appDetails);
+  const loadingAppDetails = useShellStore((s) => s.loadingAppDetails);
+  const closeAppInfo = useShellStore((s) => s.closeAppInfo);
+  const openAppInfo = useShellStore((s) => s.openAppInfo);
+  const __ = useShellStore((s) => s.__);
+
+  const runningTasks = useTermStore((s) => s.runningTasks);
+  const startAction = useTermStore((s) => s.startAction);
+
+  const items = useAppStore((s) => s.items);
+  const installed = useAppStore((s) => s.installed);
+  const installedVersions = useAppStore((s) => s.installedVersions);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
+  const categories = useAppStore((s) => s.categories);
 
   const isOpen = Boolean(selectedApp);
 
@@ -69,7 +69,7 @@ export function InfoPanel() {
   const depFormulae = appDetails?.dependencies?.formulae || [];
   const caskStatus = appDetails?.status || { isDisabled: false, isDeprecated: false };
 
-  // App categories
+  // App categories (up to 3)
   const appCategories = (() => {
     const raw = [
       selectedApp.category,
@@ -77,12 +77,23 @@ export function InfoPanel() {
       selectedApp.thirdCategory,
       selectedApp.secondaryCategory,
       ...(selectedApp.categories || []),
+      ...(appDetails?.categories || []),
     ].filter(Boolean);
 
-    const unique = Array.from(new Set(raw));
+    const unique = Array.from(new Set(raw.map((k) => String(k).trim())));
     return unique
-      .map((name) => categories.find((c) => c.name.toLowerCase() === String(name).toLowerCase()))
-      .filter(Boolean);
+      .map((name) => {
+        const found = categories.find(
+          (c) => c.name.toLowerCase() === name.toLowerCase() || (c.displayName && c.displayName.toLowerCase() === name.toLowerCase())
+        );
+        return found || {
+          name,
+          displayName: name,
+          symbolName: 'square.grid.2x2',
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 3);
   })();
 
   const panelRef = React.useRef(null);
@@ -91,10 +102,9 @@ export function InfoPanel() {
   React.useEffect(() => {
     if (isOpen) {
       previousActiveElementRef.current = document.activeElement;
-      // Focus close button or panel on open
+      // Focus panel container for keyboard events without outlining close button
       setTimeout(() => {
-        const firstFocusable = panelRef.current?.querySelector('button, a, [tabindex]:not([tabindex="-1"])');
-        firstFocusable?.focus?.();
+        panelRef.current?.focus?.();
       }, 50);
     } else if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
       previousActiveElementRef.current.focus();
@@ -136,6 +146,7 @@ export function InfoPanel() {
     >
       <DrawerContent
         ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={name || __('Infos')}
@@ -148,7 +159,7 @@ export function InfoPanel() {
             <ShellButton
               icon={<X className="size-[18px]" />}
               onClick={closeAppInfo}
-              className="rounded-sm shrink-0 [-webkit-app-region:no-drag]"
+              className="rounded-sm shrink-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-app-region:no-drag]"
               title={__('Close')}
               aria-label={__('Close')}
             />
@@ -184,7 +195,200 @@ export function InfoPanel() {
             </div>
           </div>
 
-          {/* Cask Status Alert (Disabled / Deprecated) */}
+          {/* Primary Actions */}
+          <div className="flex items-center gap-2 pt-0.5">
+            {isRunning ? (
+              <ShellButton className="w-full gap-2" variant="secondary" disabled icon={<Loader2 className="size-3.5 animate-spin" />}>
+                {__('Working...')}
+              </ShellButton>
+            ) : (
+              <>
+                {isOutdated && (
+                  <ShellButton
+                    className="flex-1"
+                    variant="default"
+                    onClick={() => startAction('upgrade', selectedApp.token)}
+                  >
+                    {__('Upgrade')}
+                  </ShellButton>
+                )}
+
+                {isInstalled && selectedApp.app && !isOutdated && (
+                  <ShellButton
+                    className="flex-1"
+                    variant="default"
+                    onClick={() => startAction('open', selectedApp.token, selectedApp.app)}
+                  >
+                    {__('Open')}
+                  </ShellButton>
+                )}
+
+                {isInstalled && (
+                  <ShellButton
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => startAction('uninstall', selectedApp.token)}
+                  >
+                    {__('Delete')}
+                  </ShellButton>
+                )}
+
+                {!isInstalled && caskStatus.isDisabled ? (
+                  <ShellButton
+                    className="w-full opacity-60 cursor-not-allowed"
+                    variant="secondary"
+                    disabled
+                    title={formatReason(caskStatus.disableReason, __) || __('Cask Disabled')}
+                  >
+                    {__('Disabled')}
+                  </ShellButton>
+                ) : !isInstalled ? (
+                  <ShellButton
+                    className="w-full"
+                    variant="default"
+                    onClick={() => startAction('install', selectedApp.token)}
+                  >
+                    {__('Install')}
+                  </ShellButton>
+                ) : null}
+              </>
+            )}
+          </div>
+
+          {/* Metadata Section in Card: Website, categories, token, added, count, platform, arch */}
+          <div className="rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
+            {/* 1. Website / Homepage */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Homepage')}</span>
+              {selectedApp.homepage ? (
+                <button
+                  onClick={() => window.ipc?.openExternal?.(selectedApp.homepage)}
+                  className="text-primary hover:underline flex items-center gap-1 max-w-[150px] truncate cursor-default"
+                >
+                  <ExternalLink className="size-3 shrink-0" />
+                  <span className="truncate">{selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
+                </button>
+              ) : (
+                <span className="text-muted-foreground/60">—</span>
+              )}
+            </div>
+
+            {/* 2. Categories (up to 3) */}
+            {appCategories.length > 0 && (
+              <div className="flex items-start justify-between py-0.5 gap-2">
+                <span className="text-muted-foreground shrink-0">{appCategories.length > 1 ? __('Categories') : __('Category')}</span>
+                <div className="flex flex-wrap gap-1.5 justify-end max-w-[160px]">
+                  {appCategories.map((c) => (
+                    <span
+                      key={c.name}
+                      className="inline-flex items-center gap-1 text-xs text-foreground font-medium"
+                    >
+                      <ShellIcon name={c.symbolName} className="size-[14px] text-foreground shrink-0" />
+                      <span className="truncate">{__(c.displayName)}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3. Token */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Token')}</span>
+              <span className="text-foreground select-text truncate max-w-[150px]">{selectedApp.token}</span>
+            </div>
+
+            {/* 4. Added */}
+            {selectedApp.added && (
+              <div className="flex items-center justify-between py-0.5">
+                <span className="text-muted-foreground">{__('Added')}</span>
+                <span className="text-foreground">{formatDate(selectedApp.added, __)}</span>
+              </div>
+            )}
+
+            {/* 5. Count / Monthly Installs */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Monthly Installs')}</span>
+              <div className="flex items-center gap-1 text-foreground">
+                <ArrowDown className="size-3 text-current shrink-0" />
+                <span>{formatCountK(selectedApp.count)}</span>
+              </div>
+            </div>
+
+            {/* 6. Platform */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Platform', 'Platform')}</span>
+              {loadingAppDetails ? (
+                <span className="text-muted-foreground text-xs font-normal">…</span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs text-foreground font-medium">
+                  {reqMet ? (
+                    <Check className="size-[14px] text-foreground shrink-0" />
+                  ) : (
+                    <AlertTriangle className="size-[14px] text-amber-500 shrink-0" />
+                  )}
+                  <span>{reqText || 'macOS'}</span>
+                </span>
+              )}
+            </div>
+
+            {/* 7. Architecture */}
+            <div className="flex items-center justify-between py-0.5">
+              <span className="text-muted-foreground">{__('Architecture')}</span>
+              {loadingAppDetails ? (
+                <span className="text-muted-foreground text-xs font-normal">…</span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs text-foreground font-medium">
+                  {archCompat.status === 'incompatible' ? (
+                    <AlertTriangle className="size-[14px] text-destructive shrink-0" />
+                  ) : archCompat.status === 'rosetta' ? (
+                    <Info className="size-[14px] text-blue-500 shrink-0" />
+                  ) : (
+                    <Check className="size-[14px] text-foreground shrink-0" />
+                  )}
+                  <span>{__(archCompat.label)}</span>
+                </span>
+              )}
+            </div>
+
+            {/* 8. Dependencies */}
+            {(depCasks.length > 0 || depFormulae.length > 0) && (
+              <div className="flex items-start justify-between py-0.5 gap-2">
+                <span className="text-muted-foreground shrink-0">{__('Dependencies')}</span>
+                <div className="flex flex-wrap gap-1.5 justify-end max-w-[160px]">
+                  {depCasks.map((depToken) => {
+                    const depApp = items.find((c) => c.token === depToken);
+                    const depName = depApp ? getAppName(depApp) : depToken;
+                    const isDepInstalled = installed.includes(depToken);
+                    return (
+                      <button
+                        key={depToken}
+                        onClick={() => openAppInfo(depToken)}
+                        className="inline-flex items-center gap-1 text-xs text-foreground hover:underline transition-colors cursor-default"
+                        title={`${depName} (${isDepInstalled ? __('Installed') : __('Platform', 'Platform')})`}
+                      >
+                        {isDepInstalled ? (
+                          <Check className="size-3 text-foreground shrink-0" />
+                        ) : (
+                          <span className="size-1.5 rounded-full bg-muted-foreground/60 shrink-0" />
+                        )}
+                        <span className="truncate max-w-[110px]">{depName}</span>
+                      </button>
+                    );
+                  })}
+                  {depFormulae.map((form) => (
+                    <span
+                      key={form}
+                      className="inline-flex items-center gap-1 text-xs text-muted-foreground font-mono"
+                    >
+                      <span>{form}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Caveats / Warnings: Under Info Card */}
           {caskStatus.isDisabled && (
             <div className="p-2.5 rounded-[var(--radius-card)] border border-destructive/40 bg-destructive/10 text-destructive space-y-1 overflow-hidden">
               <div className="flex items-center gap-1.5 font-semibold text-xs text-destructive">
@@ -235,200 +439,6 @@ export function InfoPanel() {
             </div>
           )}
 
-          {/* Primary Actions */}
-          <div className="flex items-center gap-2 pt-0.5">
-            {isRunning ? (
-              <ShellButton className="w-full gap-2" variant="secondary" disabled icon={<Loader2 className="size-3.5 animate-spin" />}>
-                {__('Working...')}
-              </ShellButton>
-            ) : (
-              <>
-                {isOutdated && (
-                  <ShellButton
-                    className="flex-1"
-                    variant="secondary"
-                    onClick={() => startAction('upgrade', selectedApp.token)}
-                  >
-                    {__('Upgrade')}
-                  </ShellButton>
-                )}
-
-                {isInstalled && selectedApp.app && !isOutdated && (
-                  <ShellButton
-                    className="flex-1"
-                    variant="secondary"
-                    onClick={() => startAction('open', selectedApp.token, selectedApp.app)}
-                  >
-                    {__('Open')}
-                  </ShellButton>
-                )}
-
-                {isInstalled && (
-                  <ShellButton
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={() => startAction('uninstall', selectedApp.token)}
-                  >
-                    {__('Delete')}
-                  </ShellButton>
-                )}
-
-                {!isInstalled && caskStatus.isDisabled ? (
-                  <ShellButton
-                    className="w-full opacity-60 cursor-not-allowed"
-                    variant="secondary"
-                    disabled
-                    title={formatReason(caskStatus.disableReason, __) || __('Cask Disabled')}
-                  >
-                    {__('Disabled')}
-                  </ShellButton>
-                ) : !isInstalled ? (
-                  <ShellButton
-                    className="w-full"
-                    variant="default"
-                    onClick={() => startAction('install', selectedApp.token)}
-                  >
-                    {__('Install')}
-                  </ShellButton>
-                ) : null}
-              </>
-            )}
-          </div>
-
-          {/* Metadata Section in Card */}
-          <div className="rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
-            {/* Homepage */}
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Homepage')}</span>
-              {selectedApp.homepage ? (
-                <button
-                  onClick={() => window.ipc?.openExternal?.(selectedApp.homepage)}
-                  className="text-primary hover:underline flex items-center gap-1 max-w-[150px] truncate cursor-default"
-                >
-                  <ExternalLink className="size-3 shrink-0" />
-                  <span className="truncate">{selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
-                </button>
-              ) : (
-                <span className="text-muted-foreground/60">—</span>
-              )}
-            </div>
-
-            {/* Categories (Under link, clean styling without badge background) */}
-            {appCategories.length > 0 && (
-              <div className="flex items-start justify-between py-0.5 gap-2">
-                <span className="text-muted-foreground shrink-0">{appCategories.length > 1 ? __('Categories') : __('Category')}</span>
-                <div className="flex flex-wrap gap-1.5 justify-end max-w-[160px]">
-                  {appCategories.map((c) => (
-                    <span
-                      key={c.name}
-                      className="inline-flex items-center gap-1 text-xs text-foreground font-medium"
-                    >
-                      <ShellIcon name={c.symbolName} className="size-[14px] text-muted-foreground" />
-                      <span>{__(c.displayName)}</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Token */}
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Token')}</span>
-              <span className="text-foreground select-text truncate max-w-[150px]">{selectedApp.token}</span>
-            </div>
-
-            {/* Dependencies (No badge background) */}
-            {(depCasks.length > 0 || depFormulae.length > 0) && (
-              <div className="flex items-start justify-between py-0.5 gap-2">
-                <span className="text-muted-foreground shrink-0">{__('Dependencies')}</span>
-                <div className="flex flex-wrap gap-1.5 justify-end max-w-[160px]">
-                  {depCasks.map((depToken) => {
-                    const depApp = items.find((c) => c.token === depToken);
-                    const depName = depApp ? getAppName(depApp) : depToken;
-                    const isDepInstalled = installed.includes(depToken);
-                    return (
-                      <button
-                        key={depToken}
-                        onClick={() => openAppInfo(depToken)}
-                        className="inline-flex items-center gap-1 text-xs text-foreground hover:underline transition-colors cursor-default"
-                        title={`${depName} (${isDepInstalled ? __('Installed') : __('Platform', 'Platform')})`}
-                      >
-                        {isDepInstalled ? (
-                          <Check className="size-3 text-emerald-500 shrink-0" />
-                        ) : (
-                          <span className="size-1.5 rounded-full bg-muted-foreground/60 shrink-0" />
-                        )}
-                        <span className="truncate max-w-[110px]">{depName}</span>
-                      </button>
-                    );
-                  })}
-                  {depFormulae.map((form) => (
-                    <span
-                      key={form}
-                      className="inline-flex items-center gap-1 text-xs text-muted-foreground font-mono"
-                    >
-                      <span>{form}</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Monthly Installs */}
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Monthly Installs')}</span>
-              <div className="flex items-center gap-1 text-foreground">
-                <ArrowDown className="size-3 text-current shrink-0" />
-                <span>{formatCountK(selectedApp.count)}</span>
-              </div>
-            </div>
-
-            {/* Added */}
-            {selectedApp.added && (
-              <div className="flex items-center justify-between py-0.5">
-                <span className="text-muted-foreground">{__('Added')}</span>
-                <span className="text-foreground">{formatDate(selectedApp.added, __)}</span>
-              </div>
-            )}
-
-            {/* Platform (At the bottom) */}
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Platform', 'Platform')}</span>
-              {loadingAppDetails ? (
-                <span className="text-muted-foreground text-xs font-normal">…</span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-xs text-foreground font-medium">
-                  {reqMet ? (
-                    <Check className="size-[14px] text-emerald-500 shrink-0" />
-                  ) : (
-                    <AlertTriangle className="size-[14px] text-amber-500 shrink-0" />
-                  )}
-                  <span>{reqText || 'macOS'}</span>
-                </span>
-              )}
-            </div>
-
-            {/* Architecture (At the bottom) */}
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Architecture')}</span>
-              {loadingAppDetails ? (
-                <span className="text-muted-foreground text-xs font-normal">…</span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-xs text-foreground font-medium">
-                  {archCompat.status === 'incompatible' ? (
-                    <AlertTriangle className="size-[14px] text-destructive shrink-0" />
-                  ) : archCompat.status === 'rosetta' ? (
-                    <Info className="size-[14px] text-blue-500 shrink-0" />
-                  ) : (
-                    <Check className="size-[14px] text-emerald-500 shrink-0" />
-                  )}
-                  <span>{__(archCompat.label)}</span>
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Caveat Notice */}
           {appDetails?.caveats && (
             <div className="p-2 rounded-[var(--radius-card)] border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1 overflow-hidden">
               <div className="flex items-center gap-1.5 font-semibold text-xs">

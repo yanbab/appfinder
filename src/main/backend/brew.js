@@ -4,12 +4,14 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const taskRunner = require('./task-runner');
+const { fetchCatalog } = require('./fetcher');
 
 const execFileAsync = promisify(execFile);
 
 // Cache definitions & directory locations
 const memoryCache = new Map();
 const caskInfoCache = new Map();
+const activeFetches = new Map();
 const CONFIG_DIR = path.join(process.env.HOME || '', '.config', 'appfinder');
 const UPDATES_CACHE_FILE = path.join(CONFIG_DIR, 'updates.json');
 const UPDATES_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
@@ -17,7 +19,6 @@ const UPDATES_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 const CACHE_APPFINDER_DIR = path.join(process.env.HOME || '', '.cache', 'appfinder');
 const CACHE_HOME_DIR = path.join(process.env.HOME || '', '.cache');
 const BUNDLED_DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
-const FETCH_SCRIPT = path.join(__dirname, '..', '..', 'scripts', 'fetch-casks.sh');
 
 const CODE_NAMES = {
   high_sierra: '10.13', mojave: '10.14', catalina: '10.15',
@@ -359,14 +360,37 @@ const ACTION_ARGS = {
     args: zap ? ['uninstall', '--force', '--zap', '--cask', t] : ['uninstall', '--force', '--cask', t]
   }),
   refresh: () => ({ command: getBrewPath(), args: ['update'] }),
-  cleanup: () => ({ command: getBrewPath(), args: ['cleanup', '--prune=all'] }),
-  fetch: () => ({ command: '/bin/bash', args: [FETCH_SCRIPT], cwd: path.dirname(FETCH_SCRIPT) })
+  cleanup: () => ({ command: getBrewPath(), args: ['cleanup', '--prune=all'] })
 };
 
 function runAction(data, callbacks = {}) {
   const cbs = typeof callbacks === 'function' ? { onComplete: callbacks } : (callbacks || {});
   const { onLog, onComplete, onPrompt, onRefreshUpdates, onRefreshData } = cbs;
   const { taskId, action, token, zap } = data || {};
+
+  // Native catalog fetch without shell subprocesses
+  if (action === 'fetch') {
+    const controller = new AbortController();
+    activeFetches.set(taskId, controller);
+
+    fetchCatalog({
+      onLog: (text) => onLog?.({ taskId, type: 'stdout', text, line: text, raw: text, plainText: text }),
+      signal: controller.signal
+    }).then(() => {
+      activeFetches.delete(taskId);
+      memoryCache.delete('apps.json');
+      memoryCache.delete('categories.json');
+      if (typeof onRefreshData === 'function') {
+        onRefreshData().catch(() => { });
+      }
+      onComplete?.({ taskId, code: 0, error: null, cancelled: false });
+    }).catch((err) => {
+      activeFetches.delete(taskId);
+      const isCancelled = controller.signal.aborted;
+      onComplete?.({ taskId, code: isCancelled ? 130 : 1, error: err.message, cancelled: isCancelled });
+    });
+    return;
+  }
 
   const getArgs = ACTION_ARGS[action];
   const config = getArgs ? getArgs(token, zap) : null;
@@ -394,12 +418,6 @@ function runAction(data, callbacks = {}) {
             } else {
               getUpdates(true).catch(() => { });
             }
-          } else if (action === 'fetch') {
-            memoryCache.delete('apps.json');
-            memoryCache.delete('categories.json');
-            if (typeof onRefreshData === 'function') {
-              onRefreshData().catch(() => { });
-            }
           }
         }
         onComplete?.({ taskId: tid, code, error, cancelled });
@@ -409,6 +427,13 @@ function runAction(data, callbacks = {}) {
 }
 
 function cancelAction(taskId, onComplete) {
+  if (activeFetches.has(taskId)) {
+    const controller = activeFetches.get(taskId);
+    controller.abort();
+    activeFetches.delete(taskId);
+    onComplete?.({ taskId, code: -1, cancelled: true });
+    return;
+  }
   taskRunner.cancelTask(taskId, onComplete);
 }
 

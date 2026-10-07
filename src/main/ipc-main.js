@@ -22,7 +22,7 @@ function setupIpcMain() {
   ipcMain.handle('cask:open', async (_, token, appName) => Backend.launch(appName || token));
 
   ipcMain.on('cask:run-action', (event, data) => {
-    console.log('[IPC-MAIN RUN ACTION]:', data);
+    console.log('[IPC-MAIN RUN ACTION]:', data.taskId);
     Backend.runAction(data, {
       onLog: (logData) => {
         if (!event.sender.isDestroyed()) {
@@ -75,7 +75,7 @@ function setupIpcMain() {
         }
       },
       onComplete: ({ taskId, code, error, cancelled }) => {
-        console.log('[IPC-MAIN TASK COMPLETE]:', { taskId, code, error, cancelled });
+        console.log('[IPC-MAIN TASK COMPLETE]:', taskId, code, error, cancelled);
         if (code === 0 && (data?.action === 'install' || data?.action === 'uninstall')) {
           if (app?.dock?.bounce) {
             app.dock.bounce('informational');

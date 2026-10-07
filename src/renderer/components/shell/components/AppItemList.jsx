@@ -1,24 +1,20 @@
 import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useShellStore, useAppStore, useTermStore } from '@/stores';
 import { AppIcon } from './AppIcon';
 import { ShellButton } from './ShellButton';
 import { ShellIcon } from './ShellIcon';
 import { getAppName, formatVersion } from '@/hooks/utils';
-
-
 import { Loader2 } from 'lucide-react';
 
 export function AppItemList({ item }) {
-  const {
-    openAppInfo,
-    selectedApp,
-    installed,
-    outdatedMap,
-    runningTasks,
-    currentTab,
-    startAction,
-    __,
-  } = useShell();
+  const openAppInfo = useShellStore((s) => s.openAppInfo);
+  const selectedApp = useShellStore((s) => s.selectedApp);
+  const currentTab = useShellStore((s) => s.currentTab);
+  const __ = useShellStore((s) => s.__);
+  const installed = useAppStore((s) => s.installed);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
+  const runningTasks = useTermStore((s) => s.runningTasks);
+  const startAction = useTermStore((s) => s.startAction);
 
   const isSelected = selectedApp?.token === item.token;
   const isRunning = Boolean(runningTasks[item.token]);

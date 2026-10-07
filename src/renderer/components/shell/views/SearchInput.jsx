@@ -1,10 +1,22 @@
 import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import { useAppStore, useShellStore } from '@/stores';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 export function SearchInput({ className = '' }) {
-  const { search, setSearch, __ } = useShell();
+  const search = useAppStore((s) => s.search);
+  const setSearch = useAppStore((s) => s.setSearch);
+  const currentTab = useShellStore((s) => s.currentTab);
+  const selectTab = useShellStore((s) => s.selectTab);
+  const __ = useShellStore((s) => s.__);
+
+  const handleChange = (e) => {
+    const val = e.target.value;
+    setSearch(val);
+    if (val && val.trim() && currentTab === 'discover') {
+      selectTab('all-apps');
+    }
+  };
 
   return (
     <div className={`relative flex items-center ${className}`}>
@@ -14,7 +26,7 @@ export function SearchInput({ className = '' }) {
         type="text"
         placeholder={__('Search')}
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={handleChange}
         className="h-7 pl-8 pr-7 text-xs bg-black/[0.06] dark:bg-white/[0.08] focus:bg-black/[0.09] dark:focus:bg-white/[0.12] border-0 border-none shadow-none rounded-[var(--radius-btn)] placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-none"
       />
       {search && (

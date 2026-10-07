@@ -1,21 +1,27 @@
-import React from 'react';
-import { useShell } from '@/hooks/useShell';
+import React, { useMemo } from 'react';
+import { useShellStore, useAppStore, selectFilteredItems } from '@/stores';
 import { ShellButton, ShellIcon, NavGroup } from '@/components/shell/components';
 import { SearchInput } from './SearchInput';
 
 export function Sidebar() {
-  const {
-    currentTab,
-    selectTab,
-    showSidebar,
-    allAppsCount,
-    installed,
-    updatesCount,
-    categories,
-    search,
-    filteredCount,
-    __,
-  } = useShell();
+  const currentTab = useShellStore((s) => s.currentTab);
+  const selectTab = useShellStore((s) => s.selectTab);
+  const showSidebar = useShellStore((s) => s.showSidebar);
+  const __ = useShellStore((s) => s.__);
+
+  const items = useAppStore((s) => s.items);
+  const categories = useAppStore((s) => s.categories);
+  const installed = useAppStore((s) => s.installed);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
+  const search = useAppStore((s) => s.search);
+  const appState = useAppStore();
+
+  const allAppsCount = useMemo(() => items.filter((c) => c.category !== 'font').length, [items]);
+  const updatesCount = useMemo(() => Object.keys(outdatedMap).length, [outdatedMap]);
+  const filteredCount = useMemo(() => {
+    if (!search || !search.trim()) return 0;
+    return selectFilteredItems(appState, currentTab).length;
+  }, [appState, currentTab, search]);
 
   const navItems = [
     {

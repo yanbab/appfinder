@@ -1,14 +1,14 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { TerminalBuffer, stripAnsi } = require('../main/backend/terminal-buffer');
-const { detectPrompt } = require('../main/backend/task-runner');
-const brew = require('../main/backend/brew');
+const { TerminalBuffer, stripAnsi } = require('../src/main/backend/terminal-buffer');
+const { detectPrompt } = require('../src/main/backend/task-runner');
+const brew = require('../src/main/backend/brew');
 
 let formatStatusBarMessage;
 let extractTaskError;
 let formatReason;
 test.before(async () => {
-  const utils = await import('../renderer/hooks/utils.js');
+  const utils = await import('../src/renderer/hooks/utils.js');
   formatStatusBarMessage = utils.formatStatusBarMessage;
   extractTaskError = utils.extractTaskError;
   formatReason = utils.formatReason;
@@ -142,7 +142,7 @@ test('brew.getApps and brew.getCategories return catalog datasets', () => {
 });
 
 test('pseudo-pty spawns with declared terminal size (cols/rows) and authentic TTY environment', async () => {
-  const pty = require('../main/backend/pseudo-pty');
+  const pty = require('../src/main/backend/pseudo-pty');
   const term = pty.spawn(process.execPath, [
     '-e',
     'console.log(JSON.stringify({ isTTY: Boolean(process.stdout.isTTY), cols: process.stdout.columns || 0, rows: process.stdout.rows || 0, envCols: process.env.COLUMNS, envLines: process.env.LINES, term: process.env.TERM }))'
@@ -220,7 +220,7 @@ test('TerminalBuffer cursor-up (\\x1b[A) replaces previous line for multi-line p
 });
 
 test('taskRunner streams live carriage-return progress events through onLog', async () => {
-  const taskRunner = require('../main/backend/task-runner');
+  const taskRunner = require('../src/main/backend/task-runner');
   const taskId = 'test-progress-' + Date.now();
   const capturedLines = [];
 
@@ -308,7 +308,7 @@ test('formatStatusBarMessage ignores arbitrary and non-progress output', () => {
 });
 
 test('taskRunner marks completion as cancelled: true when user declines confirmation prompt', async () => {
-  const taskRunner = require('../main/backend/task-runner');
+  const taskRunner = require('../src/main/backend/task-runner');
   const taskId = 'test-cancel-prompt-' + Date.now();
 
   const result = await new Promise((resolve) => {
@@ -344,7 +344,7 @@ test('taskRunner marks completion as cancelled: true when user declines confirma
 });
 
 test('taskRunner triggers onPrompt exactly once per prompt and ignores subsequent output chunks', async () => {
-  const taskRunner = require('../main/backend/task-runner');
+  const taskRunner = require('../src/main/backend/task-runner');
   const taskId = 'test-single-prompt-' + Date.now();
   let promptCallCount = 0;
 
