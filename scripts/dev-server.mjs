@@ -1,4 +1,4 @@
-import { createServer } from 'vite';
+import { createServer, build } from 'vite';
 import { spawn } from 'child_process';
 import electron from 'electron';
 import path from 'path';
@@ -7,6 +7,11 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function startDev() {
+  console.log(`\x1b[36m[Electron]\x1b[0m Building main process & preload bundle...`);
+  await build({
+    configFile: path.resolve(__dirname, '../vite.main.config.mjs'),
+  });
+
   const server = await createServer({
     configFile: path.resolve(__dirname, '../vite.renderer.config.mjs'),
     server: {
