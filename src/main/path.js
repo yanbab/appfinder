@@ -10,6 +10,6 @@ module.exports = {
   CACHE_DIR: path.join(os.homedir(), '.cache', 'appfinder'),
   DATA_DIR: path.join(ROOT_DIR, 'data'),
   LOCALES_DIR: path.join(ROOT_DIR, 'locales'),
-  RENDERER_PATH: path.join(ROOT_DIR, 'dist/vite/index.html'),
+  RENDERER_PATH: path.join(ROOT_DIR, 'dist/vite-renderer/index.html'),
   PRELOAD_PATH: path.join(__dirname, 'preload.js'),
 };

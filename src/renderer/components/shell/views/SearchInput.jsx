@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppStore, useShellStore } from '@/stores';
-import { Search, X } from 'lucide-react';
+import { ShellIcon } from '@/components/shell/components';
 import { Input } from '@/components/ui/input';
 
 export function SearchInput({ className = '' }) {
@@ -20,7 +20,7 @@ export function SearchInput({ className = '' }) {
 
   return (
     <div className={`relative flex items-center ${className}`}>
-      <Search className="absolute left-2.5 size-3.5 text-muted-foreground pointer-events-none" />
+      <ShellIcon name="magnifyingglass" className="absolute left-2.5 size-3.5 text-muted-foreground pointer-events-none" />
       <Input
         id="search-input"
         type="text"
@@ -35,7 +35,7 @@ export function SearchInput({ className = '' }) {
           className="absolute right-2 size-4 rounded-full bg-muted-foreground/40 hover:bg-muted-foreground/60 active:bg-muted-foreground/80 text-background flex items-center justify-center cursor-default transition-colors"
           title={__('Clear search')}
         >
-          <X className="size-2.5 stroke-[2.5]" />
+          <ShellIcon name="xmark" className="size-2.5" />
         </button>
       )}
     </div>

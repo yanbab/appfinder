@@ -264,3 +264,59 @@ dialog {
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.4);
 }
+
+/* 6. Modal & Drawer Animation Utilities */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn95 {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInFromRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInFromLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInFromBottom {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slideInFromTop {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+.animate-in.fade-in,
+.animate-in.fade-in-0 {
+  animation: fadeIn 150ms ease-out forwards;
+}
+
+.animate-in.zoom-in-95 {
+  animation: zoomIn95 150ms ease-out forwards;
+}
+
+.animate-in.slide-in-from-right {
+  animation: slideInFromRight 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-in.slide-in-from-left {
+  animation: slideInFromLeft 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-in.slide-in-from-bottom {
+  animation: slideInFromBottom 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-in.slide-in-from-top {
+  animation: slideInFromTop 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

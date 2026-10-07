@@ -1,7 +1,6 @@
 import React from 'react';
 import { useShellStore, useAppStore } from '@/stores';
 import { ShellButton, ShellIcon } from '@/components/shell/components';
-import { LayoutGrid, List } from 'lucide-react';
 
 export function TitleBar() {
   const currentTab = useShellStore((s) => s.currentTab);
@@ -63,7 +62,7 @@ export function TitleBar() {
                   : 'bg-transparent text-muted-foreground/80 hover:text-foreground dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
               }`}
             >
-              <LayoutGrid className="size-5" />
+              <ShellIcon name="square.grid.2x2" className="size-4" />
             </button>
             <div className={`w-[1px] h-3.5 my-auto transition-opacity ${viewMode === 'grid' || viewMode === 'list' ? 'opacity-0' : 'bg-black/10 dark:bg-white/10'}`} />
             <button
@@ -76,7 +75,7 @@ export function TitleBar() {
                   : 'bg-transparent text-muted-foreground/80 hover:text-foreground dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
               }`}
             >
-              <List className="size-5" />
+              <ShellIcon name="list.bullet" className="size-4" />
             </button>
           </div>
         )}

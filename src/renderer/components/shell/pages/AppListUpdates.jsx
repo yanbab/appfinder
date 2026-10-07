@@ -42,7 +42,7 @@ export function AppListUpdates() {
   const filteredItems = useMemo(() => selectFilteredItems(appState, 'updates'), [appState]);
   const filteredCount = filteredItems.length;
 
-  const isRefreshRunning = Boolean(runningTasks['refresh']) || isRefreshing;
+  const isRefreshRunning = Boolean(runningTasks['refresh']);
   const formattedLastChecked = formatLastChecked(lastCheckedTime, __);
 
   // If empty and refreshing, show loading spinner state

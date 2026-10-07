@@ -15,7 +15,6 @@ import {
   formatDate,
   formatReason,
 } from '@/hooks/utils';
-import { X, ExternalLink, AlertTriangle, AlertOctagon, Info, Check, Loader2, ArrowDown } from 'lucide-react';
 
 export function InfoPanel() {
   const selectedApp = useShellStore((s) => s.selectedApp);
@@ -34,7 +33,45 @@ export function InfoPanel() {
   const outdatedMap = useAppStore((s) => s.outdatedMap);
   const categories = useAppStore((s) => s.categories);
 
+  const panelRef = React.useRef(null);
+  const previousActiveElementRef = React.useRef(null);
   const isOpen = Boolean(selectedApp);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      previousActiveElementRef.current = document.activeElement;
+      // Focus panel container for keyboard events without outlining close button
+      setTimeout(() => {
+        panelRef.current?.focus?.();
+      }, 50);
+    } else if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
+      previousActiveElementRef.current.focus();
+      previousActiveElementRef.current = null;
+    }
+  }, [isOpen]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeAppInfo();
+      return;
+    }
+
+    if (e.key === 'Tab') {
+      const focusable = panelRef.current?.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      if (!focusable || focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  };
 
   if (!selectedApp) {
     return (
@@ -96,45 +133,6 @@ export function InfoPanel() {
       .slice(0, 3);
   })();
 
-  const panelRef = React.useRef(null);
-  const previousActiveElementRef = React.useRef(null);
-
-  React.useEffect(() => {
-    if (isOpen) {
-      previousActiveElementRef.current = document.activeElement;
-      // Focus panel container for keyboard events without outlining close button
-      setTimeout(() => {
-        panelRef.current?.focus?.();
-      }, 50);
-    } else if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
-      previousActiveElementRef.current.focus();
-      previousActiveElementRef.current = null;
-    }
-  }, [isOpen]);
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      closeAppInfo();
-      return;
-    }
-
-    if (e.key === 'Tab') {
-      const focusable = panelRef.current?.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])');
-      if (!focusable || focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-  };
-
   return (
     <Drawer
       open={isOpen}
@@ -157,7 +155,7 @@ export function InfoPanel() {
         <div className="app-header h-[52px] shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
           <div className="flex items-center gap-2 min-w-0 flex-1 h-full [-webkit-app-region:drag]">
             <ShellButton
-              icon={<X className="size-[18px]" />}
+              icon={<ShellIcon name="xmark" className="size-[18px]" />}
               onClick={closeAppInfo}
               className="rounded-sm shrink-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-app-region:no-drag]"
               title={__('Close')}
@@ -198,7 +196,7 @@ export function InfoPanel() {
           {/* Primary Actions */}
           <div className="flex items-center gap-2 pt-0.5">
             {isRunning ? (
-              <ShellButton className="w-full gap-2" variant="secondary" disabled icon={<Loader2 className="size-3.5 animate-spin" />}>
+              <ShellButton className="w-full gap-2" variant="secondary" disabled icon={<ShellIcon name="spinner" className="size-3.5 animate-spin" />}>
                 {__('Working...')}
               </ShellButton>
             ) : (
@@ -265,7 +263,7 @@ export function InfoPanel() {
                   onClick={() => window.ipc?.openExternal?.(selectedApp.homepage)}
                   className="text-primary hover:underline flex items-center gap-1 max-w-[150px] truncate cursor-default"
                 >
-                  <ExternalLink className="size-3 shrink-0" />
+                  <ShellIcon name="arrow.up.right.square" className="size-3 shrink-0" />
                   <span className="truncate">{selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
                 </button>
               ) : (
@@ -283,7 +281,7 @@ export function InfoPanel() {
                       key={c.name}
                       className="inline-flex items-center gap-1 text-xs text-foreground font-medium"
                     >
-                      <ShellIcon name={c.symbolName} className="size-[14px] text-foreground shrink-0" />
+                      <ShellIcon name={c.symbolName} className="size-[14px] text-muted-foreground shrink-0" />
                       <span className="truncate">{__(c.displayName)}</span>
                     </span>
                   ))}
@@ -309,7 +307,7 @@ export function InfoPanel() {
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Monthly Installs')}</span>
               <div className="flex items-center gap-1 text-foreground">
-                <ArrowDown className="size-3 text-current shrink-0" />
+                <ShellIcon name="arrow.down" className="size-3 text-muted-foreground shrink-0" />
                 <span>{formatCountK(selectedApp.count)}</span>
               </div>
             </div>
@@ -322,9 +320,9 @@ export function InfoPanel() {
               ) : (
                 <span className="inline-flex items-center gap-1 text-xs text-foreground font-medium">
                   {reqMet ? (
-                    <Check className="size-[14px] text-foreground shrink-0" />
+                    <ShellIcon name="checkmark" className="size-[14px] text-muted-foreground shrink-0" />
                   ) : (
-                    <AlertTriangle className="size-[14px] text-amber-500 shrink-0" />
+                    <ShellIcon name="exclamationmark.triangle" className="size-[14px] text-amber-500 shrink-0" />
                   )}
                   <span>{reqText || 'macOS'}</span>
                 </span>
@@ -339,11 +337,11 @@ export function InfoPanel() {
               ) : (
                 <span className="inline-flex items-center gap-1 text-xs text-foreground font-medium">
                   {archCompat.status === 'incompatible' ? (
-                    <AlertTriangle className="size-[14px] text-destructive shrink-0" />
+                    <ShellIcon name="exclamationmark.triangle" className="size-[14px] text-destructive shrink-0" />
                   ) : archCompat.status === 'rosetta' ? (
-                    <Info className="size-[14px] text-blue-500 shrink-0" />
+                    <ShellIcon name="info.circle" className="size-[14px] text-blue-500 shrink-0" />
                   ) : (
-                    <Check className="size-[14px] text-foreground shrink-0" />
+                    <ShellIcon name="checkmark" className="size-[14px] text-muted-foreground shrink-0" />
                   )}
                   <span>{__(archCompat.label)}</span>
                 </span>
@@ -367,7 +365,7 @@ export function InfoPanel() {
                         title={`${depName} (${isDepInstalled ? __('Installed') : __('Platform', 'Platform')})`}
                       >
                         {isDepInstalled ? (
-                          <Check className="size-3 text-foreground shrink-0" />
+                          <ShellIcon name="checkmark" className="size-3 text-muted-foreground shrink-0" />
                         ) : (
                           <span className="size-1.5 rounded-full bg-muted-foreground/60 shrink-0" />
                         )}
@@ -392,7 +390,7 @@ export function InfoPanel() {
           {caskStatus.isDisabled && (
             <div className="p-2.5 rounded-[var(--radius-card)] border border-destructive/40 bg-destructive/10 text-destructive space-y-1 overflow-hidden">
               <div className="flex items-center gap-1.5 font-semibold text-xs text-destructive">
-                <AlertOctagon className="size-3.5 shrink-0" />
+                <ShellIcon name="exclamationmark.octagon" className="size-3.5 shrink-0" />
                 <span>{__('Cask Disabled')}</span>
               </div>
               {caskStatus.disableReason && (
@@ -417,7 +415,7 @@ export function InfoPanel() {
           {!caskStatus.isDisabled && caskStatus.isDeprecated && (
             <div className="p-2.5 rounded-[var(--radius-card)] border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1 overflow-hidden">
               <div className="flex items-center gap-1.5 font-semibold text-xs">
-                <AlertTriangle className="size-3.5 shrink-0" />
+                <ShellIcon name="exclamationmark.triangle" className="size-3.5 shrink-0" />
                 <span>{__('Cask Deprecated')}</span>
               </div>
               {caskStatus.deprecationReason && (
@@ -442,7 +440,7 @@ export function InfoPanel() {
           {appDetails?.caveats && (
             <div className="p-2 rounded-[var(--radius-card)] border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1 overflow-hidden">
               <div className="flex items-center gap-1.5 font-semibold text-xs">
-                <AlertTriangle className="size-3.5 shrink-0" />
+                <ShellIcon name="exclamationmark.triangle" className="size-3.5 shrink-0" />
                 <span>{__('Caveat')}</span>
               </div>
               <p className="text-xs font-mono leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] overflow-hidden text-foreground">

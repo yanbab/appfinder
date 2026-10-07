@@ -17,7 +17,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const readline = require('readline');
 
-const rootDir = path.resolve(__dirname, '../..');
+const rootDir = path.resolve(__dirname, '..');
 const pkgPath = path.join(rootDir, 'package.json');
 const changelogPath = path.join(rootDir, 'CHANGELOG.md');
 
@@ -105,7 +105,8 @@ async function main() {
 
   // 4. Fetch latest cask catalog and update data
   console.log(`🔄 Fetching latest casks and generating catalog data...`);
-  run(`npm run fetch`);
+  const { fetchCatalog } = require('../src/main/backend/fetcher');
+  await fetchCatalog({ onLog: (msg) => console.log(msg) });
 
   // 5. Update CHANGELOG.md
   if (fs.existsSync(changelogPath)) {

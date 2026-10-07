@@ -10,7 +10,6 @@ import { AppIcon } from '@/components/shell/components/AppIcon';
 import { ShellIcon } from '@/components/shell/components';
 import { AppItemSlider } from '@/components/shell/components/AppItemSlider';
 import { getAppName } from '@/hooks/utils';
-import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 
 export function Discover() {
   const selectTab = useShellStore((s) => s.selectTab);
@@ -170,7 +169,7 @@ export function Discover() {
               className="flex items-center gap-1 text-xs text-muted-foreground active:text-foreground cursor-default outline-none focus:outline-none"
             >
               <span>{__('Show All')}</span>
-              <ChevronRight className="size-3.5" />
+              <ShellIcon name="chevron.right" className="size-3.5" />
             </button>
           </div>
 
@@ -213,7 +212,7 @@ export function Discover() {
               className="flex items-center gap-1 text-xs text-muted-foreground active:text-foreground cursor-default outline-none focus:outline-none"
             >
               <span>{__('Show All')}</span>
-              <ChevronRight className="size-3.5" />
+              <ShellIcon name="chevron.right" className="size-3.5" />
             </button>
           </div>
 
@@ -254,7 +253,7 @@ export function Discover() {
                 className="flex items-center gap-1 text-xs text-muted-foreground active:text-foreground cursor-default outline-none focus:outline-none"
               >
                 <span>{showAllCategories ? __('Show Less') : __('Show All')}</span>
-                {showAllCategories ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                {showAllCategories ? <ShellIcon name="chevron.up" className="size-3.5" /> : <ShellIcon name="chevron.down" className="size-3.5" />}
               </button>
             )}
           </div>

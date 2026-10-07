@@ -4,7 +4,6 @@ import { AppIcon } from './AppIcon';
 import { ShellButton } from './ShellButton';
 import { ShellIcon } from './ShellIcon';
 import { getAppName, formatVersion } from '@/hooks/utils';
-import { Loader2 } from 'lucide-react';
 
 export function AppItemList({ item }) {
   const openAppInfo = useShellStore((s) => s.openAppInfo);
@@ -66,7 +65,7 @@ export function AppItemList({ item }) {
         onPointerDown={(e) => e.stopPropagation()}
       >
         {isRunning ? (
-          <ShellButton variant="secondary" disabled icon={<Loader2 className="size-3.5 animate-spin mr-1.5" />}>
+          <ShellButton variant="secondary" disabled icon={<ShellIcon name="spinner" className="size-3.5 animate-spin mr-1.5" />}>
             {__('Working...')}
           </ShellButton>
         ) : isOutdated ? (

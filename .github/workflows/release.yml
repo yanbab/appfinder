@@ -124,7 +124,7 @@ jobs:
           git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/yanbab/homebrew-tap.git" tap-repo
           mkdir -p tap-repo/Casks
 
-          node src/scripts/generate-cask.js \
+          node scripts/generate-cask.js \
             --version "$VERSION" \
             --arm-dmg "$ARM_FILE" \
             --intel-dmg "$INTEL_FILE" \

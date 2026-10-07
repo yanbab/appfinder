@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { generateCask, validateCaskRuby, computeSha256 } = require('../dev/generate-cask');
+const { generateCask, validateCaskRuby, computeSha256 } = require('../scripts/generate-cask');
 
 const MOCK_ARM_SHA = 'a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0';
 const MOCK_INTEL_SHA = '0fedcba9876543210fedcba9876543210fedcba9876543210fedcba987654321';

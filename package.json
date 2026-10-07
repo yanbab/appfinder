@@ -5,10 +5,7 @@
   "description": "App store for the Homebrew package manager",
   "author": "yanbab",
   "license": "MIT",
-  "main": "dist/main/main.js",
-  "bin": {
-    "appfinder": "./src/cli/index.js"
-  },
+  "main": "dist/vite-main/main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/yanbab/appfinder.git"
@@ -18,23 +15,14 @@
   },
   "homepage": "https://github.com/yanbab/appfinder#readme",
   "scripts": {
-    "cli": "node src/cli/index.js",
-    "dev": "node dev/dev.mjs",
-    "term:demo": "electron src/_term/main.js",
-    "test": "node --test 'test/**/*.test.js'",
+    "dev": "node scripts/dev.mjs",
     "start": "npm run build:react && npm run build:main && electron .",
-    "build": "npm run build:react && npm run build:main && electron-builder build",
-    "build:mac": "npm run build:react && npm run build:main && electron-builder build --mac",
-    "install:electron": "node node_modules/electron/install.js",
-    "rebuild": "npx @electron/rebuild",
+    "build": "npm run build:react && npm run build:main && electron-builder build --mac",
+    "build:intel": "npm run build:react && npm run build:main && electron-builder build --mac --x64",
     "build:main": "vite build --config src/main/vite.main.config.mjs",
-    "watch:main": "vite build --watch --config src/main/vite.main.config.mjs",
     "build:react": "vite build --config src/renderer/vite.config.mjs",
-    "watch:react": "vite build --watch --config src/renderer/vite.config.mjs",
-    "dev:react": "vite --config src/renderer/vite.config.mjs",
-    "fetch": "cd scripts && bash fetch-casks.sh",
-    "clean": "rm -rf ./cache ./dist $HOME/.config/appfinder \"$HOME/Library/Application Support/AppFinder\"",
-    "release": "node dev/release.js"
+    "test": "node --test 'test/**/*.test.js'",
+    "release": "node scripts/release.js"
   },
   "keywords": [
     "casks",
@@ -44,27 +32,21 @@
     "applications"
   ],
   "devDependencies": {
-    "@base-ui/react": "^1.8.0",
-    "@electron/rebuild": "^4.2.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron": "^44.2.0",
     "electron-builder": "^26.15.3",
     "electron-devtools-installer": "^4.0.0",
-    "lucide-react": "^1.48.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3",
-    "tw-animate-css": "^1.4.0",
     "vite": "^8.3.1"
   },
-  "dependencies": {},
   "build": {
     "appId": "org.yanbab.appfinder",
     "mac": {
@@ -84,7 +66,8 @@
       "output": "dist/electron-builder"
     },
     "files": [
-      "dist/**/*",
+      "dist/vite-main/**/*",
+      "dist/vite-renderer/**/*",
       "locales/**/*",
       "data/**/*",
       "package.json"

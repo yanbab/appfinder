@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { useShellStore, useAppStore, useTermStore } from '@/stores';
 import { AppIcon } from './AppIcon';
+import { ShellIcon } from './ShellIcon';
 import { Button } from '@/components/ui/button';
 import { getAppName, name2color } from '@/hooks/utils';
-import { Loader2 } from 'lucide-react';
 
 export function AppItemSlider() {
   const featuredItems = useAppStore((s) => s.featuredItems);
@@ -85,7 +85,7 @@ export function AppItemSlider() {
                 <div className="pt-0.5 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   {runningTasks[item.token] ? (
                     <Button size="sm" variant="secondary" disabled className="bg-white/20 text-white border-0">
-                      <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                      <ShellIcon name="spinner" className="size-3.5 animate-spin mr-1.5" />
                       <span>{__('Working...')}</span>
                     </Button>
                   ) : outdatedMap[item.token] ? (

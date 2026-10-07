@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   build: {
     target: 'node20',
-    outDir: path.resolve(__dirname, '../../dist/main'),
+    outDir: path.resolve(__dirname, '../../dist/vite-main'),
     emptyOutDir: true,
     minify: true,
     lib: {

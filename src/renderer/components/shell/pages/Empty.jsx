@@ -1,6 +1,5 @@
 import React from 'react';
 import { ShellIcon } from '@/components/shell/components/ShellIcon';
-import { Loader2 } from 'lucide-react';
 
 export function Empty({
   icon = 'magnifyingglass',
@@ -19,7 +18,7 @@ export function Empty({
       {...props}
     >
       {isSpinner ? (
-        <Loader2 className="size-8 text-primary animate-spin mb-3" />
+        <ShellIcon name="spinner" className="size-8 text-primary animate-spin mb-3" />
       ) : typeof icon === 'string' ? (
         <ShellIcon
           name={icon}

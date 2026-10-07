@@ -33,7 +33,6 @@ class PseudoTerminal extends EventEmitter {
     };
 
     const isDarwin = process.platform === 'darwin' && fs.existsSync('/usr/bin/script');
-    const isLinux = process.platform === 'linux' && fs.existsSync('/usr/bin/script');
 
     let child;
 
@@ -42,12 +41,6 @@ class PseudoTerminal extends EventEmitter {
         '-q', '-t', '0', '/dev/null',
         '/bin/sh', '-c', `stty rows ${this.rows} cols ${this.cols} 2>/dev/null; exec "$@"`, '--',
         file, ...args
-      ], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
-    } else if (isLinux) {
-      // Linux script syntax: script -q -c "..." /dev/null
-      const cmdStr = [file, ...args].map(a => `'${a.replace(/'/g, "'\\''")}'`).join(' ');
-      child = nodeSpawn('/usr/bin/script', [
-        '-q', '-c', `stty rows ${this.rows} cols ${this.cols} 2>/dev/null; exec ${cmdStr}`, '/dev/null'
       ], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
     } else {
       child = nodeSpawn(file, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });

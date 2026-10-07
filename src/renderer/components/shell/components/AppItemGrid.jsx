@@ -5,7 +5,6 @@ import { AppIcon } from './AppIcon';
 import { ShellButton } from './ShellButton';
 import { ShellIcon } from './ShellIcon';
 import { getAppName, formatVersion } from '@/hooks/utils';
-import { Loader2 } from 'lucide-react';
 
 export function AppItemGrid({ item }) {
   const openAppInfo = useShellStore((s) => s.openAppInfo);
@@ -61,7 +60,7 @@ export function AppItemGrid({ item }) {
           <ShellButton
             variant="ghost"
             disabled
-            icon={<Loader2 className="size-4 animate-spin text-muted-foreground" />}
+            icon={<ShellIcon name="spinner" className="size-4 animate-spin text-muted-foreground" />}
             title="Working..."
           />
         ) : isOutdated ? (

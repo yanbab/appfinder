@@ -1,7 +1,6 @@
 import React from 'react';
 import { useTermStore, useShellStore } from '@/stores';
 import { ShellButton, ShellIcon } from '@/components/shell/components';
-import { Loader2 } from 'lucide-react';
 
 export function StatusBar() {
   const activeTaskId = useTermStore((s) => s.activeTaskId);
@@ -23,7 +22,7 @@ export function StatusBar() {
       <div className="h-full flex items-center gap-2 min-w-0 mr-2 select-none">
         {activeTaskId && (
           <>
-            <Loader2 className="size-3.5 text-primary animate-spin shrink-0" />
+            <ShellIcon name="spinner" className="size-3.5 text-primary animate-spin shrink-0" />
             {drawerTitle && (
               <span className="overflow-hidden text-ellipsis whitespace-pre text-[11px] font-mono text-foreground/80">{drawerTitle}</span>
             )}
