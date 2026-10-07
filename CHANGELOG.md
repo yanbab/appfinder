@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.10] - 2026-10-07
+
+### Changes
+- Port to TypeScript
+
+---
+
 ## [0.9.9] - 2026-10-07
 
 ### Changes
