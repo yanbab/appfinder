@@ -9,7 +9,7 @@ export {
   CHUNK_SIZE,
   FEATURED_TOKENS
 } from './useAppStore';
-export type { AppStoreState, UpdateInfo } from './useAppStore';
+export type { AppStoreState, UpdateInfo, FilterableAppState } from './useAppStore';
 export { useTermStore } from './useTermStore';
 export type { TermStoreState, TerminalSubscriber } from './useTermStore';
 export { useShellStore } from './useShellStore';

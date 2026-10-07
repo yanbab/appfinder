@@ -16,14 +16,14 @@ export function Sidebar(): React.JSX.Element {
   const installed = useAppStore((s) => s.installed);
   const outdatedMap = useAppStore((s) => s.outdatedMap);
   const search = useAppStore((s) => s.search);
-  const appState = useAppStore();
+  const order = useAppStore((s) => s.order);
 
   const allAppsCount = useMemo(() => items.filter((c) => c.category !== 'font').length, [items]);
   const updatesCount = useMemo(() => Object.keys(outdatedMap).length, [outdatedMap]);
   const filteredCount = useMemo(() => {
     if (!search || !search.trim()) return 0;
-    return selectFilteredItems(appState, currentTab).length;
-  }, [appState, currentTab, search]);
+    return selectFilteredItems({ items, search, order, installed, outdatedMap, categories }, currentTab).length;
+  }, [items, search, order, installed, outdatedMap, categories, currentTab]);
 
   const navItems = [
     {

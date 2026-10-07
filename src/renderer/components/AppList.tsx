@@ -17,9 +17,18 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
   const loading = useAppStore((s) => s.loading);
   const displayedCount = useAppStore((s) => s.displayedCount);
   const loadMore = useAppStore((s) => s.loadMore);
-  const appState = useAppStore();
 
-  const filteredItems = useMemo(() => selectFilteredItems(appState, currentTab), [appState, currentTab]);
+  const items = useAppStore((s) => s.items);
+  const search = useAppStore((s) => s.search);
+  const order = useAppStore((s) => s.order);
+  const installed = useAppStore((s) => s.installed);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
+  const categories = useAppStore((s) => s.categories);
+
+  const filteredItems = useMemo(
+    () => selectFilteredItems({ items, search, order, installed, outdatedMap, categories }, currentTab),
+    [items, search, order, installed, outdatedMap, categories, currentTab]
+  );
   const filteredCount = filteredItems.length;
   const displayedItems = useMemo(() => filteredItems.slice(0, displayedCount), [filteredItems, displayedCount]);
 

@@ -133,8 +133,13 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   }
 }));
 
+export type FilterableAppState = Pick<
+  AppStoreState,
+  'items' | 'search' | 'order' | 'installed' | 'outdatedMap' | 'categories'
+>;
+
 // Memoized/Pure selector helpers
-export function selectFilteredItems(state: AppStoreState, currentTab: string): CaskItem[] {
+export function selectFilteredItems(state: FilterableAppState, currentTab: string): CaskItem[] {
   const { items, search, order, installed, outdatedMap, categories } = state;
   let list: CaskItem[] = [];
 

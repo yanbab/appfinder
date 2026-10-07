@@ -35,12 +35,21 @@ function formatLastChecked(date: Date | string | null | undefined, __: (key: str
 
 export function AppListUpdates(): React.JSX.Element {
   const lastCheckedTime = useAppStore((s) => s.lastCheckedTime);
-  const appState = useAppStore();
+  const items = useAppStore((s) => s.items);
+  const search = useAppStore((s) => s.search);
+  const order = useAppStore((s) => s.order);
+  const installed = useAppStore((s) => s.installed);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
+  const categories = useAppStore((s) => s.categories);
+
   const runningTasks = useTermStore((s) => s.runningTasks);
   const startAction = useTermStore((s) => s.startAction);
   const __ = useShellStore((s) => s.__);
 
-  const filteredItems = useMemo(() => selectFilteredItems(appState, 'updates'), [appState]);
+  const filteredItems = useMemo(
+    () => selectFilteredItems({ items, search, order, installed, outdatedMap, categories }, 'updates'),
+    [items, search, order, installed, outdatedMap, categories]
+  );
   const filteredCount = filteredItems.length;
 
   const isRefreshRunning = Boolean(runningTasks['refresh']);

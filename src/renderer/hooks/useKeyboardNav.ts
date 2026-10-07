@@ -14,15 +14,21 @@ export function useKeyboardNav() {
   const setViewMode = useShellStore((s) => s.setViewMode);
 
   const categories = useAppStore((s) => s.categories);
+  const items = useAppStore((s) => s.items);
   const search = useAppStore((s) => s.search);
   const setSearch = useAppStore((s) => s.setSearch);
+  const order = useAppStore((s) => s.order);
+  const installed = useAppStore((s) => s.installed);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
   const displayedCount = useAppStore((s) => s.displayedCount);
   const loadMore = useAppStore((s) => s.loadMore);
-  const appState = useAppStore();
 
   const showPasswordModal = useTermStore((s) => s.showPasswordModal);
 
-  const filteredItems = useMemo(() => selectFilteredItems(appState, currentTab), [appState, currentTab]);
+  const filteredItems = useMemo(
+    () => selectFilteredItems({ items, search, order, installed, outdatedMap, categories }, currentTab),
+    [items, search, order, installed, outdatedMap, categories, currentTab]
+  );
   const filteredCount = filteredItems.length;
   const displayedItems = useMemo(() => filteredItems.slice(0, displayedCount), [filteredItems, displayedCount]);
 
