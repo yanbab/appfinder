@@ -7,9 +7,11 @@
 
 const fs = require('fs');
 const path = require('path');
+const { CACHE_DIR } = require('../path');
 
-const CACHE_APPFINDER_DIR = path.join(process.env.HOME || '', '.cache', 'appfinder');
-const FETCH_DIR = path.join(CACHE_APPFINDER_DIR, 'fetch');
+const FETCH_DIR = path.join(CACHE_DIR, 'fetch');
+const CACHED_APPS_FILE = path.join(CACHE_DIR, 'apps.json');
+const CACHED_CATEGORIES_FILE = path.join(CACHE_DIR, 'categories.json');
 const ICON_BASE_URL = 'https://cdn.jsdelivr.net/gh/alielsokary/CaskFlow@icons/';
 
 const CATEGORIES_DEF = [
@@ -117,9 +119,6 @@ async function fetchCatalog({ onLog, signal } = {}) {
   if (!fs.existsSync(FETCH_DIR)) {
     fs.mkdirSync(FETCH_DIR, { recursive: true });
   }
-  if (!fs.existsSync(CACHE_APPFINDER_DIR)) {
-    fs.mkdirSync(CACHE_APPFINDER_DIR, { recursive: true });
-  }
 
   onLog?.('==> Updating Homebrew casks...');
   const casksRaw = await downloadJson('https://formulae.brew.sh/api/cask.json', path.join(FETCH_DIR, 'cask.json'), signal);
@@ -141,10 +140,10 @@ async function fetchCatalog({ onLog, signal } = {}) {
 
   onLog?.('==> Caching apps...');
   const processedApps = processAppsData(casksRaw, categoriesRaw, downloadsRaw, addedRaw);
-  fs.writeFileSync(path.join(CACHE_APPFINDER_DIR, 'apps.json'), JSON.stringify(processedApps, null, 2), 'utf8');
+  fs.writeFileSync(CACHED_APPS_FILE, JSON.stringify(processedApps, null, 2), 'utf8');
 
   onLog?.('==> Caching categories...');
-  fs.writeFileSync(path.join(CACHE_APPFINDER_DIR, 'categories.json'), JSON.stringify(CATEGORIES_DEF, null, 2), 'utf8');
+  fs.writeFileSync(CACHED_CATEGORIES_FILE, JSON.stringify(CATEGORIES_DEF, null, 2), 'utf8');
 
   onLog?.('==> ✔︎ Updated');
   return { apps: processedApps, categories: CATEGORIES_DEF };
@@ -154,6 +153,6 @@ module.exports = {
   fetchCatalog,
   processAppsData,
   CATEGORIES_DEF,
-  CACHE_APPFINDER_DIR,
+  CACHE_DIR,
   FETCH_DIR
 };

@@ -5,7 +5,7 @@
   "description": "App store for the Homebrew package manager",
   "author": "yanbab",
   "license": "MIT",
-  "main": "src/main/main.js",
+  "main": "dist/main/main.js",
   "bin": {
     "appfinder": "./src/cli/index.js"
   },
@@ -22,11 +22,13 @@
     "dev": "node dev/dev.mjs",
     "term:demo": "electron src/_term/main.js",
     "test": "node --test 'test/**/*.test.js'",
-    "start": "npm run build:react && electron .",
-    "build": "npm run build:react && electron-builder build",
-    "build:mac": "npm run build:react && electron-builder build --mac",
+    "start": "npm run build:react && npm run build:main && electron .",
+    "build": "npm run build:react && npm run build:main && electron-builder build",
+    "build:mac": "npm run build:react && npm run build:main && electron-builder build --mac",
     "install:electron": "node node_modules/electron/install.js",
     "rebuild": "npx @electron/rebuild",
+    "build:main": "vite build --config src/main/vite.main.config.mjs",
+    "watch:main": "vite build --watch --config src/main/vite.main.config.mjs",
     "build:react": "vite build --config src/renderer/vite.config.mjs",
     "watch:react": "vite build --watch --config src/renderer/vite.config.mjs",
     "dev:react": "vite --config src/renderer/vite.config.mjs",
@@ -82,10 +84,9 @@
       "output": "dist/electron-builder"
     },
     "files": [
-      "src/main/**/*",
-      "src/locales/**/*",
+      "dist/**/*",
+      "locales/**/*",
       "data/**/*",
-      "dist/vite/**/*",
       "package.json"
     ]
   }

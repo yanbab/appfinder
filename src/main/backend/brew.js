@@ -6,36 +6,21 @@ const os = require('os');
 const taskRunner = require('./task-runner');
 const { fetchCatalog } = require('./fetcher');
 
+const { CONFIG_DIR, CACHE_DIR, DATA_DIR } = require('../path');
+
 const execFileAsync = promisify(execFile);
 
-// Cache definitions & directory locations
+// Cache definitions
 const memoryCache = new Map();
 const caskInfoCache = new Map();
 const activeFetches = new Map();
-const CONFIG_DIR = path.join(process.env.HOME || '', '.config', 'appfinder');
 const UPDATES_CACHE_FILE = path.join(CONFIG_DIR, 'updates.json');
 const UPDATES_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
-
-const CACHE_APPFINDER_DIR = path.join(process.env.HOME || '', '.cache', 'appfinder');
-const CACHE_HOME_DIR = path.join(process.env.HOME || '', '.cache');
-const BUNDLED_DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
 
 const CODE_NAMES = {
   high_sierra: '10.13', mojave: '10.14', catalina: '10.15',
   big_sur: '11', monterey: '12', ventura: '13', sonoma: '14', sequoia: '15', tahoe: '16'
 };
-
-function resolveDataFilePath(file) {
-  const baseName = file.replace(/\.json$/, '');
-  const candidates = [
-    path.join(CACHE_APPFINDER_DIR, file),
-    path.join(CACHE_APPFINDER_DIR, baseName),
-    path.join(CACHE_HOME_DIR, file),
-    path.join(CACHE_HOME_DIR, baseName),
-    path.join(BUNDLED_DATA_DIR, file)
-  ];
-  return candidates.find(p => fs.existsSync(p)) || path.join(BUNDLED_DATA_DIR, file);
-}
 
 function getSystemInfo() {
   let sysVer = '';
@@ -201,30 +186,22 @@ function readJsonSafely(filePath) {
 function getData(file, forceReload = false) {
   if (!forceReload && memoryCache.has(file)) return memoryCache.get(file);
 
-  const baseName = file.replace(/\.json$/, '');
-  const bundledFile = path.join(BUNDLED_DATA_DIR, file);
-  const candidatePaths = [
-    path.join(CACHE_APPFINDER_DIR, file),
-    path.join(CACHE_APPFINDER_DIR, baseName),
-    path.join(CACHE_HOME_DIR, file),
-    path.join(CACHE_HOME_DIR, baseName)
-  ];
+  const cachedFile = path.join(CACHE_DIR, file);
+  const bundledFile = path.join(DATA_DIR, file);
 
-  // 1. Try reading from cached locations
-  for (const candidate of candidatePaths) {
-    if (fs.existsSync(candidate)) {
-      try {
-        const data = readJsonSafely(candidate);
-        if (Array.isArray(data) && data.length > 0) {
-          memoryCache.set(file, data);
-          return data;
-        }
-      } catch (err) {
-        console.warn(`[BREW] Corrupted cache file detected at "${candidate}": ${err.message}. Removing corrupted cache file.`);
-        try {
-          fs.unlinkSync(candidate);
-        } catch (_) { }
+  // 1. Try reading from user cache (~/.cache/appfinder)
+  if (fs.existsSync(cachedFile)) {
+    try {
+      const data = readJsonSafely(cachedFile);
+      if (Array.isArray(data) && data.length > 0) {
+        memoryCache.set(file, data);
+        return data;
       }
+    } catch (err) {
+      console.warn(`[BREW] Corrupted cache file detected at "${cachedFile}": ${err.message}. Removing corrupted cache file.`);
+      try {
+        fs.unlinkSync(cachedFile);
+      } catch (_) { }
     }
   }
 

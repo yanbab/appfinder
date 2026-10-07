@@ -2,10 +2,9 @@
 
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
+const { CONFIG_DIR } = require('./path');
 
-const configDir = path.join(os.homedir(), '.config', 'appfinder');
-const configPath = path.join(configDir, 'config.json');
+const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 
 const defaults = {
   zap: false,
@@ -18,7 +17,7 @@ let config = null;
 
 function setupConfig() {
   try {
-    const raw = fs.readFileSync(configPath, 'utf8');
+    const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
     config = { ...defaults, ...JSON.parse(raw) };
   } catch {
     config = { ...defaults };
@@ -34,8 +33,8 @@ function getConfig() {
 function updateConfig(newConfig) {
   config = { ...getConfig(), ...newConfig };
   try {
-    fs.mkdirSync(configDir, { recursive: true });
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
   } catch (e) {
     console.error('Failed to save config:', e);
   }

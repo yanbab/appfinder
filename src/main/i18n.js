@@ -4,10 +4,10 @@ const { app } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const util = require('util');
-
+const { LOCALES_DIR } = require('./path');
 const { getConfig } = require('./config');
 
-const localesDir = path.join(__dirname, '../locales');
+const localesDir = LOCALES_DIR;
 
 const catalogs = {};
 let currentLocale = 'en';

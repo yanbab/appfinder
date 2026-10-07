@@ -1,10 +1,7 @@
 // Shell window
 
 const { BrowserWindow, app } = require('electron');
-const path = require('path');
-
-const preloadPath = path.join(__dirname, './ipc-renderer.js');
-const rendererPath = path.join(__dirname, '../../dist/vite/index.html');
+const { PRELOAD_PATH, RENDERER_PATH } = require('./path');
 
 let mainWindow = null;
 
@@ -12,7 +9,7 @@ function loadContent(win) {
     if (process.env.VITE_DEV_SERVER_URL) {
         win.loadURL(process.env.VITE_DEV_SERVER_URL);
     } else {
-        win.loadFile(rendererPath);
+        win.loadFile(RENDERER_PATH);
     }
 }
 
@@ -42,7 +39,7 @@ function createShellWindow() {
         frame: false,
         windowStatePersistence: true,
         webPreferences: {
-            preload: preloadPath,
+            preload: PRELOAD_PATH,
             contextIsolation: true,
             nodeIntegration: false,
             // scrollBounce: true
