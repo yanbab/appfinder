@@ -1,6 +1,6 @@
 // Shell window
 
-import { BrowserWindow, app } from 'electron';
+import { BrowserWindow, app, shell } from 'electron';
 import { PRELOAD_PATH, RENDERER_PATH } from './path';
 
 let mainWindow: BrowserWindow | null = null;
@@ -41,6 +41,34 @@ export function createShellWindow(): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
     }
+  });
+
+  // Security: Prevent window creation and rogue navigation
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const parsed = new URL(url);
+      if (['https:', 'http:'].includes(parsed.protocol)) {
+        shell.openExternal(url);
+      }
+    } catch (_) { }
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+    const devServer = process.env.VITE_DEV_SERVER_URL;
+    if (devServer && navigationUrl.startsWith(devServer)) {
+      return;
+    }
+    if (navigationUrl.startsWith('file://')) {
+      return;
+    }
+    event.preventDefault();
+    try {
+      const parsed = new URL(navigationUrl);
+      if (['https:', 'http:'].includes(parsed.protocol)) {
+        shell.openExternal(navigationUrl);
+      }
+    } catch (_) { }
   });
 
   loadContent(mainWindow);
