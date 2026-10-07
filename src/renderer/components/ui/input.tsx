@@ -1,7 +1,9 @@
 import * as React from "react";
 import { cn } from "@/hooks/utils";
 
-function Input({ className, type = "text", ...props }) {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+export function Input({ className, type = "text", ...props }: InputProps) {
   return (
     <input
       type={type}
@@ -13,5 +15,3 @@ function Input({ className, type = "text", ...props }) {
     />
   );
 }
-
-export { Input };

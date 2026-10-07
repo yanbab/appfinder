@@ -1,25 +1,34 @@
-import React from 'react';
+import React, { Component, type ReactNode, type ErrorInfo } from 'react';
 import { ShellButton, ShellIcon } from '@/components/shell/components';
 
-export class ErrorBoundary extends React.Component {
-  constructor(props) {
+export interface ErrorProps {
+  children?: ReactNode;
+}
+
+export interface ErrorState {
+  hasError: boolean;
+  error: globalThis.Error | null;
+}
+
+export class Error extends Component<ErrorProps, ErrorState> {
+  constructor(props: ErrorProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: globalThis.Error): ErrorState {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, errorInfo) {
-    console.error('[ErrorBoundary caught error]', error, errorInfo);
+  componentDidCatch(error: globalThis.Error, errorInfo: ErrorInfo): void {
+    console.error('[Error caught rendering error]', error, errorInfo);
   }
 
-  handleReload = () => {
+  handleReload = (): void => {
     window.location.reload();
   };
 
-  render() {
+  render(): ReactNode {
     if (this.state.hasError) {
       return (
         <div className="flex h-screen w-screen flex-col items-center justify-center p-6 bg-background text-foreground select-none">
@@ -46,3 +55,6 @@ export class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+export const ErrorBoundary = Error;
+export default Error;

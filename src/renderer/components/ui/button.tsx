@@ -4,7 +4,7 @@ import { cn } from "@/hooks/utils";
 const BASE_BUTTON_CLASSES =
   "inline-flex shrink-0 items-center justify-center rounded-[var(--radius-btn)] border border-transparent text-xs font-medium whitespace-nowrap outline-none focus:outline-none focus-visible:outline-none select-none disabled:pointer-events-none disabled:opacity-50 cursor-default";
 
-const BUTTON_VARIANTS = {
+const BUTTON_VARIANTS: Record<string, string> = {
   default: "bg-primary text-primary-foreground active:bg-primary/80 shadow-2xs",
   outline: "border-border/60 text-foreground active:bg-muted/70 shadow-2xs",
   secondary: "bg-secondary text-secondary-foreground active:bg-[var(--btn-bg-active)] shadow-2xs",
@@ -14,7 +14,7 @@ const BUTTON_VARIANTS = {
   pill: "rounded-full bg-white text-primary font-semibold shadow-xs active:bg-white/80 border-0 leading-none",
 };
 
-const BUTTON_SIZES = {
+const BUTTON_SIZES: Record<string, string> = {
   default: "h-7 px-3 text-xs gap-1.5 rounded-[var(--radius-btn)]",
   sm: "h-6.5 px-2.5 text-xs rounded-[var(--radius-btn)] gap-1",
   xs: "h-5.5 px-2 text-[11px] rounded-[var(--radius-btn)] gap-1",
@@ -25,7 +25,13 @@ const BUTTON_SIZES = {
   pill: "h-6.5 px-3.5 text-xs gap-1",
 };
 
-function buttonVariants({ variant = "default", size = "default", className } = {}) {
+export interface ButtonVariantOptions {
+  variant?: keyof typeof BUTTON_VARIANTS | string;
+  size?: keyof typeof BUTTON_SIZES | string;
+  className?: string;
+}
+
+export function buttonVariants({ variant = "default", size = "default", className }: ButtonVariantOptions = {}): string {
   return cn(
     BASE_BUTTON_CLASSES,
     BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.default,
@@ -34,7 +40,11 @@ function buttonVariants({ variant = "default", size = "default", className } = {
   );
 }
 
-function Button({ className, variant, size, asChild = false, ...props }) {
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    ButtonVariantOptions {}
+
+export function Button({ className, variant, size, ...props }: ButtonProps) {
   return (
     <button
       className={buttonVariants({ variant, size, className })}
@@ -42,5 +52,3 @@ function Button({ className, variant, size, asChild = false, ...props }) {
     />
   );
 }
-
-export { Button, buttonVariants };

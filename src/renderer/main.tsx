@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./styles/index.css";
 import { Shell } from "./components/Shell.jsx";
 import { Settings } from "./components/Settings.jsx";
-import { ErrorBoundary } from "./components/ErrorBoundary.jsx";
+import { Error } from "./components/Error";
 import { ThemeProvider } from "@/hooks/useTheme.jsx";
 import { initStoreListeners } from "@/stores";
 
@@ -16,11 +16,11 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
-      <ErrorBoundary>
+      <Error>
         <ThemeProvider>
           {isSettings ? <Settings /> : <Shell />}
         </ThemeProvider>
-      </ErrorBoundary>
+      </Error>
     </StrictMode>
   );
 }
