@@ -388,6 +388,13 @@ export function runAction(data: any, callbacks: any = {}): void {
     return;
   }
 
+  if (['install', 'upgrade', 'uninstall'].includes(action)) {
+    if (!token || typeof token !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_\-\.\@\/]*$/.test(token)) {
+      onComplete?.({ taskId, code: 1, error: 'Invalid cask token format' });
+      return;
+    }
+  }
+
   const getArgs = ACTION_ARGS[action];
   const config = getArgs ? getArgs(token, zap) : null;
   if (!config) {

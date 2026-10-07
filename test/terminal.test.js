@@ -134,6 +134,16 @@ test('brew.runAction rejects invalid action', (t, done) => {
   });
 });
 
+test('brew.runAction rejects invalid cask token format', (t, done) => {
+  brew.runAction({ action: 'install', token: '--invalid-flag', taskId: 'test-invalid-token' }, {
+    onComplete: ({ code, error }) => {
+      assert.equal(code, 1);
+      assert.equal(error, 'Invalid cask token format');
+      done();
+    }
+  });
+});
+
 test('brew.getApps and brew.getCategories return catalog datasets', () => {
   const apps = brew.getApps();
   assert.ok(Array.isArray(apps) && apps.length > 0, 'apps should be a non-empty array');
