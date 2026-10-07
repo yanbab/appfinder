@@ -1,7 +1,7 @@
 {
   "name": "appfinder",
   "productName": "AppFinder",
-  "version": "0.9.7",
+  "version": "0.9.8",
   "description": "App store for the Homebrew package manager",
   "author": "yanbab",
   "license": "MIT",
@@ -15,14 +15,14 @@
   },
   "homepage": "https://github.com/yanbab/appfinder#readme",
   "scripts": {
-    "dev": "node scripts/dev.mjs",
+    "dev": "node scripts/dev-server.mjs",
     "start": "npm run build:react && npm run build:main && electron .",
     "build": "npm run build:react && npm run build:main && electron-builder build --mac",
     "build:intel": "npm run build:react && npm run build:main && electron-builder build --mac --x64",
-    "build:main": "vite build --config src/main/vite.main.config.mjs",
-    "build:react": "vite build --config src/renderer/vite.config.mjs",
+    "build:main": "vite build --config vite.main.config.mjs",
+    "build:react": "vite build --config vite.renderer.config.mjs",
     "test": "node --test 'test/**/*.test.js'",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release-github.js"
   },
   "keywords": [
     "casks",

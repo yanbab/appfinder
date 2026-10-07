@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.8] - 2026-10-07
+
+### Changes
+- refactor: migrate application icons to SF Symbols asset directory
+- refactor: decrease build size / share path.js in main
+- refactor: update createStore to be drop in replaclment to Zustand
+- refactor: replace monolithic useShell hook with modular state management stores : useAppStore useShellStore useTermStore
+- refactor: replace monolithic useShell hook with modular state management stores : useAppStore useShellStore useTermStore
+- refactor: docs, shrunk apps.json form 3.7MB -> 2.7MB
+
+---
+
 ## [0.9.7] - 2026-10-06
 
 ### Changes
