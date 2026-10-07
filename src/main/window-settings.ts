@@ -1,5 +1,6 @@
-import { BrowserWindow, shell } from 'electron';
+import { BrowserWindow } from 'electron';
 import { PRELOAD_PATH, RENDERER_PATH } from './path';
+import { setupWindowSecurity } from './security';
 import { __ } from './i18n';
 
 let settingsWindow: BrowserWindow | null = null;
@@ -29,33 +30,7 @@ export function createSettingsWindow(parentWindow?: BrowserWindow): BrowserWindo
     }
   });
 
-  // Security: Prevent window creation and rogue navigation
-  settingsWindow.webContents.setWindowOpenHandler(({ url }) => {
-    try {
-      const parsed = new URL(url);
-      if (['https:', 'http:'].includes(parsed.protocol)) {
-        shell.openExternal(url);
-      }
-    } catch (_) { }
-    return { action: 'deny' };
-  });
-
-  settingsWindow.webContents.on('will-navigate', (event, navigationUrl) => {
-    const devServer = process.env.VITE_DEV_SERVER_URL;
-    if (devServer && navigationUrl.startsWith(devServer)) {
-      return;
-    }
-    if (navigationUrl.startsWith('file://')) {
-      return;
-    }
-    event.preventDefault();
-    try {
-      const parsed = new URL(navigationUrl);
-      if (['https:', 'http:'].includes(parsed.protocol)) {
-        shell.openExternal(navigationUrl);
-      }
-    } catch (_) { }
-  });
+  setupWindowSecurity(settingsWindow);
 
   if (process.env.VITE_DEV_SERVER_URL) {
     settingsWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}?view=settings`);
