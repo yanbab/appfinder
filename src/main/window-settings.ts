@@ -1,42 +1,33 @@
 import type { BrowserWindow } from 'electron';
-import { Window } from './window';
+import { createWindow } from './window';
 import { __ } from './i18n';
 
-let settingsWindow: SettingsWindow | null = null;
+let settingsWindow: BrowserWindow | null = null;
 
-export class SettingsWindow extends Window {
-  constructor(parentWindow?: BrowserWindow) {
-    super({
-      title: __('Settings'),
-      width: 380,
-      height: 200,
-      resizable: false,
-      minimizable: false,
-      maximizable: false,
-      fullscreenable: false,
-      parent: parentWindow || undefined,
-      modal: false,
-    });
-
-    this.loadAppView('view=settings');
-
-    this.on('closed', () => {
-      settingsWindow = null;
-    });
-  }
-}
-
-export function createSettingsWindow(parentWindow?: BrowserWindow): SettingsWindow {
+export function createSettingsWindow(parentWindow?: BrowserWindow): BrowserWindow {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
     settingsWindow.focus();
     return settingsWindow;
   }
 
-  settingsWindow = new SettingsWindow(parentWindow);
+  settingsWindow = createWindow({
+    title: __('Settings'),
+    width: 380,
+    height: 200,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    parent: parentWindow || undefined,
+    modal: false,
+    viewQuery: 'view=settings',
+  });
+
+  settingsWindow.on('closed', () => {
+    settingsWindow = null;
+  });
+
   return settingsWindow;
 }
 
 export const openSettingsWindow = createSettingsWindow;
-
-
-
