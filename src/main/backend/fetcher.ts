@@ -37,6 +37,16 @@ export const CATEGORIES_DEF: CategoryItem[] = [
   { "name": "other", "displayName": "Other", "symbolName": "square.grid.2x2" }
 ];
 
+export function writeJsonAtomic(destPath: string, data: any): void {
+  const dir = path.dirname(destPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  const tmpPath = `${destPath}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
+  fs.writeFileSync(tmpPath, typeof data === 'string' ? data : JSON.stringify(data, null, 2), 'utf8');
+  fs.renameSync(tmpPath, destPath);
+}
+
 async function downloadJson(url: string, destPath: string, signal?: AbortSignal): Promise<any> {
   const res = await fetch(url, { signal, headers: { 'User-Agent': 'AppFinder' } });
   if (!res.ok) {
@@ -44,8 +54,8 @@ async function downloadJson(url: string, destPath: string, signal?: AbortSignal)
   }
   const data = await res.json();
   try {
-    fs.writeFileSync(destPath, JSON.stringify(data), 'utf8');
-  } catch (_) {}
+    writeJsonAtomic(destPath, data);
+  } catch (_) { }
   return data;
 }
 
@@ -149,10 +159,10 @@ export async function fetchCatalog({ onLog, signal }: FetchCatalogOptions = {}):
 
   onLog?.('==> Caching apps...');
   const processedApps = processAppsData(casksRaw, categoriesRaw, downloadsRaw, addedRaw);
-  fs.writeFileSync(CACHED_APPS_FILE, JSON.stringify(processedApps, null, 2), 'utf8');
+  writeJsonAtomic(CACHED_APPS_FILE, processedApps);
 
   onLog?.('==> Caching categories...');
-  fs.writeFileSync(CACHED_CATEGORIES_FILE, JSON.stringify(CATEGORIES_DEF, null, 2), 'utf8');
+  writeJsonAtomic(CACHED_CATEGORIES_FILE, CATEGORIES_DEF);
 
   onLog?.('==> ✔︎ Updated');
   return { apps: processedApps, categories: CATEGORIES_DEF };
