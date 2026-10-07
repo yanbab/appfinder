@@ -54,9 +54,9 @@ export class PseudoTerminal extends EventEmitter {
         '-q', '-t', '0', '/dev/null',
         '/bin/sh', '-c', `stty rows ${this.rows} cols ${this.cols} 2>/dev/null; exec "$@"`, '--',
         file, ...args,
-      ], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
+      ], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
     } else {
-      child = nodeSpawn(file, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
+      child = nodeSpawn(file, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
     }
 
     this.child = child;
@@ -119,8 +119,14 @@ export class PseudoTerminal extends EventEmitter {
     if (this._killed) return;
     this._killed = true;
     try {
-      this.child?.kill(signal as any);
-    } catch (_) { }
+      if (this.child?.pid) {
+        process.kill(-this.child.pid, signal);
+      }
+    } catch (_) {
+      try {
+        this.child?.kill(signal as any);
+      } catch (__) { }
+    }
   }
 }
 
