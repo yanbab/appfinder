@@ -1,7 +1,7 @@
 {
   "name": "appfinder",
   "productName": "AppFinder",
-  "version": "0.9.10",
+  "version": "0.9.9",
   "description": "App store for the Homebrew package manager",
   "author": "yanbab",
   "license": "MIT",
@@ -25,7 +25,7 @@
     "test": "node --import tsx --test 'test/**/*.test.js'",
     "docs": "typedoc --plugin typedoc-plugin-markdown --out _doc/api",
     "docs:html": "typedoc --out _doc/html",
-    "release": "tsx scripts/release-github.js"
+    "release": "node scripts/release-github.js"
   },
   "keywords": [
     "casks",

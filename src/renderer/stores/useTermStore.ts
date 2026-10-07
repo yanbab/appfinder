@@ -75,8 +75,8 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
     const name = cask ? getAppName(cask) : token;
     let title = action === 'install' ? `Installing ${name}...`
       : action === 'uninstall' ? `Deleting ${name}...`
-      : action === 'upgrade' ? `Updating ${name}...`
-      : `${action}...`;
+        : action === 'upgrade' ? `Updating ${name}...`
+          : `${action}...`;
 
     if (remainingCount !== null && remainingCount > 0) {
       title = `${action === 'upgrade' ? 'Updating' : 'Installing'} ${name}... (${remainingCount} remaining)`;
@@ -134,8 +134,8 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
         runningTasks: { ...state.runningTasks, [action]: action },
         drawerTitle:
           action === 'refresh' ? __('Checking for updates...')
-          : action === 'fetch' ? __('Checking for new applications...')
-          : __('Cleaning up Homebrew cache...')
+            : action === 'fetch' ? __('Checking for new applications...')
+              : __('Cleaning up Homebrew cache...')
       }));
       if (action === 'cleanup') {
         useShellStore.getState().setShowTerminal(true);
