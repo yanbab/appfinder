@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useAppStore, useTermStore, useShellStore, selectFilteredItems } from '@/stores';
 import { AppList } from './AppList';
-import { Empty } from './Empty';
+import { EmptyState } from './EmptyState';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 
@@ -57,13 +57,13 @@ export function AppListUpdates(): React.JSX.Element {
 
   // If empty and refreshing, show loading spinner state
   if (filteredCount === 0 && isRefreshRunning) {
-    return <Empty loading />;
+    return <EmptyState loading />;
   }
 
   // If no updates available, show Empty state with refresh button and last check date
   if (filteredCount === 0) {
     return (
-      <Empty
+      <EmptyState
         icon="checkmark"
         title={__('Up to date')}
         subtitle={__('All installed casks are updated to their latest versions.')}
@@ -80,7 +80,7 @@ export function AppListUpdates(): React.JSX.Element {
             {__('Last check :')} <span className="font-medium text-muted-foreground">{formattedLastChecked}</span>
           </div>
         </div>
-      </Empty>
+      </EmptyState>
     );
   }
 

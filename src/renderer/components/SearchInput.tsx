@@ -31,16 +31,16 @@ export function SearchInput({ className = '' }: SearchInputProps) {
         placeholder={__('Search')}
         value={search}
         onChange={handleChange}
-        className="h-7 pl-8 pr-7 text-xs bg-black/[0.06] dark:bg-white/[0.08] focus:bg-black/[0.09] dark:focus:bg-white/[0.12] border-0 border-none shadow-none rounded-[var(--radius-btn)] placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-none"
+        className="h-7 pl-8 pr-7 text-xs bg-black/[0.06] dark:bg-white/[0.08] focus:bg-black/[0.08] dark:focus:bg-white/[0.10] border-0 border-none shadow-none rounded-[var(--radius-btn)] text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition-none"
       />
       {search && (
         <button
           type="button"
           onClick={() => setSearch('')}
-          className="absolute right-2 size-4 rounded-full bg-muted-foreground/40 hover:bg-muted-foreground/60 active:bg-muted-foreground/80 text-background flex items-center justify-center cursor-default transition-colors"
+          className="absolute right-2 size-4 rounded-full bg-muted-foreground/65 hover:bg-muted-foreground/85 active:bg-muted-foreground text-background dark:text-[#18181a] flex items-center justify-center cursor-default transition-colors"
           title={__('Clear search')}
         >
-          <ShellIcon name="xmark" className="size-2.5" />
+          <ShellIcon name="xmark" className="size-2.5 stroke-[2.5]" />
         </button>
       )}
     </div>

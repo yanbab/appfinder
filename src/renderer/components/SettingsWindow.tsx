@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { LocaleInfo } from '@/types';
 
-export function Settings() {
+export function SettingsWindow() {
   const [alwaysShowStatusBar, setAlwaysShowStatusBar] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [language, setLanguage] = useState('system');
@@ -185,4 +185,4 @@ export function Settings() {
   );
 }
 
-export default Settings;
+export default SettingsWindow;

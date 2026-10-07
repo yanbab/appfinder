@@ -2,7 +2,7 @@ import React, { useRef, useMemo } from 'react';
 import { useAppStore, useShellStore, selectFilteredItems } from '@/stores';
 import { AppCard } from './AppCard';
 import { AppRow } from './AppRow';
-import { Empty } from './Empty';
+import { EmptyState } from './EmptyState';
 
 export interface AppListProps {
   header?: React.ReactNode;
@@ -45,12 +45,12 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
   };
 
   if (loading) {
-    return <Empty loading />;
+    return <EmptyState loading />;
   }
 
   if (filteredCount === 0) {
     return (
-      <Empty
+      <EmptyState
         icon="magnifyingglass"
         title={__('No casks found')}
         subtitle={__('Try adjusting your search or category filter.')}

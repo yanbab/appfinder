@@ -70,6 +70,7 @@ export function Sidebar(): React.JSX.Element {
               <Button
                 key={item.id}
                 variant="sidebar"
+                className={item.id === 'discover' ? 'mb-1' : undefined}
                 icon={item.icon}
                 active={currentTab === item.id}
                 badge={item.badge}

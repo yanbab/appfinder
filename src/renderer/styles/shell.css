@@ -52,7 +52,7 @@
 }
 
 *:focus-visible {
-  outline: 2px solid var(--ring) !important;
+  outline: 2px solid color-mix(in srgb, var(--ring) 60%, transparent) !important;
   outline-offset: 1px !important;
 }
 
@@ -63,7 +63,7 @@ textarea:focus:not(:focus-visible) {
 
 input:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--ring) !important;
+  outline: 2px solid color-mix(in srgb, var(--ring) 60%, transparent) !important;
   outline-offset: 1px !important;
 }
 

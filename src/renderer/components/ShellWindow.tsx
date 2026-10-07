@@ -13,7 +13,7 @@ import { AppListUpdates } from './AppListUpdates';
 import { useNativeContextMenu } from '@/hooks/useNativeContextMenu';
 import { useKeyboardNav } from '@/hooks/useKeyboardNav';
 
-export function Shell(): React.JSX.Element {
+export function ShellWindow(): React.JSX.Element {
   const currentTab = useShellStore((s) => s.currentTab);
   const showTerminal = useShellStore((s) => s.showTerminal);
   const search = useAppStore((s) => s.search);
@@ -46,4 +46,4 @@ export function Shell(): React.JSX.Element {
   );
 }
 
-export default Shell;
+export default ShellWindow;

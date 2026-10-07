@@ -6,19 +6,19 @@ import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 import { formatReason } from '@/hooks/utils';
 
-export interface AppActionButtonProps {
+export interface AppButtonsProps {
   item: CaskItem;
   variant?: 'icon' | 'row' | 'hero' | 'panel';
   className?: string;
   caskStatus?: { isDisabled?: boolean; isDeprecated?: boolean; disableReason?: string; deprecationReason?: string };
 }
 
-export function AppActionButton({
+export function AppButtons({
   item,
   variant = 'row',
   className,
   caskStatus,
-}: AppActionButtonProps) {
+}: AppButtonsProps) {
   const __ = useShellStore((s) => s.__);
   const { isRunning, isInstalled, isOutdated, canOpen, install, upgrade, uninstall, open } = useAppItemState(item);
 
@@ -235,4 +235,4 @@ export function AppActionButton({
   );
 }
 
-export default AppActionButton;
+export default AppButtons;

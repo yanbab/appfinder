@@ -1,9 +1,9 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/index.css";
-import { Shell } from "./components/Shell";
-import { Settings } from "./components/Settings";
-import { Error } from "./components/Error";
+import { ShellWindow } from "./components/ShellWindow";
+import { SettingsWindow } from "./components/SettingsWindow";
+import { ErrorWindow } from "./components/ErrorWindow";
 import { ThemeProvider } from "@/hooks";
 import { initStoreListeners } from "@/stores";
 
@@ -16,11 +16,11 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
-      <Error>
+      <ErrorWindow>
         <ThemeProvider>
-          {isSettings ? <Settings /> : <Shell />}
+          {isSettings ? <SettingsWindow /> : <ShellWindow />}
         </ThemeProvider>
-      </Error>
+      </ErrorWindow>
     </StrictMode>
   );
 }

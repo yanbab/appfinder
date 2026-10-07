@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo } from 'react';
 import { useShellStore, useAppStore, selectFeaturedItems } from '@/stores';
 import { AppIcon } from './AppIcon';
-import { AppActionButton } from './AppActionButton';
+import { AppButtons } from './AppButtons';
 import { getAppName, name2color } from '@/hooks/utils';
 
-export function AppSlider() {
+export function DiscoverSlider() {
   const items = useAppStore((s) => s.items);
   const featuredItems = useMemo(() => selectFeaturedItems(items), [items]);
   const slideIndex = useShellStore((s) => s.slideIndex);
@@ -28,7 +28,7 @@ export function AppSlider() {
     <div
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="relative overflow-hidden rounded-[calc(var(--radius-card)*2)] h-[210px] shadow-sm select-none"
+      className="relative overflow-hidden rounded-[calc(var(--radius-card)*2)] h-[160px] shadow-sm select-none"
     >
       {featuredItems.map((item, idx) => {
         const isActive = idx === slideIndex;
@@ -36,7 +36,7 @@ export function AppSlider() {
           <div
             key={item.token}
             onClick={() => openAppInfo(item)}
-            className={`absolute inset-0 p-6 flex items-center transition-opacity duration-500 ease-in-out cursor-default ${
+            className={`absolute inset-0 p-4 sm:p-5 flex items-center transition-opacity duration-500 ease-in-out cursor-default ${
               isActive ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
@@ -58,26 +58,26 @@ export function AppSlider() {
               <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-black/20 via-black/35 to-black/55 backdrop-blur-md" />
             </div>
 
-            <div className="relative z-1 flex items-center gap-6 w-full min-w-0">
+            <div className="relative z-1 flex items-center gap-5 w-full min-w-0">
               {/* App Icon */}
-              <div className="size-28 sm:size-32 shrink-0 flex items-center justify-center">
+              <div className="size-24 sm:size-28 shrink-0 flex items-center justify-center">
                 <AppIcon item={item} size="hero" className="size-full rounded-[var(--radius-card)]" />
               </div>
 
               {/* Details */}
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="space-y-1">
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-sm truncate">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="space-y-0.5">
+                  <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white drop-shadow-sm truncate">
                     {getAppName(item)}
                   </h2>
                   {item.desc && (
-                    <p className="text-xs sm:text-sm text-white/80 line-clamp-2 leading-relaxed drop-shadow-xs max-w-xl">
+                    <p className="text-xs text-white/80 line-clamp-2 leading-relaxed drop-shadow-xs max-w-xl">
                       {item.desc}
                     </p>
                   )}
                 </div>
 
-                <AppActionButton item={item} variant="hero" />
+                <AppButtons item={item} variant="hero" />
               </div>
             </div>
           </div>
@@ -87,4 +87,4 @@ export function AppSlider() {
   );
 }
 
-export default AppSlider;
+export default DiscoverSlider;

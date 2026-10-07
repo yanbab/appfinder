@@ -38,7 +38,7 @@ export function NavGroup({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full px-2.5 py-1 flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase tracking-wider cursor-default select-none outline-none focus:outline-none bg-transparent hover:bg-transparent active:bg-transparent transition-none"
+        className="w-full px-2.5 py-1 flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase cursor-default select-none outline-none focus:outline-none bg-transparent hover:bg-transparent active:bg-transparent transition-none"
       >
         <span className="truncate">{resolvedTitle}</span>
         <ShellIcon

@@ -2,22 +2,22 @@ import React, { Component, type ReactNode, type ErrorInfo } from 'react';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 
-export interface ErrorProps {
+export interface ErrorWindowProps {
   children?: ReactNode;
 }
 
-export interface ErrorState {
+export interface ErrorWindowState {
   hasError: boolean;
   error: globalThis.Error | null;
 }
 
-export class Error extends Component<ErrorProps, ErrorState> {
-  constructor(props: ErrorProps) {
+export class ErrorWindow extends Component<ErrorWindowProps, ErrorWindowState> {
+  constructor(props: ErrorWindowProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: globalThis.Error): ErrorState {
+  static getDerivedStateFromError(error: globalThis.Error): ErrorWindowState {
     return { hasError: true, error };
   }
 
@@ -57,4 +57,4 @@ export class Error extends Component<ErrorProps, ErrorState> {
   }
 }
 
-export default Error;
+export default ErrorWindow;

@@ -43,6 +43,7 @@ export interface AppStoreState {
   installedVersions: Record<string, string>;
   outdatedMap: Record<string, UpdateInfo>;
   lastCheckedTime: Date | null;
+  isCheckingUpdates: boolean;
   loading: boolean;
   search: string;
   order: string;
@@ -69,6 +70,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   installedVersions: {},
   outdatedMap: {},
   lastCheckedTime: null,
+  isCheckingUpdates: false,
   loading: true,
   search: '',
   order: 'popularity',
@@ -123,13 +125,17 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
 
   refreshUpdates: async (force: boolean = false) => {
     if (!window.ipc?.getUpdates) return;
+    set({ isCheckingUpdates: true });
     try {
       const upds = await window.ipc.getUpdates(force);
       set({
         outdatedMap: parseUpdatesMap(upds),
-        lastCheckedTime: new Date()
+        lastCheckedTime: new Date(),
+        isCheckingUpdates: false
       });
-    } catch (_) {}
+    } catch (_) {
+      set({ isCheckingUpdates: false });
+    }
   }
 }));
 

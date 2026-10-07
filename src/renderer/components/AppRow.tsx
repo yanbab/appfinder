@@ -2,7 +2,7 @@ import React from 'react';
 import type { CaskItem } from '@/types';
 import { useShellStore, useAppStore } from '@/stores';
 import { AppIcon } from './AppIcon';
-import { AppActionButton } from './AppActionButton';
+import { AppButtons } from './AppButtons';
 import { getAppName, formatVersion } from '@/hooks/utils';
 
 export interface AppRowProps {
@@ -57,7 +57,7 @@ export function AppRow({ item, className }: AppRowProps) {
       </div>
 
       {/* Action buttons */}
-      <AppActionButton item={item} variant="row" />
+      <AppButtons item={item} variant="row" />
     </div>
   );
 }

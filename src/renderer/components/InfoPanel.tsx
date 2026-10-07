@@ -3,7 +3,7 @@ import { useShellStore, useAppStore } from '@/stores';
 import { AppIcon } from './AppIcon';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
-import { AppActionButton } from './AppActionButton';
+import { AppButtons } from './AppButtons';
 import {
   getAppName,
   formatVersion,
@@ -247,7 +247,7 @@ export function InfoPanel() {
         </div>
 
         {/* Primary Actions */}
-        <AppActionButton item={selectedApp} variant="panel" caskStatus={caskStatus} />
+        <AppButtons item={selectedApp} variant="panel" caskStatus={caskStatus} />
 
         {/* Metadata Section in Card */}
         <div className="rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">

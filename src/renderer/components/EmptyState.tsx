@@ -1,7 +1,7 @@
 import React, { type ReactNode, type HTMLAttributes } from 'react';
 import { ShellIcon } from './ShellIcon';
 
-export interface EmptyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
+export interface EmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   icon?: string | ReactNode;
   title?: ReactNode;
   subtitle?: ReactNode;
@@ -10,7 +10,7 @@ export interface EmptyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'
   loading?: boolean;
 }
 
-export function Empty({
+export function EmptyState({
   icon = 'magnifyingglass',
   title,
   subtitle,
@@ -18,7 +18,7 @@ export function Empty({
   className = '',
   loading = false,
   ...props
-}: EmptyProps) {
+}: EmptyStateProps) {
   const isSpinner = loading || icon === 'loader-2' || icon === 'loader' || icon === 'loading';
 
   return (
@@ -60,4 +60,4 @@ export function Empty({
   );
 }
 
-export default Empty;
+export default EmptyState;

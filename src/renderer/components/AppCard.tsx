@@ -2,7 +2,7 @@ import React from 'react';
 import type { CaskItem } from '@/types';
 import { useShellStore, useAppStore } from '@/stores';
 import { AppIcon } from './AppIcon';
-import { AppActionButton } from './AppActionButton';
+import { AppButtons } from './AppButtons';
 import { getAppName, formatVersion } from '@/hooks/utils';
 
 export interface AppCardProps {
@@ -53,7 +53,7 @@ export function AppCard({ item, className }: AppCardProps) {
         </div>
       </div>
 
-      <AppActionButton item={item} variant="icon" />
+      <AppButtons item={item} variant="icon" />
     </div>
   );
 }
