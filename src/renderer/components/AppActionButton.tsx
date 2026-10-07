@@ -1,6 +1,6 @@
 import React from 'react';
 import type { CaskItem } from '@/types';
-import { useShellStore, useTermStore } from '@/stores';
+import { useShellStore } from '@/stores';
 import { useAppItemState } from '@/hooks/useAppItemState';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
@@ -20,7 +20,6 @@ export function AppActionButton({
   caskStatus,
 }: AppActionButtonProps) {
   const __ = useShellStore((s) => s.__);
-  const startAction = useTermStore((s) => s.startAction);
   const { isRunning, isInstalled, isOutdated, canOpen, install, upgrade, uninstall, open } = useAppItemState(item);
 
   // Stop propagation helper for cards / rows
@@ -143,7 +142,7 @@ export function AppActionButton({
               <Button
                 className="flex-1"
                 variant="default"
-                onClick={() => startAction('upgrade', item.token)}
+                onClick={upgrade}
               >
                 {__('Upgrade')}
               </Button>
@@ -153,7 +152,7 @@ export function AppActionButton({
               <Button
                 className="flex-1"
                 variant="default"
-                onClick={() => startAction('open', item.token, item.app ?? undefined)}
+                onClick={open}
               >
                 {__('Open')}
               </Button>
@@ -163,7 +162,7 @@ export function AppActionButton({
               <Button
                 variant="destructive"
                 className="flex-1"
-                onClick={() => startAction('uninstall', item.token)}
+                onClick={uninstall}
               >
                 {__('Delete')}
               </Button>
@@ -182,7 +181,7 @@ export function AppActionButton({
               <Button
                 className="w-full"
                 variant="default"
-                onClick={() => startAction('install', item.token)}
+                onClick={install}
               >
                 {__('Install')}
               </Button>
