@@ -58,6 +58,4 @@ export function AppCard({ item, className }: AppCardProps) {
   );
 }
 
-// Backward-compatible alias
-export const AppItemGrid = AppCard;
 export default AppCard;

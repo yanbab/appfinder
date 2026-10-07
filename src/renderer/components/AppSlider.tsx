@@ -87,7 +87,4 @@ export function AppSlider() {
   );
 }
 
-// Backward-compatible alias
-export const AppItemSlider = AppSlider;
-export const AppItemDiscoverSlider = AppSlider;
 export default AppSlider;

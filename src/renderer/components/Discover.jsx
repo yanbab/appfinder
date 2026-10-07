@@ -281,5 +281,4 @@ export function Discover() {
   );
 }
 
-export const DiscoverView = Discover;
 export default Discover;

@@ -77,10 +77,7 @@ const ipcApi: IpcBridge = {
 
   getUpdates: (force: boolean = false) => invoke('cask:get-updates', force),
   getMessages: () => invoke('i18n:get-messages'),
-  getTranslations: () => invoke('i18n:get-messages'),
-  getI18nCatalog: () => invoke('i18n:get-messages'),
   getAvailableLocales: () => invoke('i18n:get-locales'),
-  getI18nLocales: () => invoke('i18n:get-locales'),
   getSystemLocale: () => invoke('i18n:get-system-locale'),
   getConfig: async () => {
     if (cachedConfig) return cachedConfig;
@@ -111,7 +108,6 @@ const ipcApi: IpcBridge = {
   cancelAction: (taskId: string) => ipcRenderer.send('cask:cancel-action', taskId),
   writePtyInput: (taskId: string, text: string) => ipcRenderer.send('cask:write-pty-input', { taskId, text }),
   clearCaches: () => invoke('settings:clear-caches'),
-  cleanCache: () => invoke('settings:clear-caches'),
 
   getAccentColor: () => invoke('system:get-accent-color'),
   onAccentColorChanged: (cb: (color: string) => void) => on('system:accent-color-changed', cb),

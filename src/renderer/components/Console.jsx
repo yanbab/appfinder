@@ -59,4 +59,6 @@ export function Console() {
       </div>
     </div>
   );
+}
+
 export default Console;

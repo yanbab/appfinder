@@ -55,4 +55,6 @@ export class Error extends Component<ErrorProps, ErrorState> {
 
     return this.props.children;
   }
+}
+
 export default Error;

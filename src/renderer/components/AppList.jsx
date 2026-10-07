@@ -73,5 +73,4 @@ export function AppList({ header, footer }) {
   );
 }
 
-export const AppsListView = AppList;
 export default AppList;

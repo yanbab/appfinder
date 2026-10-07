@@ -108,5 +108,4 @@ export function Sidebar() {
   );
 }
 
-export const CategoryList = Sidebar;
 export default Sidebar;

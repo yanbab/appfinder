@@ -113,5 +113,4 @@ export function AppListUpdates() {
   return <AppList header={header} footer={footer} />;
 }
 
-export const AppListUpdatesView = AppListUpdates;
 export default AppListUpdates;

@@ -1,10 +1,10 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/index.css";
-import { Shell } from "./components/Shell.jsx";
-import { Settings } from "./components/Settings.jsx";
+import { Shell } from "./components/Shell";
+import { Settings } from "./components/Settings";
 import { Error } from "./components/Error";
-import { ThemeProvider } from "@/hooks/useTheme.jsx";
+import { ThemeProvider } from "@/hooks";
 import { initStoreListeners } from "@/stores";
 
 initStoreListeners();

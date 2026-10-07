@@ -1,6 +1,16 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 
-const ThemeContext = createContext({
+export interface ThemeContextValue {
+  theme?: string;
+  isDark: boolean;
+  accentColor: string | null;
+  isLightAccent: boolean;
+  isWindowBlurred: boolean;
+  isResizing: boolean;
+  setTheme?: (theme: string) => void;
+}
+
+const ThemeContext = createContext<ThemeContextValue>({
   theme: 'system',
   isDark: false,
   accentColor: null,
@@ -12,19 +22,19 @@ const ThemeContext = createContext({
 
 // Relative luminance following WCAG 2.1 specifications:
 // https://www.w3.org/WAI/GL/wiki/Relative_luminance
-function getLuminance(hex) {
+function getLuminance(hex: string): number {
   const clean = hex.replace(/^#/, '');
   if (clean.length < 6) return 0.5;
   const r = parseInt(clean.substring(0, 2), 16) / 255;
   const g = parseInt(clean.substring(2, 4), 16) / 255;
   const b = parseInt(clean.substring(4, 6), 16) / 255;
 
-  const toLinear = (c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const toLinear = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
   return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
 }
 
-export function ThemeProvider({ children }) {
-  const [isDark, setIsDark] = useState(() => {
+export function ThemeProvider({ children }: { children?: ReactNode }) {
+  const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     const match = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false;
     if (match) {
@@ -32,14 +42,14 @@ export function ThemeProvider({ children }) {
     }
     return match;
   });
-  const [accentColor, setAccentColor] = useState(null);
-  const [isWindowBlurred, setIsWindowBlurred] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
+  const [accentColor, setAccentColor] = useState<string | null>(null);
+  const [isWindowBlurred, setIsWindowBlurred] = useState<boolean>(false);
+  const [isResizing, setIsResizing] = useState<boolean>(false);
 
   // System Dark / Light Theme listener
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleMediaChange = (e) => {
+    const handleMediaChange = (e: MediaQueryListEvent) => {
       setIsDark(e.matches);
       if (e.matches) {
         document.documentElement.classList.add('dark');
@@ -85,7 +95,7 @@ export function ThemeProvider({ children }) {
 
   // Window resize debounce to suppress layout transitions during resize
   useEffect(() => {
-    let resizeTimer = null;
+    let resizeTimer: any = null;
     const handleResize = () => {
       document.body.classList.add('is-resizing');
       setIsResizing(true);
@@ -104,14 +114,12 @@ export function ThemeProvider({ children }) {
   }, []);
 
   // Apply macOS native accent color directly to primary & ring variables
-  const applyAccentColor = useCallback((color) => {
+  const applyAccentColor = useCallback((color: string) => {
     if (!color) return;
     const clean = typeof color === 'string' ? color.trim().replace(/^#/, '') : '';
     const hex = color.startsWith?.('rgb') ? color : `#${clean.length === 8 ? clean.slice(0, 6) : clean}`;
     if (!hex || hex === '#') return;
 
-    // For high-luminance accent colors (e.g. Yellow, Orange), macOS mutes/darkens the accent color
-    // on controls like sidebar buttons so white text maintains good contrast.
     const lum = getLuminance(hex);
     const mutePercent = lum > 0.60 ? 65 : (lum > 0.40 ? 75 : 85);
 

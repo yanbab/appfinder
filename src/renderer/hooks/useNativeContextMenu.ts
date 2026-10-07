@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAppStore, useTermStore } from '@/stores';
 import { getAppName } from '@/hooks/utils';
+import type { CaskItem } from '@/types';
 
 export function useNativeContextMenu() {
   const items = useAppStore((s) => s.items);
@@ -10,21 +11,24 @@ export function useNativeContextMenu() {
   const startAction = useTermStore((s) => s.startAction);
 
   useEffect(() => {
-    const handleContextMenu = (e) => {
+    const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
+
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
 
       const selection = window.getSelection();
       const selectedText = selection ? selection.toString().trim() : '';
 
-      const searchInput = e.target.closest('#search-input') || (e.target.tagName === 'INPUT' ? e.target : null);
-      const link = e.target.closest('a[href]:not([href="#"]):not([href^="javascript:"])');
-      const selectableEl = e.target.closest('.selectable-text, .info-app-title, .info-app-desc, .info-app-version, .info-caveats-text');
-      const card = e.target.closest('[data-token]');
-      const inInfoDrawer = e.target.closest('[data-drawer-content]');
+      const searchInput = target.closest('#search-input') || (target.tagName === 'INPUT' ? target : null) as HTMLElement | null;
+      const link = target.closest('a[href]:not([href="#"]):not([href^="javascript:"])') as HTMLAnchorElement | null;
+      const selectableEl = target.closest('.selectable-text, .info-app-title, .info-app-desc, .info-app-version, .info-caveats-text');
+      const card = target.closest('[data-token]') as HTMLElement | null;
+      const inInfoDrawer = target.closest('[data-drawer-content]');
 
       let type = 'other';
-      let appInfo = null;
-      let linkUrl = null;
+      let appInfo: any = null;
+      let linkUrl: string | null = null;
       let targetText = selectedText;
 
       if (searchInput) {
@@ -37,17 +41,17 @@ export function useNativeContextMenu() {
         type = 'text';
       } else if (selectableEl) {
         type = 'text';
-        targetText = selectableEl.textContent.trim();
+        targetText = selectableEl.textContent?.trim() || '';
       } else if (inInfoDrawer && !card) {
         type = 'other';
       } else if (card) {
-        const token = card.dataset.token || (card.getAttribute && card.getAttribute('data-token'));
+        const token = card.dataset.token || card.getAttribute('data-token');
         if (token) {
           type = 'app';
           const isInstalled = installed.includes(token);
           const isOutdated = Boolean(outdatedMap[token]);
           const isRunning = Boolean(runningTasks[token]);
-          const item = items.find((i) => i.token === token);
+          const item = items.find((i: CaskItem) => i.token === token);
           const name = item ? getAppName(item) : token;
 
           appInfo = {
@@ -78,10 +82,10 @@ export function useNativeContextMenu() {
     return () => window.removeEventListener('contextmenu', handleContextMenu);
   }, [items, installed, outdatedMap, runningTasks]);
 
-  // Listen for context menu action triggers from Electron main process
   useEffect(() => {
     if (window.ipc?.onContextMenuAction) {
-      const unsub = window.ipc.onContextMenuAction(async ({ action, token }) => {
+      const unsub = window.ipc.onContextMenuAction(async (data: any) => {
+        const { action, token } = typeof data === 'object' && data ? data : { action: data, token: undefined };
         if (action && token && startAction) {
           await startAction(action, token);
         }

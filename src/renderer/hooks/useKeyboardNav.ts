@@ -27,15 +27,16 @@ export function useKeyboardNav() {
   const displayedItems = useMemo(() => filteredItems.slice(0, displayedCount), [filteredItems, displayedCount]);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (showPasswordModal) return;
 
-      const searchInput = document.getElementById('search-input');
+      const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
+      const activeEl = document.activeElement as HTMLElement | null;
       const isInput =
-        document.activeElement?.tagName === 'INPUT' ||
-        document.activeElement?.tagName === 'TEXTAREA' ||
-        document.activeElement?.isContentEditable;
-      const isSearch = document.activeElement === searchInput;
+        activeEl?.tagName === 'INPUT' ||
+        activeEl?.tagName === 'TEXTAREA' ||
+        Boolean(activeEl?.isContentEditable);
+      const isSearch = activeEl === searchInput;
 
       // Cmd+9 -> By list, Cmd+0 -> By grid
       if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) {
@@ -76,8 +77,8 @@ export function useKeyboardNav() {
           setSearch('');
           return;
         }
-        if (isInput) {
-          document.activeElement.blur();
+        if (isInput && activeEl) {
+          activeEl.blur();
           return;
         }
         if (showSidebar && window.innerWidth <= 560) {
@@ -101,7 +102,7 @@ export function useKeyboardNav() {
 
       // 4. From Search input: ArrowDown jumps into first app card
       if (isSearch && e.key === 'ArrowDown' && !e.metaKey && !e.altKey && !e.ctrlKey) {
-        const firstCard = document.querySelector('.app-card');
+        const firstCard = document.querySelector('.app-card') as HTMLElement | null;
         if (firstCard) {
           e.preventDefault();
           firstCard.focus();
@@ -111,9 +112,9 @@ export function useKeyboardNav() {
       }
 
       // 4. App cards/rows keyboard navigation
-      const activeCard = document.activeElement ? document.activeElement.closest('.app-card') : null;
+      const activeCard = activeEl ? activeEl.closest('.app-card') as HTMLElement | null : null;
       if (activeCard && currentTab !== 'discover') {
-        const cards = Array.from(document.querySelectorAll('.app-card'));
+        const cards = Array.from(document.querySelectorAll('.app-card')) as HTMLElement[];
         const currentIndex = cards.indexOf(activeCard);
         if (currentIndex === -1) return;
 
@@ -126,7 +127,7 @@ export function useKeyboardNav() {
               loadMore?.();
             }
             setTimeout(() => {
-              const updated = Array.from(document.querySelectorAll('.app-card'));
+              const updated = Array.from(document.querySelectorAll('.app-card')) as HTMLElement[];
               const last = updated[updated.length - 1];
               last?.focus();
               last?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
@@ -137,7 +138,7 @@ export function useKeyboardNav() {
           } else if (displayedItems.length < filteredCount) {
             loadMore?.();
             setTimeout(() => {
-              const updated = Array.from(document.querySelectorAll('.app-card'));
+              const updated = Array.from(document.querySelectorAll('.app-card')) as HTMLElement[];
               updated[currentIndex + 1]?.focus();
               updated[currentIndex + 1]?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
             }, 50);
@@ -172,7 +173,7 @@ export function useKeyboardNav() {
         // ArrowLeft -> Focus active sidebar item
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
-          const sidebarBtn = document.querySelector(`[data-nav-id="${currentTab}"]`) || document.querySelector('aside button');
+          const sidebarBtn = (document.querySelector(`[data-nav-id="${currentTab}"]`) || document.querySelector('aside button')) as HTMLElement | null;
           sidebarBtn?.focus();
           return;
         }
@@ -213,7 +214,7 @@ export function useKeyboardNav() {
             loadMore?.();
           }
           setTimeout(() => {
-            const updated = Array.from(document.querySelectorAll('.app-card'));
+            const updated = Array.from(document.querySelectorAll('.app-card')) as HTMLElement[];
             const last = updated[updated.length - 1];
             last?.focus();
             last?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
@@ -223,7 +224,6 @@ export function useKeyboardNav() {
       }
 
       // 5. Sidebar Navigation when focused inside sidebar
-      const activeEl = document.activeElement;
       const isSidebar = activeEl && activeEl.closest('aside');
       if (isSidebar && !isInput) {
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -242,7 +242,7 @@ export function useKeyboardNav() {
           if (nextIndex !== currentIndex && tabs[nextIndex]) {
             selectTab(tabs[nextIndex]);
             setTimeout(() => {
-              const itemEl = document.querySelector(`[data-nav-id="${tabs[nextIndex]}"]`);
+              const itemEl = document.querySelector(`[data-nav-id="${tabs[nextIndex]}"]`) as HTMLElement | null;
               itemEl?.focus();
               itemEl?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
             }, 20);
@@ -252,7 +252,7 @@ export function useKeyboardNav() {
 
         // ArrowRight from sidebar -> move focus into first app card
         if (e.key === 'ArrowRight') {
-          const firstCard = document.querySelector('.app-card');
+          const firstCard = document.querySelector('.app-card') as HTMLElement | null;
           if (firstCard) {
             e.preventDefault();
             firstCard.focus();
@@ -274,7 +274,7 @@ export function useKeyboardNav() {
         }
         setShowSidebar?.(true);
         setTimeout(() => {
-          const searchEl = document.getElementById('search-input');
+          const searchEl = document.getElementById('search-input') as HTMLInputElement | null;
           if (searchEl) {
             searchEl.focus();
             const len = searchEl.value.length;
@@ -304,5 +304,6 @@ export function useKeyboardNav() {
     loadMore,
     nextSlide,
     prevSlide,
+    setViewMode,
   ]);
 }

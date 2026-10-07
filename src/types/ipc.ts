@@ -38,10 +38,7 @@ export interface IpcBridge {
   getUpdates: (force?: boolean) => Promise<any>;
 
   getMessages: () => Promise<Record<string, string>>;
-  getTranslations: () => Promise<Record<string, string>>;
-  getI18nCatalog: () => Promise<Record<string, string>>;
   getAvailableLocales: () => Promise<LocaleInfo[]>;
-  getI18nLocales: () => Promise<LocaleInfo[]>;
   getSystemLocale: () => Promise<string>;
 
   getConfig: () => Promise<AppConfig>;
@@ -56,7 +53,6 @@ export interface IpcBridge {
   cancelAction: (taskId: string) => void;
   writePtyInput: (taskId: string, text: string) => void;
   clearCaches: () => Promise<any>;
-  cleanCache: () => Promise<any>;
 
   getAccentColor: () => Promise<string>;
   onAccentColorChanged: (cb: (color: string) => void) => Unsubscribe;

@@ -3,17 +3,17 @@ const svgModules = import.meta.glob('./*.svg', {
   query: '?raw',
   import: 'default',
   eager: true,
-});
+}) as Record<string, string>;
 
-export const symbols = Object.entries(svgModules).reduce((acc, [path, content]) => {
+export const symbols: Record<string, string> = Object.entries(svgModules).reduce((acc, [path, content]) => {
   const match = path.match(/\/([^/]+)\.svg$/);
   if (match) {
     acc[match[1].toLowerCase()] = content;
   }
   return acc;
-}, {});
+}, {} as Record<string, string>);
 
-export const aliases = {
+export const aliases: Record<string, string> = {
   search: 'magnifyingglass',
   check: 'checkmark',
   'check-circle': 'checkmark',
@@ -59,14 +59,14 @@ export const aliases = {
   trash: 'trash',
 };
 
-export function getSymbol(name) {
+export function getSymbol(name?: string): string | null {
   if (!name) return null;
   const key = String(name).toLowerCase();
   const resolved = aliases[key] || key;
   return symbols[resolved] || symbols[key] || null;
 }
 
-export function hasSymbol(name) {
+export function hasSymbol(name?: string): boolean {
   return Boolean(getSymbol(name));
 }
 

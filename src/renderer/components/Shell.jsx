@@ -45,4 +45,6 @@ export function Shell() {
       <PasswordModal />
     </div>
   );
+}
+
 export default Shell;
