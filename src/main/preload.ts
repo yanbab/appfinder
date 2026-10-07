@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { IpcBridge, TaskLogEvent, TaskPromptEvent, TaskCompleteEvent, Unsubscribe } from '../types/ipc';
+import type { IpcBridge, Unsubscribe } from '../types/ipc';
 import type { AppConfig } from '../types/cask';
 
 const on = (signal: string, callback: (...args: any[]) => void): Unsubscribe => {
@@ -110,31 +110,12 @@ const ipcApi: IpcBridge = {
   clearCaches: () => invoke('settings:clear-caches'),
 
   getAccentColor: () => invoke('system:get-accent-color'),
-  onAccentColorChanged: (cb: (color: string) => void) => on('system:accent-color-changed', cb),
   setContentSize: (width: number, height: number) => ipcRenderer.send('window:set-content-size', width, height),
-
   showContextMenu: (data: any) => ipcRenderer.send('context-menu:show', data),
-  onContextMenuAction: (cb: (action: string) => void) => on('context-menu:action', cb),
-
-  onTaskLog: (cb: (data: TaskLogEvent) => void) => on('task:log', cb),
-  onTaskPrompt: (cb: (prompt: TaskPromptEvent) => void) => on('task:prompt', cb),
-  onTaskComplete: (cb: (res: TaskCompleteEvent) => void) => on('task:complete', cb),
-  onStatusLog: (cb: (data: any) => void) => on('status:log', cb),
-  onUpdatesRefreshed: (cb: (data: any) => void) => on('cask:updates-refreshed', cb),
-  onDataRefreshed: (cb: (data: any) => void) => on('cask:data-refreshed', cb),
-  onCleanupStatus: (cb: (status: any) => void) => on('cleanup:status', cb),
-  onConfigUpdated: (cb: (cfg: AppConfig) => void) => on('config:updated', cb),
-  onI18nChanged: (cb: (data: any) => void) => on('i18n:changed', cb),
-
-  onSelectTab: (cb: (tab: string) => void) => on('shell:select-tab', cb),
-  onFocusSearch: (cb: () => void) => on('shell:focus-search', cb),
-  onCheckUpdates: (cb: () => void) => on('shell:check-updates', cb),
-  onFetchApps: (cb: () => void) => on('shell:fetch-apps', cb),
-  onClearCache: (cb: () => void) => on('shell:clear-cache', cb),
-  onSetOrder: (cb: (order: string) => void) => on('shell:set-order', cb),
-  onSetViewMode: (cb: (mode: string) => void) => on('shell:set-view-mode', cb),
-  onToggleSidebar: (cb: () => void) => on('shell:toggle-sidebar', cb),
   sidebarChanged: (visible: boolean) => ipcRenderer.send('shell:sidebar-changed', visible),
+
+  // Unified Event Bus
+  on: (signal: any, callback: any) => on(signal, callback),
 };
 
 contextBridge.exposeInMainWorld('ipc', ipcApi);

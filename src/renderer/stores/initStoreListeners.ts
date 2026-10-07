@@ -16,8 +16,7 @@ export function initStoreListeners(): void {
   const shellStore = useShellStore.getState();
 
   // 1. Initial data fetching
-  const fetchMessages = window.ipc.getMessages;
-  fetchMessages?.().then((msgs) => {
+  window.ipc.getMessages?.().then((msgs) => {
     if (msgs) shellStore.setMessages(msgs);
   });
 
@@ -27,89 +26,42 @@ export function initStoreListeners(): void {
 
   appStore.initCatalog();
 
-  // 2. Global IPC event subscriptions
-  if (window.ipc.onConfigUpdated) {
-    window.ipc.onConfigUpdated((cfg) => {
-      if (cfg?.alwaysShowStatusBar !== undefined) {
-        shellStore.setAlwaysShowStatusBar(!!cfg.alwaysShowStatusBar);
-      }
+  // 2. Global IPC event subscriptions via unified `on` bus
+  window.ipc.on('config:updated', (cfg) => {
+    if (cfg?.alwaysShowStatusBar !== undefined) {
+      shellStore.setAlwaysShowStatusBar(!!cfg.alwaysShowStatusBar);
+    }
+  });
+
+  window.ipc.on('i18n:changed', () => {
+    window.ipc.getMessages?.().then((msgs) => {
+      if (msgs) shellStore.setMessages(msgs);
     });
-  }
+  });
 
-  if (window.ipc.onI18nChanged) {
-    window.ipc.onI18nChanged(() => {
-      fetchMessages?.().then((msgs) => {
-        if (msgs) shellStore.setMessages(msgs);
-      });
-    });
-  }
+  window.ipc.on('shell:select-tab', (tab) => shellStore.selectTab(tab));
+  window.ipc.on('shell:focus-search', () => {
+    shellStore.closeAppInfo();
+    shellStore.setShowSidebar(true);
+    setTimeout(() => document.getElementById('search-input')?.focus(), 50);
+  });
+  window.ipc.on('shell:set-order', (order) => appStore.setOrder(order));
+  window.ipc.on('shell:set-view-mode', (mode) => shellStore.setViewMode(mode));
+  window.ipc.on('shell:toggle-sidebar', (show) => shellStore.setShowSidebar(show ?? !shellStore.showSidebar));
+  window.ipc.on('shell:clear-cache', () => termStore.startAction('cleanup'));
+  window.ipc.on('shell:check-updates', () => {
+    shellStore.selectTab('updates');
+    termStore.startAction('refresh', 'refresh');
+  });
+  window.ipc.on('shell:fetch-apps', () => {
+    termStore.startAction('fetch', 'fetch');
+  });
 
-  if (window.ipc.onSelectTab) {
-    window.ipc.onSelectTab((tab) => shellStore.selectTab(tab));
-  }
+  window.ipc.on('cask:updates-refreshed', () => appStore.refreshUpdates(false));
+  window.ipc.on('cask:data-refreshed', () => appStore.initCatalog());
 
-  if (window.ipc.onFocusSearch) {
-    window.ipc.onFocusSearch(() => {
-      shellStore.closeAppInfo();
-      shellStore.setShowSidebar(true);
-      setTimeout(() => document.getElementById('search-input')?.focus(), 50);
-    });
-  }
-
-  if (window.ipc.onSetOrder) {
-    window.ipc.onSetOrder((order) => appStore.setOrder(order));
-  }
-
-  if (window.ipc.onSetViewMode) {
-    window.ipc.onSetViewMode((mode) => shellStore.setViewMode(mode));
-  }
-
-  if (window.ipc.onToggleSidebar) {
-    window.ipc.onToggleSidebar((show) => shellStore.setShowSidebar(show ?? !shellStore.showSidebar));
-  }
-
-  if (window.ipc.onUpdatesRefreshed) {
-    window.ipc.onUpdatesRefreshed(() => {
-      appStore.refreshUpdates(false);
-    });
-  }
-
-  if (window.ipc.onDataRefreshed) {
-    window.ipc.onDataRefreshed(() => {
-      appStore.initCatalog();
-    });
-  }
-
-  if (window.ipc.onTaskLog) {
-    window.ipc.onTaskLog((data) => termStore.handleTaskLog(data));
-  }
-
-  if (window.ipc.onStatusLog) {
-    window.ipc.onStatusLog((text) => termStore.handleStatusLog(text));
-  }
-
-  if (window.ipc.onTaskPrompt) {
-    window.ipc.onTaskPrompt((prompt) => termStore.handleTaskPrompt(prompt));
-  }
-
-  if (window.ipc.onTaskComplete) {
-    window.ipc.onTaskComplete((data) => termStore.handleTaskComplete(data));
-  }
-
-  if (window.ipc.onClearCache) {
-    window.ipc.onClearCache(() => termStore.startAction('cleanup'));
-  }
-
-  if (window.ipc.onCheckUpdates) {
-    window.ipc.onCheckUpdates(() => {
-      shellStore.selectTab('updates');
-      termStore.startAction('refresh', 'refresh');
-    });
-  }
-
-  if (window.ipc.onFetchApps) {
-    window.ipc.onFetchApps(() => {
-      termStore.startAction('fetch', 'fetch');
-    });
-  }
+  window.ipc.on('task:log', (data) => termStore.handleTaskLog(data));
+  window.ipc.on('status:log', (text) => termStore.handleStatusLog(text));
+  window.ipc.on('task:prompt', (prompt) => termStore.handleTaskPrompt(prompt));
+  window.ipc.on('task:complete', (data) => termStore.handleTaskComplete(data));
 }

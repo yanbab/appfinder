@@ -144,8 +144,8 @@ export function ThemeProvider({ children }: { children?: ReactNode }) {
       }).catch(console.error);
     }
 
-    if (window.ipc?.onAccentColorChanged) {
-      const unsub = window.ipc.onAccentColorChanged((color) => {
+    if (window.ipc?.on) {
+      const unsub = window.ipc.on('system:accent-color-changed', (color) => {
         if (color) applyAccentColor(color);
       });
       return () => unsub?.();

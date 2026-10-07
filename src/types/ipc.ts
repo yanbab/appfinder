@@ -26,11 +26,36 @@ export interface TaskCompleteEvent {
 
 export type Unsubscribe = () => void;
 
+export interface IpcEventMap {
+  'task:log': TaskLogEvent;
+  'task:prompt': TaskPromptEvent;
+  'task:complete': TaskCompleteEvent;
+  'status:log': any;
+  'cask:updates-refreshed': any;
+  'cask:data-refreshed': void;
+  'cleanup:status': any;
+  'config:updated': AppConfig;
+  'i18n:changed': void;
+  'shell:select-tab': string;
+  'shell:focus-search': void;
+  'shell:check-updates': void;
+  'shell:fetch-apps': void;
+  'shell:clear-cache': void;
+  'shell:set-order': string;
+  'shell:set-view-mode': string;
+  'shell:toggle-sidebar': boolean | undefined;
+  'system:accent-color-changed': string;
+  'context-menu:action': { action: string; token?: string } | string;
+}
+
+export type IpcEventName = keyof IpcEventMap;
+
 export interface IpcBridge {
   systemVersion: string;
   platform: string;
   arch: string;
 
+  // Queries (Request-Response)
   getCasks: () => Promise<CaskItem[]>;
   getCategories: () => Promise<CategoryItem[]>;
   getCaskInfo: (token: string) => Promise<any>;
@@ -48,36 +73,18 @@ export interface IpcBridge {
   openExternal: (url: string) => Promise<any>;
   showErrorDialog: (title: string, content: string) => Promise<any>;
   showMessage: (options: any) => Promise<any>;
+  getAccentColor: () => Promise<string>;
+  clearCaches: () => Promise<any>;
 
+  // Actions (Send to Main)
   runAction: (taskId: string, action: string, token: string, zap?: boolean, appName?: string) => void;
   cancelAction: (taskId: string) => void;
   writePtyInput: (taskId: string, text: string) => void;
-  clearCaches: () => Promise<any>;
-
-  getAccentColor: () => Promise<string>;
-  onAccentColorChanged: (cb: (color: string) => void) => Unsubscribe;
   setContentSize: (width: number, height: number) => void;
-
   showContextMenu: (data: any) => void;
-  onContextMenuAction: (cb: (action: string) => void) => Unsubscribe;
-
-  onTaskLog: (cb: (data: TaskLogEvent) => void) => Unsubscribe;
-  onTaskPrompt: (cb: (prompt: TaskPromptEvent) => void) => Unsubscribe;
-  onTaskComplete: (cb: (res: TaskCompleteEvent) => void) => Unsubscribe;
-  onStatusLog: (cb: (data: any) => void) => Unsubscribe;
-  onUpdatesRefreshed: (cb: (data: any) => void) => Unsubscribe;
-  onDataRefreshed: (cb: (data: any) => void) => Unsubscribe;
-  onCleanupStatus: (cb: (status: any) => void) => Unsubscribe;
-  onConfigUpdated: (cb: (cfg: AppConfig) => void) => Unsubscribe;
-  onI18nChanged: (cb: (data: any) => void) => Unsubscribe;
-
-  onSelectTab: (cb: (tab: string) => void) => Unsubscribe;
-  onFocusSearch: (cb: () => void) => Unsubscribe;
-  onCheckUpdates: (cb: () => void) => Unsubscribe;
-  onFetchApps: (cb: () => void) => Unsubscribe;
-  onClearCache: (cb: () => void) => Unsubscribe;
-  onSetOrder: (cb: (order: string) => void) => Unsubscribe;
-  onSetViewMode: (cb: (mode: string) => void) => Unsubscribe;
-  onToggleSidebar: (cb: (show?: boolean) => void) => Unsubscribe;
   sidebarChanged: (visible: boolean) => void;
+
+  // Unified Event Bus (Main -> Renderer)
+  on<K extends keyof IpcEventMap>(channel: K, callback: (data: IpcEventMap[K]) => void): Unsubscribe;
+  on(channel: string, callback: (...args: any[]) => void): Unsubscribe;
 }

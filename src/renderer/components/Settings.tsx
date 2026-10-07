@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import type { LocaleInfo } from '@/types';
 
 export function Settings() {
   const [alwaysShowStatusBar, setAlwaysShowStatusBar] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [language, setLanguage] = useState('system');
-  const [locales, setLocales] = useState([]);
-  const [messages, setMessages] = useState({});
+  const [locales, setLocales] = useState<LocaleInfo[]>([]);
+  const [messages, setMessages] = useState<Record<string, string>>({});
   const [systemLanguageName, setSystemLanguageName] = useState('English');
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Translation helper supporting interpolation (%s)
   const __ = useCallback(
-    (key, ...args) => {
+    (key: string, ...args: any[]) => {
       let text = (messages && messages[key] !== undefined) ? messages[key] : key;
       if (args.length > 0) {
         args.forEach((arg) => {
@@ -78,12 +79,14 @@ export function Settings() {
   }, [loadConfig, loadI18n]);
 
   useEffect(() => {
-    const unsub = window.ipc?.onI18nChanged?.(async () => {
-      const msgs = await window.ipc?.getMessages?.();
-      if (msgs) setMessages(msgs);
-      resizeToContent();
-    });
-    return () => unsub?.();
+    if (window.ipc?.on) {
+      const unsub = window.ipc.on('i18n:changed', async () => {
+        const msgs = await window.ipc?.getMessages?.();
+        if (msgs) setMessages(msgs);
+        resizeToContent();
+      });
+      return () => unsub?.();
+    }
   }, [resizeToContent]);
 
   useEffect(() => {
@@ -92,7 +95,7 @@ export function Settings() {
     }
   }, [isReady, language, locales, resizeToContent]);
 
-  const handleToggleStatusBar = async (checked) => {
+  const handleToggleStatusBar = async (checked: boolean) => {
     setAlwaysShowStatusBar(checked);
     try {
       await window.ipc?.updateConfig?.({ alwaysShowStatusBar: checked });
@@ -101,7 +104,7 @@ export function Settings() {
     }
   };
 
-  const handleLanguageChange = async (e) => {
+  const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLang = e.target.value;
     setLanguage(newLang);
     try {

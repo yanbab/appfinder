@@ -83,8 +83,8 @@ export function useNativeContextMenu() {
   }, [items, installed, outdatedMap, runningTasks]);
 
   useEffect(() => {
-    if (window.ipc?.onContextMenuAction) {
-      const unsub = window.ipc.onContextMenuAction(async (data: any) => {
+    if (window.ipc?.on) {
+      const unsub = window.ipc.on('context-menu:action', async (data: any) => {
         const { action, token } = typeof data === 'object' && data ? data : { action: data, token: undefined };
         if (action && token && startAction) {
           await startAction(action, token);
