@@ -1,5 +1,6 @@
 import fs from 'fs';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
+import { dialog } from 'electron';
 import i18n from './i18n';
 
 export function checkCommand(cmd: string): boolean {
@@ -15,7 +16,7 @@ export function checkCommand(cmd: string): boolean {
     } catch (_) { }
   }
   try {
-    execSync(`which ${cmd}`, { stdio: 'ignore' });
+    execFileSync('which', [cmd], { stdio: 'ignore' });
     return true;
   } catch (_) {
     return false;
@@ -23,7 +24,6 @@ export function checkCommand(cmd: string): boolean {
 }
 
 export function checkCommandDialog(cmd: string): void {
-  const { dialog } = require('electron');
   dialog.showErrorBox(
     i18n.__('Command "%s" not found', cmd),
     i18n.__('Please install "%s" and try again.', cmd)
