@@ -45,7 +45,7 @@ function createShellWindow() {
             preload: preloadPath,
             contextIsolation: true,
             nodeIntegration: false,
-            scrollBounce: true
+            // scrollBounce: true
         }
     });
     loadContent(mainWindow);

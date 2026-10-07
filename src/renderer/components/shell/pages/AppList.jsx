@@ -49,13 +49,13 @@ export function AppList({ header, footer }) {
       onScroll={handleScroll}
       className="flex-1 overflow-y-auto p-4"
     >
-      <div className="max-w-[var(--content-max-width)] mx-auto w-full space-y-4">
+      <div className={viewMode === 'grid' ? "w-full space-y-4" : "max-w-[var(--content-max-width)] mx-auto w-full space-y-4"}>
         {header}
         <div
           className={
             viewMode === 'grid'
               ? "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5"
-              : "border border-[var(--card-border)] rounded-[var(--radius-card)] overflow-hidden bg-card divide-y divide-[var(--card-border)] shadow-2xs w-full"
+              : "rounded-[var(--radius-card)] overflow-hidden bg-card divide-y divide-border/20 shadow-2xs w-full"
           }
         >
           {displayedItems.map((item) =>

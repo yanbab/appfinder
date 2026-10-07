@@ -50,7 +50,7 @@ export function Discover() {
         {/* Quick Stats Skeleton */}
         <div className="grid grid-cols-3 gap-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-[74px] p-3 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs flex flex-col justify-center space-y-2">
+            <div key={i} className="h-[74px] p-3 rounded-[var(--radius-card)] bg-card shadow-2xs flex flex-col justify-center space-y-2">
               <div className="h-6 w-16 bg-muted/70 rounded animate-pulse" />
               <div className="h-3 w-12 bg-muted/50 rounded animate-pulse" />
             </div>
@@ -62,7 +62,7 @@ export function Discover() {
           <div className="h-4 w-20 bg-muted/60 rounded animate-pulse" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="flex items-center gap-3 p-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs">
+              <div key={i} className="flex items-center gap-3 p-2 rounded-[var(--radius-card)] bg-card shadow-2xs">
                 <div className="size-12 rounded-[var(--radius-card)] bg-muted/70 animate-pulse shrink-0" />
                 <div className="space-y-1.5 min-w-0 flex-1">
                   <div className="h-4 w-28 bg-muted/70 rounded animate-pulse" />
@@ -78,7 +78,7 @@ export function Discover() {
           <div className="h-4 w-20 bg-muted/60 rounded animate-pulse" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="flex items-center gap-3 p-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs">
+              <div key={i} className="flex items-center gap-3 p-2 rounded-[var(--radius-card)] bg-card shadow-2xs">
                 <div className="size-12 rounded-[var(--radius-card)] bg-muted/70 animate-pulse shrink-0" />
                 <div className="space-y-1.5 min-w-0 flex-1">
                   <div className="h-4 w-28 bg-muted/70 rounded animate-pulse" />
@@ -94,7 +94,7 @@ export function Discover() {
           <div className="h-4 w-24 bg-muted/60 rounded animate-pulse" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs">
+              <div key={i} className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] bg-card shadow-2xs">
                 <div className="size-[18px] rounded bg-muted/70 animate-pulse shrink-0" />
                 <div className="h-3.5 w-20 bg-muted/50 rounded animate-pulse" />
               </div>
@@ -114,7 +114,7 @@ export function Discover() {
       <div className="grid grid-cols-3 gap-2">
         <button
           onClick={() => selectTab('all-apps')}
-          className="h-[74px] flex flex-col items-start justify-center py-2 px-3 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] text-left group"
+          className="h-[74px] flex flex-col items-start justify-center py-2 px-3 rounded-[var(--radius-card)] bg-card shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] text-left group"
         >
           <span className="text-2xl sm:text-3xl font-light tracking-tight text-foreground leading-tight">
             {allAppsCount.toLocaleString()}
@@ -126,7 +126,7 @@ export function Discover() {
 
         <button
           onClick={() => selectTab('installed')}
-          className="h-[74px] flex flex-col items-start justify-center py-2 px-3 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] text-left group"
+          className="h-[74px] flex flex-col items-start justify-center py-2 px-3 rounded-[var(--radius-card)] bg-card shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] text-left group"
         >
           <span className="text-2xl sm:text-3xl font-light tracking-tight text-foreground leading-tight">
             {installed.length.toLocaleString()}
@@ -138,7 +138,7 @@ export function Discover() {
 
         <button
           onClick={() => selectTab('updates')}
-          className="h-[74px] flex flex-col items-start justify-center py-2 px-3 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] text-left group"
+          className="h-[74px] flex flex-col items-start justify-center py-2 px-3 rounded-[var(--radius-card)] bg-card shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] text-left group"
         >
           <span className="text-2xl sm:text-3xl font-light tracking-tight text-foreground leading-tight">
             {updatesCount}
@@ -173,7 +173,7 @@ export function Discover() {
               <div
                 key={item.token}
                 onClick={() => openAppInfo(item)}
-                className="flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] group"
+                className="flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] group"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <AppIcon item={item} size="tile" className="size-12 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
@@ -216,7 +216,7 @@ export function Discover() {
               <div
                 key={item.token}
                 onClick={() => openAppInfo(item)}
-                className="flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] group"
+                className="flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] group"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <AppIcon item={item} size="tile" className="size-12 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
@@ -258,7 +258,7 @@ export function Discover() {
               <button
                 key={cat.name}
                 onClick={() => selectTab(cat.name)}
-                className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] bg-card border border-[var(--card-border)] shadow-2xs active:bg-[var(--card-active-bg)] text-left group select-none cursor-default"
+                className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] bg-card shadow-2xs active:bg-[var(--card-active-bg)] text-left group select-none cursor-default"
               >
                 <ShellIcon
                   name={cat.symbolName}

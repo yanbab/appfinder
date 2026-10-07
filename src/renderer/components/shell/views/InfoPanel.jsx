@@ -296,7 +296,7 @@ export function InfoPanel() {
           </div>
 
           {/* Metadata Section in Card */}
-          <div className="border border-[var(--card-border)] rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
+          <div className="rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
             {/* Homepage */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Homepage')}</span>

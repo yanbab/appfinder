@@ -41,25 +41,23 @@ if (window.matchMedia) {
 const copyBtn = document.querySelector('.copy-btn');
 const copyIcon = document.querySelector('.copy-icon');
 const checkIcon = document.querySelector('.check-icon');
-const copyText = document.querySelector('.copy-text');
-const commandText = 'git clone https://github.com/yanbab/appfinder.git';
+const commandElem = document.querySelector('.clone-command');
 
 if (copyBtn) {
   copyBtn.addEventListener('click', async () => {
+    const textToCopy = commandElem ? commandElem.textContent.trim() : 'brew install yanbab/tap/appfinder';
     try {
-      await navigator.clipboard.writeText(commandText);
+      await navigator.clipboard.writeText(textToCopy);
 
       // Success state
       copyBtn.classList.add('copied');
       if (copyIcon) copyIcon.style.display = 'none';
       if (checkIcon) checkIcon.style.display = 'inline';
-      if (copyText) copyText.textContent = 'Copied!';
 
       setTimeout(() => {
         copyBtn.classList.remove('copied');
         if (copyIcon) copyIcon.style.display = 'inline';
         if (checkIcon) checkIcon.style.display = 'none';
-        if (copyText) copyText.textContent = 'Copy';
       }, 2000);
     } catch (err) {
       console.error('Failed to copy text: ', err);

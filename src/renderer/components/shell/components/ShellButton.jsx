@@ -88,7 +88,7 @@ export function ShellButton({
   }
 
   const iconOnlyStyles = isIconOnly
-    ? "text-muted-foreground hover:text-foreground active:text-foreground dark:hover:text-white dark:active:text-white hover:bg-black/[0.08] active:bg-black/[0.14] dark:hover:bg-white/[0.14] dark:active:bg-white/[0.22] transition-colors"
+    ? "text-muted-foreground hover:text-white dark:hover:text-white active:text-white dark:active:text-white hover:bg-black/[0.08] active:bg-black/[0.14] dark:hover:bg-white/[0.14] dark:active:bg-white/[0.22] transition-colors [&_svg]:text-current [&_svg]:pointer-events-none"
     : "";
 
   const activeStyles = isSelected

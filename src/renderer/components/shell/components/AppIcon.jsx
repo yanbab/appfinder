@@ -23,7 +23,7 @@ export function AppIcon({ item, size = "md", className }) {
 
   const currentSizeClass = sizeClasses[size] || sizeClasses.md;
   const name = item?.name || item?.token || "";
-  const hasIcon = item?.icon && !hasError;
+  const hasIcon = item?.iconUrl && !hasError;
 
   return (
     <div className={cn("relative shrink-0 select-none overflow-hidden flex items-center justify-center [container-type:inline-size]", currentSizeClass, className)}>

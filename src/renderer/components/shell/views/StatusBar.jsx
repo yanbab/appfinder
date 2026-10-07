@@ -39,7 +39,7 @@ export function StatusBar() {
           <ShellButton
             variant="ghost"
             className="h-full !rounded-none px-2.5 gap-1.5 text-xs text-destructive hover:text-destructive active:text-destructive dark:hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20"
-            icon={<ShellIcon name="stop.circle" className="size-3.5 shrink-0 text-destructive" />}
+            icon={<ShellIcon name="stop.fill" className="size-3.5 shrink-0 text-destructive" />}
             title={__("Stop")}
             onClick={cancelAction}
           >

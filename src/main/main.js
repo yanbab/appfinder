@@ -40,8 +40,10 @@ async function init() {
   setupI18n();
   setupApplicationMenu();
   setupContextMenu();
-  await initDevTools();
   createShellWindow();
+
+  await initDevTools();
+
 }
 
 app.whenReady().then(init);

@@ -486,6 +486,19 @@ export function ShellProvider({ children }) {
       unsubs.push(window.ipc.onClearCache(() => startAction('cleanup')));
     }
 
+    if (window.ipc.onCheckUpdates) {
+      unsubs.push(window.ipc.onCheckUpdates(() => {
+        selectTab('updates');
+        startAction('refresh', 'refresh');
+      }));
+    }
+
+    if (window.ipc.onFetchApps) {
+      unsubs.push(window.ipc.onFetchApps(() => {
+        startAction('fetch', 'fetch');
+      }));
+    }
+
     return () => unsubs.forEach(u => u());
   }, [messages, selectTab, startAction, refreshInstalledState, refreshUpdatesState, processNextQueuedUpdate, __]);
 
@@ -565,7 +578,7 @@ export function ShellProvider({ children }) {
 
   const topInstalledItems = useMemo(() => {
     const sorted = items
-      .filter(c => c.count > 0 && (c.icon || c.iconUrl) && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
+      .filter(c => c.count > 0 && c.iconUrl && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
       .sort((a, b) => (b.count || 0) - (a.count || 0));
 
     const top = [];
@@ -583,7 +596,7 @@ export function ShellProvider({ children }) {
 
   const recentItems = useMemo(() => {
     const sorted = items
-      .filter(c => c.added && (c.icon || c.iconUrl) && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
+      .filter(c => c.added && c.iconUrl && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
       .sort((a, b) => (b.added || '').localeCompare(a.added || ''));
 
     const top = [];

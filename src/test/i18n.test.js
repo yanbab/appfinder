@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const i18n = require('../src/main/i18n');
+const i18n = require('../main/i18n');
 
 test('i18n exports getMessages and getCatalog as alias', () => {
   assert.equal(typeof i18n.getMessages, 'function');

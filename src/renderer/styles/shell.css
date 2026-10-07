@@ -8,8 +8,8 @@
   --radius-btn: 0.375rem;
   --radius-card: 0.375rem;
   --radius-badge: 0.25rem;
-  --card-border: rgba(0, 0, 0, 0.08);
-  --card-active-bg: rgba(0, 0, 0, 0.06);
+  --card-border: transparent;
+  --card-active-bg: rgba(0, 0, 0, 0.05);
   --btn-bg-active: #d5d5da;
   --accent-color-raw: #8e8e93;
   --accent-color: var(--primary);
@@ -18,8 +18,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --card-border: rgba(255, 255, 255, 0.08);
-    --card-active-bg: rgba(255, 255, 255, 0.14);
+    --card-border: transparent;
+    --card-active-bg: rgba(255, 255, 255, 0.08);
     --btn-bg-active: #5c5c60;
     --accent-color-raw: #98989d;
     --accent-color: var(--primary);
@@ -28,8 +28,8 @@
 }
 
 .dark {
-  --card-border: rgba(255, 255, 255, 0.08);
-  --card-active-bg: rgba(255, 255, 255, 0.14);
+  --card-border: transparent;
+  --card-active-bg: rgba(255, 255, 255, 0.08);
   --btn-bg-active: #5c5c60;
   --accent-color-raw: #98989d;
   --accent-color: var(--primary);
@@ -80,6 +80,10 @@ button:hover,
   transition: none !important;
 }
 
+.app-card {
+  border: none !important;
+}
+
 .app-card:active:not(:has(button:active)) {
   background-color: var(--card-active-bg);
 }
@@ -113,25 +117,9 @@ body,
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) .app-header {
-    background-color: #343436;
-  }
-
-  :root:not(.light) .app-footer {
-    background-color: #343436;
-  }
-
   :root:not(.light) aside {
     border-right-color: #000000 !important;
   }
-}
-
-.dark .app-header {
-  background-color: #343436;
-}
-
-.dark .app-footer {
-  background-color: #343436;
 }
 
 .dark aside {

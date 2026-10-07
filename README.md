@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/icon.svg" width="128" height="128" alt="" /><br/>
+  <img src="docs/assets/icon.svg" width="64" height="64" alt="" /><br/>
   <strong>App Finder</strong><br/>
   <small>Applications library for macOS</small>
 </p>
@@ -24,7 +24,7 @@ This catalog is indexed locally to enable fast searching and application managem
 
 ### Installation
 
-- (Download)(https://github.com/yanbab/appfinder/releases/latest/) (MacOS)
+- [Download](https://github.com/yanbab/appfinder/releases/latest/) (macOS)
 
 **Install via Homebrew**
 ```

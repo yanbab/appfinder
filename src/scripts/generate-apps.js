@@ -70,7 +70,6 @@ function getCasks() {
             name: c.name && c.name[0] ? c.name[0] : c.token,
             desc: c.desc,
             homepage: c.homepage,
-            url: c.url,
             app: appValue,
             version: c.version,
             category: primaryCat,
@@ -82,7 +81,6 @@ function getCasks() {
         };
 
         if (iconTokensSet.has(token)) {
-            caskItem.icon = `${iconBaseUrl}${token}.png`;
             caskItem.iconUrl = `${iconBaseUrl}${token}.png`;
         }
 
@@ -91,5 +89,5 @@ function getCasks() {
 }
 
 const casks = getCasks();
-// casks = casks.filter(c => c.icon !== undefined);
+// casks = casks.filter(c => c.iconUrl !== undefined);
 console.log(JSON.stringify(casks, null, 2));

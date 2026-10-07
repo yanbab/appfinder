@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const brew = require('../src/main/backend/brew');
+const brew = require('../main/backend/brew');
 
 test('brew.getApps and brew.getCategories always return catalog datasets', () => {
   const apps = brew.getApps(true);

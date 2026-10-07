@@ -29,7 +29,7 @@ export function AppItemGrid({ item }) {
           openAppInfo(item);
         }
       }}
-      className={`app-card relative flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card text-card-foreground border border-[var(--card-border)] shadow-2xs select-none cursor-default focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/50 ${
+      className={`app-card relative flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card text-card-foreground shadow-2xs select-none cursor-default focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/50 ${
         isSelected ? 'bg-[var(--card-active-bg)]' : ''
       }`}
     >
@@ -68,7 +68,7 @@ export function AppItemGrid({ item }) {
               e.stopPropagation();
               upgrade();
             }}
-            icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-4 text-muted-foreground hover:text-foreground" />}
+            icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-4" />}
             title="Upgrade"
           />
         ) : isInstalled ? (
@@ -79,7 +79,7 @@ export function AppItemGrid({ item }) {
                 e.stopPropagation();
                 open();
               }}
-              icon={<ShellIcon name="play" className="size-3.5 text-muted-foreground hover:text-foreground" />}
+              icon={<ShellIcon name="play.fill" className="size-3.5" />}
               title="Open"
             />
           ) : (
@@ -101,7 +101,7 @@ export function AppItemGrid({ item }) {
               e.stopPropagation();
               install();
             }}
-            icon={<ShellIcon name="arrow.down.to.line" className="size-4 text-muted-foreground hover:text-foreground" />}
+            icon={<ShellIcon name="arrow.down.to.line" className="size-4" />}
             title="Install"
           />
         )}
