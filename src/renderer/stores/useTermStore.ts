@@ -7,9 +7,6 @@ import type { TaskLogEvent, TaskPromptEvent, TaskCompleteEvent } from '../../typ
 export type TerminalSubscriber = (text: string, clear?: boolean) => void;
 
 const terminalSubscribers = new Set<TerminalSubscriber>();
-let updateQueue: string[] = [];
-let isUpdatingAll = false;
-let errorLog = '';
 
 export interface TermStoreState {
   runningTasks: Record<string, string>;
@@ -19,6 +16,9 @@ export interface TermStoreState {
   drawerTitle: string;
   showPasswordModal: boolean;
   terminalHistory: string;
+  updateQueue: string[];
+  isUpdatingAll: boolean;
+  errorLog: string;
 
   registerTerminalSubscriber: (cb: TerminalSubscriber) => () => void;
   clearTerminal: () => void;
@@ -43,6 +43,9 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
   drawerTitle: '',
   showPasswordModal: false,
   terminalHistory: '',
+  updateQueue: [],
+  isUpdatingAll: false,
+  errorLog: '',
 
   // Terminal actions
   registerTerminalSubscriber: (cb: TerminalSubscriber) => {
@@ -60,13 +63,13 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
   // Task execution
   executeTask: (action: string, token: string = '', zap: boolean = false, remainingCount: number | null = null) => {
     get().clearTerminal();
-    errorLog = '';
     const taskId = `cask-${action}-${token || Date.now()}`;
 
     set((state) => ({
       activeTaskId: taskId,
       activeTaskToken: token,
       activeTaskAction: action,
+      errorLog: '',
       runningTasks: token ? { ...state.runningTasks, [token]: action } : state.runningTasks
     }));
 
@@ -87,15 +90,16 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
   },
 
   processNextQueuedUpdate: () => {
+    const { isUpdatingAll, updateQueue } = get();
     if (!isUpdatingAll || updateQueue.length === 0) {
-      isUpdatingAll = false;
-      updateQueue = [];
-      set({ drawerTitle: '' });
+      set({ isUpdatingAll: false, updateQueue: [], drawerTitle: '' });
       return;
     }
-    const nextToken = updateQueue.shift();
+    const nextQueue = [...updateQueue];
+    const nextToken = nextQueue.shift();
+    set({ updateQueue: nextQueue });
     if (nextToken) {
-      get().executeTask('upgrade', nextToken, false, updateQueue.length + 1);
+      get().executeTask('upgrade', nextToken, false, nextQueue.length + 1);
     }
   },
 
@@ -118,8 +122,7 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
     if (action === 'upgrade-all') {
       const outdatedTokens = Object.keys(outdatedMap);
       if (outdatedTokens.length === 0) return;
-      isUpdatingAll = true;
-      updateQueue = [...outdatedTokens];
+      set({ isUpdatingAll: true, updateQueue: [...outdatedTokens] });
       get().processNextQueuedUpdate();
       return;
     }
@@ -131,6 +134,7 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
         activeTaskId: taskId,
         activeTaskToken: action,
         activeTaskAction: action,
+        errorLog: '',
         runningTasks: { ...state.runningTasks, [action]: action },
         drawerTitle:
           action === 'refresh' ? __('Checking for updates...')
@@ -184,15 +188,16 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
       window.ipc?.writePtyInput?.(currentId, '\x03');
       window.ipc?.cancelAction?.(currentId);
     }
-    isUpdatingAll = false;
-    updateQueue = [];
     set({
       activeTaskId: null,
       activeTaskToken: null,
       activeTaskAction: null,
       runningTasks: {},
       showPasswordModal: false,
-      drawerTitle: ''
+      drawerTitle: '',
+      isUpdatingAll: false,
+      updateQueue: [],
+      errorLog: ''
     });
   },
 
@@ -211,8 +216,7 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
   // IPC Event Handlers
   handleTaskLog: (data: TaskLogEvent) => {
     const text = data.text || '';
-    errorLog = text;
-    set({ terminalHistory: text });
+    set({ terminalHistory: text, errorLog: text });
     terminalSubscribers.forEach((cb) => cb(text));
     if (data.line) {
       const statusMsg = formatStatusBarMessage(data.line);
@@ -236,7 +240,7 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
   },
 
   handleTaskComplete: (data: TaskCompleteEvent) => {
-    const { activeTaskToken, activeTaskAction } = get();
+    const { activeTaskToken, activeTaskAction, isUpdatingAll, errorLog } = get();
     const __ = useShellStore.getState().__;
 
     set((state) => {
@@ -266,8 +270,7 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
       }
       set({ drawerTitle: '' });
     } else {
-      isUpdatingAll = false;
-      updateQueue = [];
+      set({ isUpdatingAll: false, updateQueue: [] });
       if (!data.cancelled && data.code !== 130) {
         const rawErr: any = data.error || (errorLog ? extractTaskError(errorLog, activeTaskToken || '') : null);
         const errDetail: string = typeof rawErr === 'object' && rawErr !== null
