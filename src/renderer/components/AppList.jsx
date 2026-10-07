@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useAppStore, useShellStore, selectFilteredItems } from '@/stores';
-import { AppItemGrid } from './AppItemGrid';
-import { AppItemList } from './AppItemList';
+import { AppCard } from './AppCard';
+import { AppRow } from './AppRow';
 import { Empty } from './Empty';
 
 export function AppList({ header, footer }) {
@@ -61,9 +61,9 @@ export function AppList({ header, footer }) {
         >
           {displayedItems.map((item) =>
             viewMode === 'grid' ? (
-              <AppItemGrid key={item.token} item={item} />
+              <AppCard key={item.token} item={item} />
             ) : (
-              <AppItemList key={item.token} item={item} />
+              <AppRow key={item.token} item={item} />
             )
           )}
         </div>

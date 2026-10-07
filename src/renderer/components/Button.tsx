@@ -1,5 +1,6 @@
-import * as React from "react";
-import { cn } from "@/hooks/utils";
+import * as React from 'react';
+import { useShellStore } from '@/stores';
+import { cn } from '@/hooks/utils';
 
 const BASE_BUTTON_CLASSES =
   "inline-flex shrink-0 items-center justify-center rounded-[var(--radius-btn)] border border-transparent text-xs font-medium whitespace-nowrap outline-none focus:outline-none focus-visible:outline-none select-none disabled:pointer-events-none disabled:opacity-50 cursor-default";
@@ -25,31 +26,112 @@ const BUTTON_SIZES: Record<string, string> = {
   pill: "h-6.5 px-3.5 text-xs gap-1",
 };
 
-export interface ButtonVariantOptions {
-  variant?: keyof typeof BUTTON_VARIANTS | string;
+export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'title'> {
+  variant?: keyof typeof BUTTON_VARIANTS | 'sidebar' | string;
   size?: keyof typeof BUTTON_SIZES | string;
-  className?: string;
+  icon?: React.ReactNode;
+  text?: React.ReactNode;
+  title?: React.ReactNode;
+  tooltip?: React.ReactNode;
+  badge?: React.ReactNode;
+  active?: boolean;
+  selected?: boolean;
 }
 
-export function buttonVariants({ variant = "default", size = "default", className }: ButtonVariantOptions = {}): string {
-  return cn(
-    BASE_BUTTON_CLASSES,
-    BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.default,
-    BUTTON_SIZES[size] || BUTTON_SIZES.default,
-    className
-  );
-}
+export function Button({
+  icon,
+  children,
+  text,
+  title,
+  tooltip,
+  variant,
+  size,
+  badge,
+  className,
+  active,
+  selected,
+  ...props
+}: ButtonProps) {
+  const __ = useShellStore((s) => s.__);
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    ButtonVariantOptions {}
+  const content = children || text;
+  const isSelected = Boolean(active || selected);
 
-export function Button({ className, variant, size, ...props }: ButtonProps) {
+  const rawTitle = title || tooltip;
+  const resolvedTitle = rawTitle
+    ? (typeof rawTitle === 'string' ? __(rawTitle) : String(rawTitle))
+    : undefined;
+
+  // Dedicated sidebar button implementation
+  if (variant === 'sidebar') {
+    const hasBadge = badge !== null && badge !== undefined && badge !== false && badge !== 0;
+    return (
+      <button
+        type="button"
+        title={resolvedTitle}
+        className={cn(
+          "sidebar-nav-button",
+          isSelected && "active",
+          className
+        )}
+        {...props}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          {icon && (
+            <span className="sidebar-icon inline-flex items-center justify-center shrink-0">
+              {icon}
+            </span>
+          )}
+          {content && (
+            <span className="truncate">
+              {typeof content === 'string' ? __(content) : content}
+            </span>
+          )}
+        </div>
+        {hasBadge && (
+          <span className="sidebar-badge shrink-0">
+            {badge}
+          </span>
+        )}
+      </button>
+    );
+  }
+
+  const isIconOnly = Boolean(icon && !content);
+  const isBoth = Boolean(icon && content);
+  const isTextOnly = Boolean(!icon && content);
+
+  let resolvedVariant = variant || (isIconOnly ? 'ghost' : 'secondary');
+  let resolvedSize = size || (isIconOnly ? 'icon-sm' : 'sm');
+
+  const iconOnlyStyles = isIconOnly
+    ? "text-muted-foreground hover:text-white dark:hover:text-white active:text-white dark:active:text-white hover:bg-black/[0.08] active:bg-black/[0.14] dark:hover:bg-white/[0.14] dark:active:bg-white/[0.22] transition-colors [&_svg]:text-current [&_svg]:pointer-events-none"
+    : "";
+
+  const activeStyles = isSelected
+    ? "bg-black/[0.09] dark:bg-white/[0.18] text-foreground dark:text-white font-medium shadow-none"
+    : "";
+
+  const variantClass = BUTTON_VARIANTS[resolvedVariant] || BUTTON_VARIANTS.default;
+  const sizeClass = BUTTON_SIZES[resolvedSize] || BUTTON_SIZES.default;
+
   return (
     <button
-      className={buttonVariants({ variant, size, className })}
+      type="button"
+      title={isIconOnly ? resolvedTitle : (typeof title === 'string' ? title : undefined)}
+      className={cn(
+        BASE_BUTTON_CLASSES,
+        variantClass,
+        sizeClass,
+        iconOnlyStyles,
+        activeStyles,
+        className
+      )}
       {...props}
-    />
+    >
+      {icon}
+      {content && (typeof content === 'string' ? <span>{content}</span> : content)}
+    </button>
   );
 }
 

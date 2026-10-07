@@ -1,20 +1,15 @@
-import React, { useEffect } from 'react';
-import { useShellStore, useAppStore, useTermStore } from '@/stores';
+import React, { useEffect, useMemo } from 'react';
+import { useShellStore, useAppStore, selectFeaturedItems } from '@/stores';
 import { AppIcon } from './AppIcon';
-import { ShellIcon } from './ShellIcon';
-import { Button } from './Button';
+import { AppActionButton } from './AppActionButton';
 import { getAppName, name2color } from '@/hooks/utils';
 
-export function AppItemSlider() {
-  const featuredItems = useAppStore((s) => s.featuredItems);
+export function AppSlider() {
+  const items = useAppStore((s) => s.items);
+  const featuredItems = useMemo(() => selectFeaturedItems(items), [items]);
   const slideIndex = useShellStore((s) => s.slideIndex);
   const nextSlide = useShellStore((s) => s.nextSlide);
   const openAppInfo = useShellStore((s) => s.openAppInfo);
-  const __ = useShellStore((s) => s.__);
-  const installed = useAppStore((s) => s.installed);
-  const outdatedMap = useAppStore((s) => s.outdatedMap);
-  const runningTasks = useTermStore((s) => s.runningTasks);
-  const startAction = useTermStore((s) => s.startAction);
 
   const [isPaused, setIsPaused] = React.useState(false);
 
@@ -82,48 +77,7 @@ export function AppItemSlider() {
                   )}
                 </div>
 
-                <div className="pt-0.5 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                  {runningTasks[item.token] ? (
-                    <Button size="sm" variant="secondary" disabled className="bg-white/20 text-white border-0">
-                      <ShellIcon name="spinner" className="size-3.5 animate-spin mr-1.5" />
-                      <span>{__('Working...')}</span>
-                    </Button>
-                  ) : outdatedMap[item.token] ? (
-                    <Button
-                      size="sm"
-                      onClick={() => startAction('upgrade', item.token)}
-                      className="bg-white hover:bg-white/90 text-black font-medium border-0 cursor-default"
-                    >
-                      <span>{__('Upgrade')}</span>
-                    </Button>
-                  ) : installed.includes(item.token) ? (
-                    item.app ? (
-                      <Button
-                        size="sm"
-                        onClick={() => startAction('open', item.token, item.app)}
-                        className="bg-white hover:bg-white/90 text-black font-medium border-0 cursor-default"
-                      >
-                        <span>{__('Open')}</span>
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        disabled
-                        className="bg-white/30 text-white font-medium border-0 cursor-not-allowed"
-                      >
-                        <span>{__('Open')}</span>
-                      </Button>
-                    )
-                  ) : (
-                    <Button
-                      size="sm"
-                      onClick={() => startAction('install', item.token)}
-                      className="bg-white hover:bg-white/90 text-black font-medium border-0 cursor-default"
-                    >
-                      <span>{__('Install')}</span>
-                    </Button>
-                  )}
-                </div>
+                <AppActionButton item={item} variant="hero" />
               </div>
             </div>
           </div>
@@ -133,5 +87,7 @@ export function AppItemSlider() {
   );
 }
 
-export const AppItemDiscoverSlider = AppItemSlider;
-export default AppItemSlider;
+// Backward-compatible alias
+export const AppItemSlider = AppSlider;
+export const AppItemDiscoverSlider = AppSlider;
+export default AppSlider;

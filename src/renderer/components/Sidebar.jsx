@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useShellStore, useAppStore, selectFilteredItems } from '@/stores';
-import { ShellButton } from './ShellButton';
+import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 import { NavGroup } from './NavGroup';
 import { SearchInput } from './SearchInput';
@@ -72,7 +72,7 @@ export function Sidebar() {
           {/* Main Navigation Group (No title -> not collapsable) */}
           <NavGroup>
             {navItems.map((item) => (
-              <ShellButton
+              <Button
                 key={item.id}
                 variant="sidebar"
                 icon={item.icon}
@@ -81,7 +81,7 @@ export function Sidebar() {
                 onClick={() => selectTab(item.id)}
               >
                 {item.label}
-              </ShellButton>
+              </Button>
             ))}
           </NavGroup>
 
@@ -89,7 +89,7 @@ export function Sidebar() {
           {categories && categories.length > 0 && (
             <NavGroup title={__('Categories')} defaultOpen={true}>
               {categories.map((cat) => (
-                <ShellButton
+                <Button
                   key={cat.name}
                   variant="sidebar"
                   icon={<ShellIcon name={cat.symbolName} className="size-[18px] shrink-0 [&>svg]:size-[18px]" />}
@@ -98,7 +98,7 @@ export function Sidebar() {
                   onClick={() => selectTab(cat.name)}
                 >
                   {__(cat.displayName)}
-                </ShellButton>
+                </Button>
               ))}
             </NavGroup>
           )}

@@ -1,5 +1,5 @@
 import React, { Component, type ReactNode, type ErrorInfo } from 'react';
-import { ShellButton } from './ShellButton';
+import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 
 export interface ErrorProps {
@@ -44,9 +44,9 @@ export class Error extends Component<ErrorProps, ErrorState> {
               {this.state.error?.message || 'An unexpected rendering error occurred.'}
             </p>
             <div className="pt-2 flex justify-center gap-2">
-              <ShellButton variant="default" onClick={this.handleReload}>
+              <Button variant="default" onClick={this.handleReload}>
                 Reload Application
-              </ShellButton>
+              </Button>
             </div>
           </div>
         </div>
@@ -55,7 +55,4 @@ export class Error extends Component<ErrorProps, ErrorState> {
 
     return this.props.children;
   }
-}
-
-export const ErrorBoundary = Error;
 export default Error;

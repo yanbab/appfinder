@@ -8,7 +8,7 @@ import {
 } from '@/stores';
 import { AppIcon } from './AppIcon';
 import { ShellIcon } from './ShellIcon';
-import { AppItemSlider } from './AppItemSlider';
+import { AppSlider } from './AppSlider';
 import { getAppName } from '@/hooks/utils';
 
 export function Discover() {
@@ -113,7 +113,7 @@ export function Discover() {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4 max-w-[var(--content-max-width)] mx-auto w-full">
       {/* Featured Carousel Banner */}
-      <AppItemSlider />
+      <AppSlider />
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-3 gap-2">

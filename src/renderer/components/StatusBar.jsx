@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTermStore, useShellStore } from '@/stores';
-import { ShellButton } from './ShellButton';
+import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 
 export function StatusBar() {
@@ -34,7 +34,7 @@ export function StatusBar() {
       {/* Right: Actions */}
       <div className="flex items-center h-full shrink-0">
         {activeTaskId && (
-          <ShellButton
+          <Button
             variant="ghost"
             className="h-full !rounded-none px-2.5 gap-1.5 text-xs text-destructive hover:text-destructive active:text-destructive dark:hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20"
             icon={<ShellIcon name="stop.fill" className="size-3.5 shrink-0 text-destructive" />}
@@ -42,10 +42,10 @@ export function StatusBar() {
             onClick={cancelAction}
           >
             {__("Stop")}
-          </ShellButton>
+          </Button>
         )}
 
-        <ShellButton
+        <Button
           variant="ghost"
           className="h-full !rounded-none px-2.5 text-muted-foreground hover:text-foreground active:text-foreground dark:hover:text-white"
           icon={<ShellIcon name="apple.terminal" className="size-4 shrink-0" />}

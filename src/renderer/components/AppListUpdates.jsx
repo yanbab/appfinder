@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useAppStore, useTermStore, useShellStore, selectFilteredItems } from '@/stores';
 import { AppList } from './AppList';
 import { Empty } from './Empty';
-import { ShellButton } from './ShellButton';
+import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 
 function formatLastChecked(date, __) {
@@ -60,13 +60,13 @@ export function AppListUpdates() {
         subtitle={__('All installed casks are updated to their latest versions.')}
       >
         <div className="flex flex-col items-center gap-2">
-          <ShellButton
+          <Button
             disabled={isRefreshRunning}
             onClick={() => startAction('refresh', 'refresh')}
             icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className={`size-3.5 ${isRefreshRunning ? 'animate-spin' : ''}`} />}
           >
             {__('Refresh')}
-          </ShellButton>
+          </Button>
           <div className="text-xs text-muted-foreground mt-1">
             {__('Last check :')} <span className="font-medium text-muted-foreground">{formattedLastChecked}</span>
           </div>
@@ -84,21 +84,21 @@ export function AppListUpdates() {
       </h3>
 
       <div className="flex items-center gap-2">
-        <ShellButton
+        <Button
           disabled={isRefreshRunning}
           onClick={() => startAction('refresh', 'refresh')}
           icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className={`size-3.5 ${isRefreshRunning ? 'animate-spin' : ''}`} />}
         >
           {__('Refresh')}
-        </ShellButton>
+        </Button>
 
         {filteredCount >= 1 && (
-          <ShellButton
+          <Button
             variant="default"
             onClick={() => startAction('upgrade-all')}
           >
             {__('Update All')}
-          </ShellButton>
+          </Button>
         )}
       </div>
     </div>

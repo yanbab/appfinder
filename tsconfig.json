@@ -14,6 +14,8 @@
     "resolveJsonModule": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "paths": {
+      "@/types": ["./src/types"],
+      "@/types/*": ["./src/types/*"],
       "@/*": ["./src/renderer/*"]
     }
   },

@@ -1,8 +1,9 @@
 import React from 'react';
 import { useShellStore, useTermStore, useAppStore } from '@/stores';
 import { AppIcon } from './AppIcon';
-import { ShellButton } from './ShellButton';
+import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
+import { AppActionButton } from './AppActionButton';
 import {
   Drawer,
   DrawerContent,
@@ -154,7 +155,7 @@ export function InfoPanel() {
         {/* Header with Close Button on the Left */}
         <div className="app-header h-[52px] shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
           <div className="flex items-center gap-2 min-w-0 flex-1 h-full [-webkit-app-region:drag]">
-            <ShellButton
+            <Button
               icon={<ShellIcon name="xmark" className="size-[18px]" />}
               onClick={closeAppInfo}
               className="rounded-sm shrink-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-app-region:no-drag]"
@@ -194,64 +195,7 @@ export function InfoPanel() {
           </div>
 
           {/* Primary Actions */}
-          <div className="flex items-center gap-2 pt-0.5">
-            {isRunning ? (
-              <ShellButton className="w-full gap-2" variant="secondary" disabled icon={<ShellIcon name="spinner" className="size-3.5 animate-spin" />}>
-                {__('Working...')}
-              </ShellButton>
-            ) : (
-              <>
-                {isOutdated && (
-                  <ShellButton
-                    className="flex-1"
-                    variant="default"
-                    onClick={() => startAction('upgrade', selectedApp.token)}
-                  >
-                    {__('Upgrade')}
-                  </ShellButton>
-                )}
-
-                {isInstalled && selectedApp.app && !isOutdated && (
-                  <ShellButton
-                    className="flex-1"
-                    variant="default"
-                    onClick={() => startAction('open', selectedApp.token, selectedApp.app)}
-                  >
-                    {__('Open')}
-                  </ShellButton>
-                )}
-
-                {isInstalled && (
-                  <ShellButton
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={() => startAction('uninstall', selectedApp.token)}
-                  >
-                    {__('Delete')}
-                  </ShellButton>
-                )}
-
-                {!isInstalled && caskStatus.isDisabled ? (
-                  <ShellButton
-                    className="w-full opacity-60 cursor-not-allowed"
-                    variant="secondary"
-                    disabled
-                    title={formatReason(caskStatus.disableReason, __) || __('Cask Disabled')}
-                  >
-                    {__('Disabled')}
-                  </ShellButton>
-                ) : !isInstalled ? (
-                  <ShellButton
-                    className="w-full"
-                    variant="default"
-                    onClick={() => startAction('install', selectedApp.token)}
-                  >
-                    {__('Install')}
-                  </ShellButton>
-                ) : null}
-              </>
-            )}
-          </div>
+          <AppActionButton item={selectedApp} variant="panel" caskStatus={caskStatus} />
 
           {/* Metadata Section in Card */}
           <div className="rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">

@@ -50,10 +50,10 @@ export function Settings() {
 
   const loadI18n = useCallback(async () => {
     try {
-      const msgs = await (window.ipc?.getMessages?.() || window.ipc?.getTranslations?.() || window.ipc?.getI18nCatalog?.());
+      const msgs = await window.ipc?.getMessages?.();
       if (msgs) setMessages(msgs);
 
-      const locs = await (window.ipc?.getAvailableLocales?.() || window.ipc?.getI18nLocales?.());
+      const locs = await window.ipc?.getAvailableLocales?.();
       if (Array.isArray(locs)) {
         setLocales(locs);
         let sysCode = 'en';
@@ -79,7 +79,7 @@ export function Settings() {
 
   useEffect(() => {
     const unsub = window.ipc?.onI18nChanged?.(async () => {
-      const msgs = await (window.ipc?.getMessages?.() || window.ipc?.getTranslations?.() || window.ipc?.getI18nCatalog?.());
+      const msgs = await window.ipc?.getMessages?.();
       if (msgs) setMessages(msgs);
       resizeToContent();
     });
@@ -106,7 +106,7 @@ export function Settings() {
     setLanguage(newLang);
     try {
       await window.ipc?.updateConfig?.({ language: newLang });
-      const msgs = await (window.ipc?.getMessages?.() || window.ipc?.getTranslations?.() || window.ipc?.getI18nCatalog?.());
+      const msgs = await window.ipc?.getMessages?.();
       if (msgs) setMessages(msgs);
       resizeToContent();
     } catch (err) {
@@ -182,6 +182,4 @@ export function Settings() {
   );
 }
 
-// Backward-compatible alias
-export const SettingsView = Settings;
 export default Settings;

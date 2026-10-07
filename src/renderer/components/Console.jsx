@@ -59,7 +59,4 @@ export function Console() {
       </div>
     </div>
   );
-}
-
-export const TerminalDrawer = Console;
 export default Console;

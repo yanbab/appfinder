@@ -45,8 +45,4 @@ export function Shell() {
       <PasswordModal />
     </div>
   );
-}
-
-// Backward-compatible alias
-export const App = Shell;
 export default Shell;

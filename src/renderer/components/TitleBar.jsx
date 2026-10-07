@@ -1,6 +1,6 @@
 import React from 'react';
 import { useShellStore, useAppStore } from '@/stores';
-import { ShellButton } from './ShellButton';
+import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 
 export function TitleBar() {
@@ -21,7 +21,7 @@ export function TitleBar() {
       <div className="flex items-center min-w-0 flex-1 h-full [-webkit-app-region:drag]">
         <div className={`shrink-0 transition-[width] duration-250 ease-out overflow-hidden ${showSidebar ? 'w-0' : 'w-[76px]'}`} />
         <div className="flex items-center gap-2 min-w-0 flex-1 h-full">
-          <ShellButton
+          <Button
             icon={<ShellIcon name="sidebar.left" className="size-5" />}
             onClick={toggleSidebar}
             className="size-7 p-0 shrink-0 [-webkit-app-region:no-drag]"

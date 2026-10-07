@@ -9,6 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   root: path.resolve(__dirname, 'src/renderer'),
+  cacheDir: path.resolve(__dirname, 'node_modules/.vite-renderer'),
   base: './',
   build: {
     outDir: path.resolve(__dirname, 'dist/vite-renderer'),
@@ -16,6 +17,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@/types': path.resolve(__dirname, 'src/types'),
       '@': path.resolve(__dirname, 'src/renderer'),
     },
   },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTermStore, useShellStore, useAppStore } from '@/stores';
-import { ShellButton } from './ShellButton';
+import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 import { Input } from './Input';
 import { getAppName } from '@/hooks/utils';
@@ -129,21 +129,21 @@ export function PasswordModal() {
           />
 
           <div className="flex items-center gap-2 pt-1 w-full">
-            <ShellButton
+            <Button
               type="button"
               variant="secondary"
               onClick={cancelPassword}
               className="flex-1 w-1/2 justify-center"
             >
               {__('Cancel')}
-            </ShellButton>
-            <ShellButton
+            </Button>
+            <Button
               type="submit"
               variant="default"
               className="flex-1 w-1/2 justify-center"
             >
               OK
-            </ShellButton>
+            </Button>
           </div>
         </form>
       </div>
