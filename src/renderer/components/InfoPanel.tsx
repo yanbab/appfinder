@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { useShellStore, useTermStore, useAppStore } from '@/stores';
+import React, { useRef, useEffect, useMemo } from 'react';
+import { useShellStore, useAppStore } from '@/stores';
 import { AppIcon } from './AppIcon';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
@@ -20,8 +20,6 @@ export function InfoPanel() {
   const closeAppInfo = useShellStore((s) => s.closeAppInfo);
   const openAppInfo = useShellStore((s) => s.openAppInfo);
   const __ = useShellStore((s) => s.__);
-
-  const runningTasks = useTermStore((s) => s.runningTasks);
 
   const items = useAppStore((s) => s.items);
   const installed = useAppStore((s) => s.installed);
@@ -118,26 +116,30 @@ export function InfoPanel() {
     }
   };
 
-  if (!selectedApp) {
-    return null;
-  }
+  const isInstalled = selectedApp ? installed.includes(selectedApp.token) : false;
+  const isOutdated = selectedApp ? Boolean(outdatedMap[selectedApp.token]) : false;
 
-  const isInstalled = installed.includes(selectedApp.token);
-  const isOutdated = Boolean(outdatedMap[selectedApp.token]);
+  const name = selectedApp ? getAppName(selectedApp) : '';
 
-  const name = getAppName(selectedApp);
+  const latestVersion = useMemo(() => {
+    if (!selectedApp) return '';
+    return (
+      outdatedMap[selectedApp.token]?.currentVersion ||
+      appDetails?.version ||
+      selectedApp.version ||
+      ''
+    );
+  }, [selectedApp, outdatedMap, appDetails?.version]);
 
-  const latestVersion =
-    outdatedMap[selectedApp.token]?.currentVersion ||
-    appDetails?.version ||
-    selectedApp.version ||
-    '';
-
-  const installedVersion =
-    outdatedMap[selectedApp.token]?.installedVersion ||
-    installedVersions[selectedApp.token] ||
-    (typeof appDetails?.installed === 'string' ? appDetails.installed : appDetails?.installed?.[0]?.version) ||
-    (isInstalled ? latestVersion : '');
+  const installedVersion = useMemo(() => {
+    if (!selectedApp) return '';
+    return (
+      outdatedMap[selectedApp.token]?.installedVersion ||
+      installedVersions[selectedApp.token] ||
+      (typeof appDetails?.installed === 'string' ? appDetails.installed : appDetails?.installed?.[0]?.version) ||
+      (isInstalled ? latestVersion : '')
+    );
+  }, [selectedApp, outdatedMap, installedVersions, appDetails?.installed, isInstalled, latestVersion]);
 
   const reqText = appDetails?.reqText || null;
   const reqMet = appDetails?.reqMet !== false;
@@ -147,7 +149,8 @@ export function InfoPanel() {
   const caskStatus = appDetails?.status || { isDisabled: false, isDeprecated: false };
 
   // App categories (up to 3)
-  const appCategories = (() => {
+  const appCategories = useMemo(() => {
+    if (!selectedApp) return [];
     const raw = [
       selectedApp.category,
       selectedApp.secondCategory,
@@ -171,7 +174,11 @@ export function InfoPanel() {
       })
       .filter(Boolean)
       .slice(0, 3);
-  })();
+  }, [selectedApp, appDetails?.categories, categories]);
+
+  if (!selectedApp) {
+    return null;
+  }
 
   return (
     <>
