@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.11] - 2026-10-07
+
+### Changes
+- 100% complete TypeScript conversion across main and renderer processes (`noImplicitAny` enabled)
+- Enforce strict security policies: HTTP/HTTPS protocol whitelist on external links, CLI argument validation, setWindowOpenHandler denial, and will-navigate lock
+- Security remediation for shell injection using `execFileSync`
+- Performance optimization: replace wide store subscriptions with granular slice selectors in React components
+- Process reliability: spawn detached PTY processes and terminate entire process group on cancellation
+- Atomic JSON cache writes with temporary files to guarantee cache integrity
+- Developer experience: Vite watch mode with auto-rebuilding and Electron auto-restart in `npm run dev`
+
+---
+
 ## [0.9.10] - 2026-10-07
 
 ### Changes
