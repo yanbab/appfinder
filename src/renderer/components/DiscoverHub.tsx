@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useAppStore, useTermStore, useShellStore } from '@/stores';
 import { ShellIcon } from './ShellIcon';
 import { Button } from './Button';
+import { Card } from './Card';
 
 function formatTimestamp(date: Date | string | null | undefined, __: (key: string) => string): string {
   if (!date) return __('Just now');
@@ -62,8 +63,10 @@ export function DiscoverHub(): React.JSX.Element {
   };
 
   return (
-    <div
-      className="w-full p-2 rounded-[var(--radius-card)] bg-gradient-to-b from-card via-card/95 to-card/85 text-card-foreground shadow-2xs flex items-center justify-between select-none cursor-default"
+    <Card
+      variant="hub"
+      padding="default"
+      className="w-full flex items-center justify-between"
       role="region"
       aria-label="Discover Hub"
     >
@@ -113,7 +116,7 @@ export function DiscoverHub(): React.JSX.Element {
           {isBusy ? __('Checking...') : __('Check for Updates')}
         </Button>
       </div>
-    </div>
+    </Card>
   );
 }
 

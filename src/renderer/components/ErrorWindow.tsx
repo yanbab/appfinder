@@ -1,6 +1,7 @@
 import React, { Component, type ReactNode, type ErrorInfo } from 'react';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
+import { Card } from './Card';
 
 export interface ErrorWindowProps {
   children?: ReactNode;
@@ -33,7 +34,7 @@ export class ErrorWindow extends Component<ErrorWindowProps, ErrorWindowState> {
     if (this.state.hasError) {
       return (
         <div className="flex h-screen w-screen flex-col items-center justify-center p-6 bg-background text-foreground select-none">
-          <div className="max-w-md w-full p-6 rounded-[var(--radius-card)] bg-card shadow-lg text-center space-y-3 border border-border">
+          <Card padding="lg" className="max-w-md w-full shadow-lg text-center space-y-3 border border-border">
             <div className="flex justify-center text-amber-500">
               <ShellIcon name="exclamationmark.triangle" className="size-10" />
             </div>
@@ -48,7 +49,7 @@ export class ErrorWindow extends Component<ErrorWindowProps, ErrorWindowState> {
                 Reload Application
               </Button>
             </div>
-          </div>
+          </Card>
         </div>
       );
     }

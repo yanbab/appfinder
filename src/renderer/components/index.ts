@@ -22,3 +22,4 @@ export * from './SettingsWindow';
 export * from './ShellWindow';
 export * from './ErrorWindow';
 export * from './DiscoverHub';
+export * from './Card';

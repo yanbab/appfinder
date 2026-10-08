@@ -4,7 +4,7 @@ dist/
 renderer/dist/
 node_modules/
 .DS_Store
+.agents/
 *.dmg
 *.log
-.tmp/
 _*

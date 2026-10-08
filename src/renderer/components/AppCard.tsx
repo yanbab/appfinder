@@ -3,6 +3,7 @@ import type { CaskItem } from '@/types';
 import { useShellStore, useAppStore } from '@/stores';
 import { AppIcon } from './AppIcon';
 import { AppButtons } from './AppButtons';
+import { Card } from './Card';
 import { getAppName, formatVersion } from '@/hooks/utils';
 
 export interface AppCardProps {
@@ -24,7 +25,10 @@ export function AppCard({ item, className }: AppCardProps) {
     : (item.desc || '');
 
   return (
-    <div
+    <Card
+      variant="interactive"
+      padding="default"
+      selected={isSelected}
       data-token={item.token}
       tabIndex={0}
       role="button"
@@ -35,9 +39,7 @@ export function AppCard({ item, className }: AppCardProps) {
           openAppInfo(item);
         }
       }}
-      className={`app-card relative flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card text-card-foreground shadow-2xs select-none cursor-default focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/50 ${
-        isSelected ? 'bg-[var(--card-active-bg)]' : ''
-      } ${className || ''}`}
+      className={`app-card relative flex items-center justify-between ${className || ''}`}
     >
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <AppIcon item={item} size="grid" className="size-14 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
@@ -54,7 +56,7 @@ export function AppCard({ item, className }: AppCardProps) {
       </div>
 
       <AppButtons item={item} variant="icon" />
-    </div>
+    </Card>
   );
 }
 

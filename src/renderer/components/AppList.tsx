@@ -3,6 +3,7 @@ import { useAppStore, useShellStore, selectFilteredItems } from '@/stores';
 import { AppCard } from './AppCard';
 import { AppRow } from './AppRow';
 import { EmptyState } from './EmptyState';
+import { Card } from './Card';
 
 export interface AppListProps {
   header?: React.ReactNode;
@@ -66,21 +67,19 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
     >
       <div className={viewMode === 'grid' ? "w-full space-y-4" : "max-w-[var(--content-max-width)] mx-auto w-full space-y-4"}>
         {header}
-        <div
-          className={
-            viewMode === 'grid'
-              ? "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5"
-              : "rounded-[var(--radius-card)] overflow-hidden bg-card divide-y divide-border/20 shadow-2xs w-full"
-          }
-        >
-          {displayedItems.map((item) =>
-            viewMode === 'grid' ? (
+        {viewMode === 'grid' ? (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5">
+            {displayedItems.map((item) => (
               <AppCard key={item.token} item={item} />
-            ) : (
+            ))}
+          </div>
+        ) : (
+          <Card padding="none" className="overflow-hidden divide-y divide-border/20 w-full">
+            {displayedItems.map((item) => (
               <AppRow key={item.token} item={item} />
-            )
-          )}
-        </div>
+            ))}
+          </Card>
+        )}
         {footer}
       </div>
     </div>

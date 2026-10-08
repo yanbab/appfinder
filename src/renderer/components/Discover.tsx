@@ -10,6 +10,7 @@ import { AppIcon } from './AppIcon';
 import { ShellIcon } from './ShellIcon';
 import { DiscoverSlider } from './DiscoverSlider';
 import { DiscoverHub } from './DiscoverHub';
+import { Card } from './Card';
 import { getAppName } from '@/hooks/utils';
 import type { CaskItem } from '../../types/cask';
 
@@ -155,10 +156,12 @@ export function Discover(): React.JSX.Element {
 
           <div className="grid grid-cols-3 gap-2">
             {recentItems.map((item: CaskItem) => (
-              <div
+              <Card
                 key={item.token}
+                variant="interactive"
+                padding="default"
                 onClick={() => openAppInfo(item)}
-                className="flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] group min-w-0"
+                className="flex items-center justify-between group min-w-0"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <AppIcon item={item} size="tile" className="size-12 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
@@ -171,7 +174,7 @@ export function Discover(): React.JSX.Element {
                     </p>
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
@@ -199,10 +202,12 @@ export function Discover(): React.JSX.Element {
 
           <div className="grid grid-cols-3 gap-2">
             {topInstalledItems.map((item: CaskItem) => (
-              <div
+              <Card
                 key={item.token}
+                variant="interactive"
+                padding="default"
                 onClick={() => openAppInfo(item)}
-                className="flex items-center justify-between p-2 rounded-[var(--radius-card)] bg-card shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] group min-w-0"
+                className="flex items-center justify-between group min-w-0"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <AppIcon item={item} size="tile" className="size-12 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
@@ -215,7 +220,7 @@ export function Discover(): React.JSX.Element {
                     </p>
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
@@ -247,10 +252,13 @@ export function Discover(): React.JSX.Element {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
             {(showAllCategories ? categories : categories.slice(0, 8)).map((cat) => (
-              <button
+              <Card
                 key={cat.name}
+                as="button"
+                variant="interactive"
+                padding="none"
                 onClick={() => selectTab(cat.name)}
-                className="flex items-center gap-2 px-2.5 py-2 rounded-[var(--radius-card)] bg-card shadow-2xs active:bg-[var(--card-active-bg)] text-left group select-none cursor-default"
+                className="flex items-center gap-2 px-2.5 py-2 text-left group w-full"
               >
                 <ShellIcon
                   name={cat.symbolName}
@@ -259,7 +267,7 @@ export function Discover(): React.JSX.Element {
                 <span className="text-xs font-medium text-foreground truncate">
                   {__(cat.displayName)}
                 </span>
-              </button>
+              </Card>
             ))}
           </div>
         </div>

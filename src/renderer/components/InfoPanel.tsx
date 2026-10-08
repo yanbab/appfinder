@@ -4,6 +4,7 @@ import { AppIcon } from './AppIcon';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 import { AppButtons } from './AppButtons';
+import { Card } from './Card';
 import {
   getAppName,
   formatVersion,
@@ -250,7 +251,7 @@ export function InfoPanel() {
         <AppButtons item={selectedApp} variant="panel" caskStatus={caskStatus} />
 
         {/* Metadata Section in Card */}
-        <div className="rounded-[var(--radius-card)] p-2 bg-card shadow-2xs text-xs space-y-1.5">
+        <Card padding="default" className="text-xs space-y-1.5">
           {/* 1. Website / Homepage */}
           <div className="flex items-center justify-between py-0.5">
             <span className="text-muted-foreground">{__('Homepage')}</span>
@@ -386,7 +387,7 @@ export function InfoPanel() {
 
         {/* Caveats / Warnings */}
         {caskStatus.isDisabled && (
-          <div className="p-2.5 rounded-[var(--radius-card)] border border-destructive/40 bg-destructive/10 text-destructive space-y-1 overflow-hidden">
+          <Card variant="error" padding="md" className="space-y-1">
             <div className="flex items-center gap-1.5 font-semibold text-xs text-destructive">
               <ShellIcon name="exclamationmark.octagon" className="size-3.5 shrink-0" />
               <span>{__('Cask Disabled')}</span>
@@ -408,11 +409,11 @@ export function InfoPanel() {
                 </button>
               </div>
             )}
-          </div>
+          </Card>
         )}
 
         {!caskStatus.isDisabled && caskStatus.isDeprecated && (
-          <div className="p-2.5 rounded-[var(--radius-card)] border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1 overflow-hidden">
+          <Card variant="warning" padding="md" className="space-y-1">
             <div className="flex items-center gap-1.5 font-semibold text-xs">
               <ShellIcon name="exclamationmark.triangle" className="size-3.5 shrink-0" />
               <span>{__('Cask Deprecated')}</span>
@@ -434,11 +435,11 @@ export function InfoPanel() {
                 </button>
               </div>
             )}
-          </div>
+          </Card>
         )}
 
         {appDetails?.caveats && (
-          <div className="p-2 rounded-[var(--radius-card)] border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 space-y-1 overflow-hidden">
+          <Card variant="warning" padding="default" className="space-y-1">
             <div className="flex items-center gap-1.5 font-semibold text-xs">
               <ShellIcon name="exclamationmark.triangle" className="size-3.5 shrink-0" />
               <span>{__('Caveat')}</span>
@@ -446,7 +447,7 @@ export function InfoPanel() {
             <p className="text-xs font-mono leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] overflow-hidden text-foreground">
               {appDetails.caveats}
             </p>
-          </div>
+          </Card>
         )}
       </div>
     </dialog>
