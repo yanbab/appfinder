@@ -383,7 +383,7 @@ export function InfoPanel() {
               </div>
             </div>
           )}
-        </div>
+        </Card>
 
         {/* Caveats / Warnings */}
         {caskStatus.isDisabled && (

@@ -66,12 +66,12 @@ export function DiscoverHub(): React.JSX.Element {
     <Card
       variant="hub"
       padding="default"
-      className="w-full flex items-center justify-between"
+      className="w-full grid grid-cols-3 items-center gap-2"
       role="region"
       aria-label="Discover Hub"
     >
       {/* Left: State 1 (Updates Available) or State 2 (All Up to Date) */}
-      <div className="flex items-center min-w-0">
+      <div className="flex items-center justify-start min-w-0">
         {updatesCount > 0 ? (
           /* State 1: Updates Available with Theme Accent Gradient */
           <button
@@ -105,7 +105,7 @@ export function DiscoverHub(): React.JSX.Element {
       </div>
 
       {/* Right: Check for Updates Button */}
-      <div className="flex items-center shrink-0">
+      <div className="flex items-center justify-end min-w-0">
         <Button
           variant="secondary"
           size="default"
