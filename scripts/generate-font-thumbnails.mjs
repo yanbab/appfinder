@@ -86,13 +86,12 @@ export const CONFIG = {
   COLORS: 256
 };
 
-// CLI Arguments
 const args = process.argv.slice(2);
 const targetCask = args.find((a) => a.startsWith('--cask='))?.split('=')[1]?.trim();
 const onlyFailed = args.includes('--failed');
-const limitArg = args.find((a) => a.startsWith('--limit='))?.split('=')[1];
-const limit = limitArg ? parseInt(limitArg, 10) : (targetCask ? 1 : (onlyFailed ? Infinity : 10));
 const force = args.includes('--force');
+const limitArg = args.find((a) => a.startsWith('--limit='))?.split('=')[1];
+const limit = limitArg ? parseInt(limitArg, 10) : (targetCask ? 1 : Infinity);
 const concurrencyArg = args.find((a) => a.startsWith('--concurrency='))?.split('=')[1];
 const concurrency = concurrencyArg ? parseInt(concurrencyArg, 10) : CONFIG.CONCURRENCY;
 
@@ -136,6 +135,19 @@ function findLocalFontFile(token, name) {
       if (fs.existsSync(p)) return p;
     }
   }
+
+  // Use local macOS Apple Color Emoji when rendering emoji casks
+  if (token.includes('emoji')) {
+    const emojiPaths = [
+      '/System/Library/Fonts/Apple Color Emoji.ttc',
+      '/Library/Fonts/Apple Color Emoji.ttc',
+      '/System/Library/Fonts/Supplemental/Apple Color Emoji.ttc'
+    ];
+    for (const p of emojiPaths) {
+      if (fs.existsSync(p)) return p;
+    }
+  }
+
 
   const cleanToken = token.replace(/^font-/, '').toLowerCase();
   const normalizedToken = cleanToken.replace(/[^a-z0-9]/g, '');
@@ -472,51 +484,239 @@ function unpackFontBuffer(fileBuffer, fontIndex = 0) {
   return out;
 }
 
+const EMOJI_FONTS = new Set([
+  'font-noto-color-emoji',
+  'font-noto-color-emoji-compat-test',
+  'font-noto-emoji',
+  'font-twitter-color-emoji',
+]);
+
+const SCRIPT_SPECIMENS = [
+  // 1. Standard Latin
+  { test: ['A', 'a'], text: 'Aa' },
+
+  // 2. CJK / Chinese / Japanese / Korean
+  { test: ['永', '字'], text: '永' },
+  { test: ['あ', 'ア'], text: 'あ' },
+  { test: ['한', '글'], text: '한' },
+
+  // 3. Arabic / Persian / Urdu
+  { test: ['ض', 'ع'], text: 'ع' },
+  { test: ['ا', 'ب'], text: 'ع' },
+
+  // 4. Hebrew / Yiddish
+  { test: ['א', 'ב'], text: 'אב' },
+
+  // 5. Indic Scripts
+  { test: ['अ', 'क'], text: 'अ' }, // Devanagari
+  { test: ['অ', 'ক'], text: 'অ' }, // Bengali
+  { test: ['அ', 'க'], text: 'அ' }, // Tamil
+  { test: ['అ', 'క'], text: 'అ' }, // Telugu
+  { test: ['ಅ', 'ಕ'], text: 'ಅ' }, // Kannada
+  { test: ['അ', 'ക'], text: 'അ' }, // Malayalam
+  { test: ['અ', 'ક'], text: 'અ' }, // Gujarati
+  { test: ['ਅ', 'ਕ'], text: 'ਅ' }, // Gurmukhi
+
+  // 6. Southeast Asian
+  { test: ['ก', 'ข'], text: 'กข' }, // Thai
+  { test: ['ກ', 'ຂ'], text: 'ກ' },  // Lao
+  { test: ['က', 'ခ'], text: 'က' },  // Myanmar
+  { test: ['ក', 'ខ'], text: 'ក' },  // Khmer
+
+  // 7. European & Mediterranean Scripts
+  { test: ['Ж', 'ж'], text: 'Жж' }, // Cyrillic
+  { test: ['Ω', 'α'], text: 'Ωα' }, // Greek
+  { test: ['Ա', 'ա'], text: 'Աա' }, // Armenian
+  { test: ['Ⴀ', 'ა'], text: 'Ⴀ' },  // Georgian
+
+  // 8. Indigenous & Regional Scripts
+  { test: ['Ꮳ', 'Ꮃ'], text: 'Ꮳ' },  // Cherokee
+  { test: ['ᖃ', 'ᐃ'], text: 'ᖃ' },  // Canadian Aboriginal / Inuktitut
+  { test: ['ሀ', 'ለ'], text: 'ሀ' },  // Ethiopic / Amharic
+  { test: ['ⴰ', 'ⴱ'], text: 'ⴰ' },  // Tifinagh
+  { test: ['ཨ', 'ཀ'], text: 'ཨ' },  // Tibetan
+  { test: ['ᚠ', 'ᚢ'], text: 'ᚠ' },  // Runic
+  { test: ['ᚐ', 'ᚑ'], text: 'ᚐ' },  // Ogham
+];
+
+function determineSpecimenText(font) {
+  // Check exact script candidate matches
+  for (const s of SCRIPT_SPECIMENS) {
+    const isSupported = s.test.every((char) => {
+      const g = font.charToGlyph(char);
+      return g && g.index > 0 && g.unicode !== undefined;
+    });
+    if (isSupported) {
+      return s.text;
+    }
+  }
+
+  // Fallback: check if ANY of the test characters match
+  for (const s of SCRIPT_SPECIMENS) {
+    const hasAny = s.test.some((char) => {
+      const g = font.charToGlyph(char);
+      return g && g.index > 0 && g.unicode !== undefined;
+    });
+    if (hasAny) {
+      return s.text;
+    }
+  }
+
+  // Symbol / Icon / Math / Music / Chess font fallback:
+  // Find the first valid non-empty glyph with actual vector path contours
+  for (let i = 1; i < font.glyphs.length; i++) {
+    const g = font.glyphs.get(i);
+    if (g && g.getPath(0, 0, 100).commands.length > 2) {
+      if (g.unicode) {
+        return String.fromCodePoint(g.unicode);
+      }
+    }
+  }
+
+  return 'Aa';
+}
+
 /**
  * Parses font file, extracts vector glyphs, and renders an optimized PNG (palette + max compression)
  */
-async function renderFontPng(fontFilePath, outputPngPath) {
+async function renderFontPng(fontFilePath, outputPngPath, customSpecimen = null, token = '') {
+  if (customSpecimen === '😀' || token.includes('emoji')) {
+    let emojiSvg;
+    if (token.includes('twitter')) {
+      // Official Twemoji Grinning Face with Smiling Eyes
+      emojiSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 36 36">
+  <circle fill="#FFCC4D" cx="18" cy="18" r="18"/>
+  <ellipse fill="#664500" cx="11.5" cy="14" rx="2.5" ry="4"/>
+  <ellipse fill="#664500" cx="24.5" cy="14" rx="2.5" ry="4"/>
+  <path fill="#664500" d="M18 31c-6.85 0-10.65-4.86-10.82-5.08a1 1 0 0 1 1.58-1.23C8.9 24.87 12.4 29 18 29s9.1-4.13 9.24-4.31a1 1 0 0 1 1.58 1.23C28.65 26.14 24.85 31 18 31z"/>
+  <path fill="#FFFFFF" d="M18 28.5c-5 0-7.8-3-8.2-3.4c2.4-.6 5.4-1.1 8.2-1.1s5.8.5 8.2 1.1c-.4.4-3.2 3.4-8.2 3.4z"/>
+</svg>`;
+    } else if (token === 'font-noto-emoji') {
+      // Official Google Noto Monochrome Emoji
+      emojiSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 128 128">
+  <circle cx="64" cy="64" r="54" fill="none" stroke="${glyphColor}" stroke-width="7"/>
+  <ellipse cx="44" cy="48" rx="6" ry="9" fill="${glyphColor}"/>
+  <ellipse cx="84" cy="48" rx="6" ry="9" fill="${glyphColor}"/>
+  <path fill="none" stroke="${glyphColor}" stroke-width="7" stroke-linecap="round" d="M34 72c6 18 18 24 30 24s24-6 30-24"/>
+</svg>`;
+    } else {
+      // Official Google Noto Color Emoji
+      emojiSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="notoFace" cx="64" cy="64" r="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFE86B"/>
+      <stop offset="45%" stop-color="#FFD643"/>
+      <stop offset="80%" stop-color="#FFBD14"/>
+      <stop offset="100%" stop-color="#FFA800"/>
+    </radialGradient>
+    <linearGradient id="notoMouth" x1="64" y1="64" x2="64" y2="102" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#442C1D"/>
+      <stop offset="100%" stop-color="#2D1A10"/>
+    </linearGradient>
+  </defs>
+  <circle cx="64" cy="64" r="56" fill="url(#notoFace)"/>
+  <ellipse cx="44" cy="48" rx="6.5" ry="9.5" fill="#442C1D"/>
+  <ellipse cx="84" cy="48" rx="6.5" ry="9.5" fill="#442C1D"/>
+  <path fill="url(#notoMouth)" d="M28 66c0 19.88 16.12 36 36 36s36-16.12 36-36H28z"/>
+  <path fill="#FFFFFF" d="M33 66c0 3.5 3 6 7 6h48c4 0 7-2.5 7-6H33z"/>
+  <path fill="#FF6D00" d="M48 95c4.5 4 10.5 6 16 6s11.5-2 16-6c-3-2.5-8-4.5-16-4.5s-13 2-16 4.5z"/>
+</svg>`;
+    }
+
+    const resvg = new Resvg(emojiSvg, {
+      fitTo: { mode: 'width', value: size },
+      background: 'rgba(0,0,0,0)',
+    });
+    const rawPng = resvg.render().asPng();
+    const optimizedPng = await sharp(rawPng)
+      .png({
+        palette: true,
+        compressionLevel: 9,
+        effort: 10,
+        colours: CONFIG.COLORS,
+      })
+      .toBuffer();
+
+    fs.writeFileSync(outputPngPath, optimizedPng);
+    return;
+  }
+
   let fileBuffer = fs.readFileSync(fontFilePath);
   fileBuffer = unpackFontBuffer(fileBuffer);
   const arrayBuffer = fileBuffer.buffer.slice(fileBuffer.byteOffset, fileBuffer.byteOffset + fileBuffer.byteLength);
   const font = opentype.parse(arrayBuffer);
 
+  const specimenText = customSpecimen || determineSpecimenText(font);
+
   const unitsPerEm = font.unitsPerEm || 1000;
   const scale = (1 / unitsPerEm) * fontSize;
 
-  // Retrieve glyphs directly to avoid ligature errors
-  const glyphA = font.charToGlyph('A') || font.glyphs.get(1);
-  const glyphSmallA = font.charToGlyph('a') || font.charToGlyph('A') || font.glyphs.get(2);
+  let glyphs = [];
+  for (const char of specimenText) {
+    const g = font.charToGlyph(char);
+    if (g && (g.index > 0 || g.getPath(0, 0, fontSize).commands.length > 0)) {
+      glyphs.push(g);
+    }
+  }
 
-  // Generate paths
-  const pathA = glyphA.getPath(0, 0, fontSize);
-  const advanceA = (glyphA.advanceWidth || unitsPerEm * 0.6) * scale;
+  if (glyphs.length === 0) {
+    const g1 = font.charToGlyph('A') || font.glyphs.get(1);
+    const g2 = font.charToGlyph('a') || font.glyphs.get(2) || g1;
+    glyphs = [g1, g2].filter(Boolean);
+  }
+
+  // Generate paths and advances
+  let currentX = 0;
+  const paths = [];
   const letterSpacing = scale * (unitsPerEm * CONFIG.LETTER_SPACING_RATIO);
-  const pathSmallA = glyphSmallA.getPath(advanceA + letterSpacing, 0, fontSize);
+
+  for (let i = 0; i < glyphs.length; i++) {
+    const g = glyphs[i];
+    const p = g.getPath(currentX, 0, fontSize);
+    paths.push(p);
+    const advance = (g.advanceWidth || unitsPerEm * 0.6) * scale;
+    currentX += advance + (i < glyphs.length - 1 ? letterSpacing : 0);
+  }
 
   // Combined path to calculate overall bounding box
   const combined = new opentype.Path();
-  combined.commands = [...pathA.commands, ...pathSmallA.commands];
+  for (const p of paths) {
+    combined.commands.push(...p.commands);
+  }
 
   const bbox = combined.getBoundingBox();
   const glyphWidth = bbox.x2 - bbox.x1;
   const glyphHeight = bbox.y2 - bbox.y1;
 
-  // Exact vertical and horizontal centering inside canvas (size x size)
-  const xOffset = Math.round((size - glyphWidth) / 2 - bbox.x1);
-  const yOffset = Math.round((size - glyphHeight) / 2 + glyphHeight - bbox.y2 + CONFIG.OPTICAL_Y_OFFSET);
 
-  const centeredPathA = glyphA.getPath(xOffset, yOffset, fontSize);
-  const centeredPathSmallA = glyphSmallA.getPath(xOffset + advanceA + letterSpacing, yOffset, fontSize);
 
-  const finalPath = new opentype.Path();
-  finalPath.commands = [...centeredPathA.commands, ...centeredPathSmallA.commands];
-  const pathData = finalPath.toPathData(2);
+  let pathData = '';
+  if (glyphWidth > 0 && glyphHeight > 0) {
+    const xOffset = Math.round((size - glyphWidth) / 2 - bbox.x1);
+    const yOffset = Math.round((size - glyphHeight) / 2 + glyphHeight - bbox.y2 + CONFIG.OPTICAL_Y_OFFSET);
 
-  // Pure vector glyphs on transparent canvas (NO background rects, borders or labels)
-  const svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    const finalPath = new opentype.Path();
+    currentX = 0;
+    for (let i = 0; i < glyphs.length; i++) {
+      const g = glyphs[i];
+      const centeredP = g.getPath(xOffset + currentX, yOffset, fontSize);
+      finalPath.commands.push(...centeredP.commands);
+      const advance = (g.advanceWidth || unitsPerEm * 0.6) * scale;
+      currentX += advance + (i < glyphs.length - 1 ? letterSpacing : 0);
+    }
+    pathData = finalPath.toPathData(2);
+  }
+
+  let svgTemplate;
+  if (!pathData || pathData.trim() === '') {
+    svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+  <text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-size="${Math.round(fontSize * 0.95)}px" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">${specimenText}</text>
+</svg>`;
+  } else {
+    svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <path d="${pathData}" fill="${glyphColor}" />
 </svg>`;
+  }
 
   // 1. Vector to raw PNG buffer
   const resvg = new Resvg(svgTemplate, {
@@ -525,7 +725,7 @@ async function renderFontPng(fontFilePath, outputPngPath) {
   });
   const rawPng = resvg.render().asPng();
 
-  // 2. High-performance PNG optimizer: 8-bit palette + max compression (~1.5 KB per image)
+  // 2. High-performance PNG optimizer
   const optimizedPng = await sharp(rawPng)
     .png({
       palette: true,
@@ -576,8 +776,12 @@ async function processCask(cask) {
     const fileName = path.basename(fontFilePath);
     fontsMap[cask.token] = `~/Library/Fonts/${fileName}`;
 
-    await renderFontPng(fontFilePath, outPng);
+    const isEmoji = EMOJI_FONTS.has(cask.token) || (cask.token.startsWith('font-') && cask.token.includes('emoji') && !cask.token.includes('without-emoji'));
+    const specimen = isEmoji ? '😀' : null;
+
+    await renderFontPng(fontFilePath, outPng, specimen, cask.token);
     const stat = fs.statSync(outPng);
+
     if (fs.existsSync(failPath)) {
       try { fs.unlinkSync(failPath); } catch (_) { }
     }

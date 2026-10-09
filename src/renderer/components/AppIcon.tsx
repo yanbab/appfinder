@@ -38,11 +38,10 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
     setHasError(false);
   }, [token, item?.iconUrl]);
 
-  // FIXME: hardcoded font thumbnails url
+  const isColorEmoji = Boolean(token && (token.includes('color-emoji') || token === 'font-apple-color-emoji'));
   const fontThumbnailUrl = isFont && token
     ? `https://yanbab.github.io/appfinder/font-thumbnails/${token}.png`
     : null;
-
 
   const activeIconUrl = item?.iconUrl || fontThumbnailUrl;
   const hasIcon = Boolean(activeIconUrl && !hasError);
@@ -69,7 +68,8 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
             fetchPriority="low"
             className={cn(
               "w-full h-full object-contain rounded-[inherit]",
-              isFont && "p-[10%] dark:invert",
+              isFont && "p-[10%]",
+              isFont && !isColorEmoji && "dark:invert",
               loaded ? "block" : "invisible"
             )}
             onLoad={() => setLoaded(true)}
