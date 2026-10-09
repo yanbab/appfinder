@@ -627,7 +627,7 @@ async function runPool(items, workerFn, maxWorkers, startTime, initialCompleted,
         console.log(`✅ ${progress.padEnd(14)} ${status.padEnd(20)} → ${current.token.padEnd(30)} ${formatSize(res.size)} (${durationMs}ms)`);
       } else {
         failed++;
-        console.log(`❌ ${progress.padEnd(14)} ${status.padEnd(20)} → ${current.token.padEnd(30)} --- KB (${durationMs}ms) ⚠️ ${res.error} `);
+        console.log(`❌ ${progress.padEnd(14)} ${status.padEnd(20)} → ${current.token.padEnd(30)} --- KB (${durationMs}ms)  ⚠️   ${res.error} `);
       }
     }
   }
