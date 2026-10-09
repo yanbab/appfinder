@@ -340,13 +340,25 @@ export async function getInfo(tokenOrCask: any, sysInfo?: SystemInfo): Promise<a
 
 export async function launch(appName: string): Promise<{ success: boolean; error?: string }> {
   try {
-    await execFileAsync('/usr/bin/open', ['-a', appName]);
+
+    // FIXME : open the file directly, remove test cases
+    let target = (appName || '').trim();
+    if (target.startsWith('~')) {
+      target = path.join(os.homedir(), target.slice(1));
+    }
+
+    if (target.startsWith('/') || /\.(ttf|otf|ttc|otc)$/i.test(target)) {
+      await execFileAsync('/usr/bin/open', [target]);
+    } else {
+      await execFileAsync('/usr/bin/open', ['-a', target]);
+    }
     return { success: true };
   } catch (err: any) {
     console.error(`Failed to launch app "${appName}":`, err.message);
     return { success: false, error: err.message };
   }
 }
+
 
 const ACTION_ARGS: Record<string, (t: string, zap?: boolean) => { command: string; args: string[]; cwd?: string }> = {
   install: (t) => ({ command: getBrewPath(), args: ['install', '--force', '--cask', t] }),

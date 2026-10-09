@@ -63,7 +63,8 @@ export function processAppsData(
   casksRaw: any[],
   categoriesRaw?: any,
   downloadsRaw?: any,
-  addedRaw?: any
+  addedRaw?: any,
+  fontsRaw?: Record<string, string>
 ): CaskItem[] {
   const tokenToCategory = categoriesRaw?.tokenToCategory || {};
   const downloadsFormulae = downloadsRaw?.formulae || {};
@@ -86,7 +87,22 @@ export function processAppsData(
     }
 
     let appValue: string | null = null;
-    if (c.artifacts && Array.isArray(c.artifacts)) {
+    if (primaryCat === 'font' || token.startsWith('font-')) {
+      if (fontsRaw && fontsRaw[token]) {
+        appValue = fontsRaw[token];
+      } else if (c.artifacts && Array.isArray(c.artifacts)) {
+        for (const art of c.artifacts) {
+          if (art.font) {
+            const fontEntry = Array.isArray(art.font) ? art.font[0] : art.font;
+            const fontName = Array.isArray(fontEntry) ? fontEntry[0] : String(fontEntry);
+            if (fontName) {
+              appValue = `~/Library/Fonts/${path.basename(fontName)}`;
+            }
+            break;
+          }
+        }
+      }
+    } else if (c.artifacts && Array.isArray(c.artifacts)) {
       for (const art of c.artifacts) {
         if (art.app && Array.isArray(art.app) && art.app[0]) {
           appValue = art.app[0];
@@ -157,8 +173,17 @@ export async function fetchCatalog({ onLog, signal }: FetchCatalogOptions = {}):
   onLog?.('==> Updating CaskFlow dates...');
   const addedRaw = await downloadJson('https://github.com/alielsokary/CaskFlow/releases/latest/download/added_dates.json', path.join(FETCH_DIR, 'added_dates.json'), signal);
 
+  let fontsRaw: Record<string, string> = {};
+  const localFontsFile = path.join(__dirname, '../../../data/fonts.json');
+  const packagedFontsFile = path.join(process.resourcesPath || '', 'data', 'fonts.json');
+  if (fs.existsSync(localFontsFile)) {
+    try { fontsRaw = JSON.parse(fs.readFileSync(localFontsFile, 'utf8')); } catch (_) {}
+  } else if (fs.existsSync(packagedFontsFile)) {
+    try { fontsRaw = JSON.parse(fs.readFileSync(packagedFontsFile, 'utf8')); } catch (_) {}
+  }
+
   onLog?.('==> Caching apps...');
-  const processedApps = processAppsData(casksRaw, categoriesRaw, downloadsRaw, addedRaw);
+  const processedApps = processAppsData(casksRaw, categoriesRaw, downloadsRaw, addedRaw, fontsRaw);
   writeJsonAtomic(CACHED_APPS_FILE, processedApps);
 
   onLog?.('==> Caching categories...');
@@ -167,5 +192,6 @@ export async function fetchCatalog({ onLog, signal }: FetchCatalogOptions = {}):
   onLog?.('==> ✔︎ Updated');
   return { apps: processedApps, categories: CATEGORIES_DEF };
 }
+
 
 

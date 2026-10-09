@@ -1,5 +1,4 @@
 import { app } from 'electron';
-import { registerSchemes, setupProtocols } from './protocols';
 import { setupSingleInstance } from './single-instance';
 import { initDevTools } from './react-devtools';
 import { setupConfig } from './config';
@@ -10,8 +9,6 @@ import { setupContextMenu } from './menu-context';
 import { createShellWindow } from './window-shell';
 import { checkCommand, checkCommandDialog } from './check';
 
-registerSchemes();
-
 if (setupSingleInstance()) {
   async function init(): Promise<void> {
     if (!checkCommand('brew')) {
@@ -21,7 +18,6 @@ if (setupSingleInstance()) {
     app.on('window-all-closed', () => {
       app.quit();
     });
-    setupProtocols();
     setupConfig();
     setupIpcMain();
     setupI18n();
@@ -34,6 +30,7 @@ if (setupSingleInstance()) {
 
   app.whenReady().then(init);
 }
+
 
 
 

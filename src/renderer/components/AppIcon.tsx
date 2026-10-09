@@ -38,11 +38,11 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
     setHasError(false);
   }, [token, item?.iconUrl]);
 
+  // FIXME: hardcoded font thumbnails url
   const fontThumbnailUrl = isFont && token
-    ? (typeof window !== 'undefined' && window.location.protocol.startsWith('http')
-        ? `/font-thumbnails/${token}.png`
-        : `font-thumbnail://${token}.png`)
+    ? `https://yanbab.github.io/appfinder/font-thumbnails/${token}.png`
     : null;
+
 
   const activeIconUrl = item?.iconUrl || fontThumbnailUrl;
   const hasIcon = Boolean(activeIconUrl && !hasError);
