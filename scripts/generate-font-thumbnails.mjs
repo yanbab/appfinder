@@ -204,6 +204,17 @@ const KNOWN_MIRRORS = {
   'font-golos-ui': 'https://raw.githubusercontent.com/google/fonts/main/ofl/golostext/GolosText%5Bwght%5D.ttf',
 };
 
+const RAW_CASK_CACHE = path.join(os.homedir(), '.cache', 'appfinder', 'fetch', 'cask.json');
+let rawCasksMap = new Map();
+if (fs.existsSync(RAW_CASK_CACHE)) {
+  try {
+    const rawList = JSON.parse(fs.readFileSync(RAW_CASK_CACHE, 'utf8'));
+    for (const item of rawList) {
+      if (item.token) rawCasksMap.set(item.token, item);
+    }
+  } catch (_) { }
+}
+
 /**
  * Fast resolution of font artifact filename without rendering PNG
  */
@@ -221,12 +232,28 @@ async function resolveFontFileName(cask) {
     return `~/Library/Fonts/${path.basename(mirrorUrl.split('?')[0])}`;
   }
 
-  // Check official cask API metadata for artifacts.font
+  // 1. Check local cached cask metadata
+  const info = rawCasksMap.get(cask.token);
+  if (info && info.artifacts) {
+    const fontList = (info.artifacts || []).flatMap((a) => (a.font ? (Array.isArray(a.font) ? a.font : [a.font]) : [])).flat();
+    if (fontList.length > 0) {
+      const preferred = fontList.find((f) => {
+        const s = (Array.isArray(f) ? f[0] : String(f)).toLowerCase();
+        return !s.includes('italic') && !s.includes('oblique') && !s.includes('bold');
+      }) || fontList[0];
+      const rawFileName = Array.isArray(preferred) ? preferred[0] : String(preferred);
+      if (rawFileName) {
+        return `~/Library/Fonts/${path.basename(rawFileName)}`;
+      }
+    }
+  }
+
+  // 2. Fallback to API if not in local cache
   try {
     const res = await fetch(`https://formulae.brew.sh/api/cask/${cask.token}.json`);
     if (res.ok) {
-      const info = await res.json();
-      const fontList = (info.artifacts || []).flatMap((a) => (a.font ? (Array.isArray(a.font) ? a.font : [a.font]) : [])).flat();
+      const apiInfo = await res.json();
+      const fontList = (apiInfo.artifacts || []).flatMap((a) => (a.font ? (Array.isArray(a.font) ? a.font : [a.font]) : [])).flat();
       if (fontList.length > 0) {
         const preferred = fontList.find((f) => {
           const s = (Array.isArray(f) ? f[0] : String(f)).toLowerCase();
@@ -242,6 +269,7 @@ async function resolveFontFileName(cask) {
 
   return null;
 }
+
 
 
 /**
@@ -620,20 +648,41 @@ async function main() {
   // Pre-populate fontsMap for all font casks missing from fontsMap (including existing/failed previews)
   const missingFromMap = fontCasks.filter((c) => !fontsMap[c.token]);
   if (missingFromMap.length > 0) {
+    console.log(`\n======================================================`);
     console.log(`🔍 Resolving font file paths for ${missingFromMap.length} font cask(s) for fonts.json...`);
+    console.log(`======================================================\n`);
     let mapIdx = 0;
-    const mapWorkers = Array.from({ length: 20 }, async () => {
+    let doneCount = 0;
+    const resStartTime = Date.now();
+    const mapWorkers = Array.from({ length: 16 }, async () => {
       while (mapIdx < missingFromMap.length) {
         const c = missingFromMap[mapIdx++];
+        const itemStart = Date.now();
         const fontPath = await resolveFontFileName(c);
         if (fontPath) {
           fontsMap[c.token] = fontPath;
+        }
+        doneCount++;
+        const durationMs = Date.now() - itemStart;
+        const elapsed = Date.now() - resStartTime;
+        const avgMs = elapsed / doneCount;
+        const remainingMs = (missingFromMap.length - doneCount) * avgMs;
+        const pct = Math.floor((doneCount / missingFromMap.length) * 100);
+        const progress = `[${doneCount}/${missingFromMap.length}]`;
+        const status = `[${pct}% - ${formatEta(remainingMs)}]`;
+
+        if (fontPath) {
+          console.log(`📄 ${progress.padEnd(14)} ${status.padEnd(20)} → ${c.token.padEnd(30)} ${fontPath} (${durationMs}ms)`);
+        } else {
+          console.log(`⚠️ ${progress.padEnd(14)} ${status.padEnd(20)} → ${c.token.padEnd(30)} (no artifact found) (${durationMs}ms)`);
         }
       }
     });
     await Promise.all(mapWorkers);
     saveFontsMap();
+    console.log(`\n✔ Saved ${Object.keys(fontsMap).length} font paths to data/fonts.json\n`);
   }
+
 
 
   // Count already existing generated previews or known failed items
