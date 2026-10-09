@@ -1,0 +1,71 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (website source)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-repo
+
+      - name: Checkout gh-pages (font thumbnails and assets)
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages-repo
+
+      - name: Assemble deployment bundle
+        run: |
+          mkdir -p _site
+          # 1. Copy website files from main branch docs/
+          cp -r main-repo/docs/* _site/
+          rm -rf _site/font-thumbnails
+
+          # 2. Merge font thumbnails from gh-pages branch
+          mkdir -p _site/font-thumbnails
+          if [ -d "gh-pages-repo/font-thumbnails" ]; then
+            echo "📦 Copying font thumbnails from gh-pages/font-thumbnails..."
+            cp -r gh-pages-repo/font-thumbnails/* _site/font-thumbnails/ 2>/dev/null || true
+          elif [ -d "gh-pages-repo" ]; then
+            echo "📦 Checking for font thumbnails in gh-pages root..."
+            find gh-pages-repo -maxdepth 1 -name "*.png" -exec cp {} _site/font-thumbnails/ \; 2>/dev/null || true
+          fi
+
+          COUNT=$(find _site/font-thumbnails -name "*.png" | wc -l | tr -d ' ')
+          echo "✅ Total font thumbnails bundled for deployment: $COUNT"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

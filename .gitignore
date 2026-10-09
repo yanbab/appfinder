@@ -8,3 +8,4 @@ node_modules/
 *.dmg
 *.log
 _*
+docs/font-thumbnails/
