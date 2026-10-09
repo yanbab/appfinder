@@ -239,39 +239,64 @@ function getData(file: string, forceReload: boolean = false): any {
 }
 
 export function getApps(forceReload: boolean = false): CaskItem[] {
-  return getData('apps.json', forceReload);
+  const casks = getData('apps.json', forceReload) || [];
+  const services = getData('services.json', forceReload) || [];
+  if (Array.isArray(services) && services.length > 0) {
+    return [...casks, ...services];
+  }
+  return casks;
 }
 
 export function getCategories(forceReload: boolean = false): CategoryItem[] {
-  return getData('categories.json', forceReload);
+  const cats: CategoryItem[] = getData('categories.json', forceReload) || [];
+  if (!cats.some((c) => c.name === 'services')) {
+    return [
+      ...cats,
+      {
+        name: 'services',
+        displayName: 'Services',
+        symbolName: 'server.rack',
+      },
+    ];
+  }
+  return cats;
 }
 
 export async function getInstalled(onLog?: (msg: string) => void): Promise<{ tokens: string[]; versions: Record<string, string> }> {
   try {
-    onLog?.('Checking installed casks...');
-    const stdout = await runBrew(['list', '--cask', '--versions']);
-    if (!stdout) return { tokens: [], versions: {} };
+    onLog?.('Checking installed packages...');
+    const [caskStdout, formulaStdout] = await Promise.all([
+      runBrew(['list', '--cask', '--versions']).catch(() => ''),
+      runBrew(['list', '--formula', '--versions']).catch(() => ''),
+    ]);
 
     const tokens: string[] = [];
     const versions: Record<string, string> = {};
 
-    for (const line of stdout.trim().split('\n')) {
-      const parts = line.trim().split(/\s+/);
-      if (parts[0]) {
-        tokens.push(parts[0]);
-        if (parts.length > 1) {
-          versions[parts[0]] = parts.slice(1).join(' ');
+    const parseLines = (text: string) => {
+      if (!text) return;
+      for (const line of text.trim().split('\n')) {
+        const parts = line.trim().split(/\s+/);
+        if (parts[0]) {
+          tokens.push(parts[0]);
+          if (parts.length > 1) {
+            versions[parts[0]] = parts.slice(1).join(' ');
+          }
         }
       }
-    }
+    };
+
+    if (caskStdout) parseLines(caskStdout);
+    if (formulaStdout) parseLines(formulaStdout);
+
     return { tokens, versions };
   } catch (e) {
-    console.error('Error fetching installed casks:', e);
+    console.error('Error fetching installed packages:', e);
     return { tokens: [], versions: {} };
   }
 }
 
-export async function getUpdates(force: boolean = false): Promise<{ casks: any[] }> {
+export async function getUpdates(force: boolean = false): Promise<{ casks: any[]; formulae?: any[] }> {
   if (!force) {
     const mem = memoryCache.get('updates');
     if (mem && (Date.now() - mem.timestamp < UPDATES_CACHE_DURATION)) {
@@ -290,14 +315,19 @@ export async function getUpdates(force: boolean = false): Promise<{ casks: any[]
   }
 
   let casks: any[] = [];
+  let formulae: any[] = [];
   try {
-    const stdout = await runBrew(['outdated', '--cask', '--json=v2']);
-    if (stdout) casks = JSON.parse(stdout).casks || [];
+    const stdout = await runBrew(['outdated', '--json=v2']);
+    if (stdout) {
+      const parsed = JSON.parse(stdout);
+      casks = parsed.casks || [];
+      formulae = parsed.formulae || [];
+    }
   } catch (e) {
-    console.error('Error fetching outdated casks:', e);
+    console.error('Error fetching outdated packages:', e);
   }
 
-  const fresh = { casks };
+  const fresh = { casks, formulae };
   memoryCache.set('updates', { data: fresh, timestamp: Date.now() });
   try {
     if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
@@ -322,35 +352,179 @@ export async function getInfo(tokenOrCask: any, sysInfo?: SystemInfo): Promise<a
   let cask = caskInfoCache.get(token);
   if (!cask) {
     try {
-      const stdout = await runBrew(['info', '--cask', '--json=v2', token]);
+      const stdout = await runBrew(['info', '--json=v2', token]);
       if (stdout) {
         const data = JSON.parse(stdout);
-        const raw = (data.casks && data.casks[0]) || null;
+        const raw = (data.casks && data.casks[0]) || (data.formulae && data.formulae[0]) || null;
         if (raw) {
           cask = normalizeCaskInfo(raw, info);
           caskInfoCache.set(token, cask);
         }
       }
     } catch (e) {
-      console.error(`Error fetching cask info for ${token}:`, e);
+      console.error(`Error fetching package info for ${token}:`, e);
     }
   }
   return cask || null;
 }
 
-export async function launch(appName: string): Promise<{ success: boolean; error?: string }> {
+export async function getServicesStatus(): Promise<Record<string, { status: string; pid?: number; user?: string }>> {
   try {
+    const stdout = await runBrew(['services', 'list', '--json']);
+    if (!stdout) return {};
+    const parsed = JSON.parse(stdout);
+    const result: Record<string, { status: string; pid?: number; user?: string }> = {};
+    if (Array.isArray(parsed)) {
+      for (const s of parsed) {
+        if (s.name) {
+          result[s.name] = {
+            status: s.status || 'unknown',
+            pid: s.pid || undefined,
+            user: s.user || undefined,
+          };
+        }
+      }
+    }
+    return result;
+  } catch (err: any) {
+    return {};
+  }
+}
 
-    // FIXME : open the file directly, remove test cases
+export async function isServiceRunning(serviceName: string): Promise<boolean> {
+  try {
+    const statuses = await getServicesStatus();
+    return statuses[serviceName]?.status === 'started';
+  } catch {
+    return false;
+  }
+}
+
+async function openFontInFontBook(fontNameOrPath: string, token?: string): Promise<void> {
+  // Derive clean font family name for Font Book search
+  let searchName = '';
+  if (fontNameOrPath && !fontNameOrPath.startsWith('/') && !fontNameOrPath.includes('.')) {
+    searchName = fontNameOrPath.replace(/\s*\([^)]*\)/g, '').trim();
+  } else if (fontNameOrPath && (fontNameOrPath.startsWith('/') || fontNameOrPath.includes('.'))) {
+    const base = path.basename(fontNameOrPath).replace(/\.[^.]+$/, '');
+    searchName = base
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/[-_]/g, ' ')
+      .replace(/\b(Regular|Bold|Italic|Light|Medium|Semibold|Black|Propo|Mono|NerdFont)\b/gi, '')
+      .trim();
+  }
+
+  if (!searchName && token) {
+    searchName = token.replace(/^font-/, '').replace(/[-_]/g, ' ').trim();
+  }
+
+  if (searchName) {
+    const escaped = searchName.replace(/["\\]/g, '\\$&');
+    const appleScript = [
+      'tell application "Font Book"',
+      '  activate',
+      'end tell',
+      'tell application "System Events"',
+      '  tell process "Font Book"',
+      '    set frontmost to true',
+      '    delay 0.15',
+      '    keystroke "f" using {command down}',
+      '    delay 0.05',
+      `    keystroke "${escaped}"`,
+      '    key code 36',
+      '  end tell',
+      'end tell'
+    ].join('\n');
+
+    try {
+      console.log(`[LAUNCH COMMAND]: osascript -e 'tell application "Font Book" to search "${searchName}"'`);
+      await execFileAsync('/usr/bin/osascript', ['-e', appleScript]);
+      return;
+    } catch (err: any) {
+      console.warn(`[LAUNCH FONT BOOK]: AppleScript UI search failed (${err.message}), falling back to open -a 'Font Book'`);
+    }
+  }
+
+  console.log("[LAUNCH COMMAND]: /usr/bin/open -a 'Font Book'");
+  await execFileAsync('/usr/bin/open', ['-a', 'Font Book']);
+}
+
+export async function reveal(appName: string, token?: string): Promise<{ success: boolean; error?: string }> {
+  try {
     let target = (appName || '').trim();
+    const tokenStr = (token || '').trim();
+    if (target.startsWith('~')) {
+      target = path.join(os.homedir(), target.slice(1));
+    }
+    if (target.startsWith('/') && fs.existsSync(target)) {
+      await execFileAsync('/usr/bin/open', ['-R', target]);
+      return { success: true };
+    }
+    const caskInfo = await getInfo(tokenStr || target);
+    const installedPath = caskInfo?.installedPath || caskInfo?.fontInfo?.installedPath;
+    if (installedPath && fs.existsSync(installedPath)) {
+      await execFileAsync('/usr/bin/open', ['-R', installedPath]);
+      return { success: true };
+    }
+    const appCandidates = [
+      `/Applications/${target}.app`,
+      `/Applications/${tokenStr}.app`,
+      path.join(os.homedir(), `Applications/${target}.app`),
+      path.join(os.homedir(), `Applications/${tokenStr}.app`),
+    ];
+    for (const p of appCandidates) {
+      if (fs.existsSync(p)) {
+        await execFileAsync('/usr/bin/open', ['-R', p]);
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'Item not found' };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function launch(appName: string, token?: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    let target = (appName || '').trim();
+    const tokenStr = (token || '').trim();
+
+    // 1. Service start/stop toggle
+    if (target.startsWith('service:') || tokenStr.startsWith('service:')) {
+      const serviceName = (target.startsWith('service:') ? target : tokenStr).replace(/^service:/, '');
+      const running = await isServiceRunning(serviceName);
+      const action = running ? 'stop' : 'start';
+      console.log(`[LAUNCH COMMAND]: brew services ${action} ${serviceName}`);
+      await runBrew(['services', action, serviceName]);
+      return { success: true };
+    }
+
+    // Expand ~
     if (target.startsWith('~')) {
       target = path.join(os.homedir(), target.slice(1));
     }
 
-    if (target.startsWith('/') || /\.(ttf|otf|ttc|otc)$/i.test(target)) {
+    // 2. Fonts: open Font Book with font selected
+    const isFont = Boolean(
+      tokenStr.startsWith('font-') ||
+      /\.(ttf|otf|ttc|otc|dfont)$/i.test(target) ||
+      target.includes('/Library/Fonts/')
+    );
+
+    if (isFont) {
+      await openFontInFontBook(appName || target, tokenStr);
+      return { success: true };
+    }
+
+    // 3. Absolute path / file target
+    if (target.startsWith('/') && fs.existsSync(target)) {
+      console.log('[LAUNCH COMMAND]: /usr/bin/open ' + (target.includes(' ') ? `"${target}"` : target));
       await execFileAsync('/usr/bin/open', [target]);
     } else {
-      await execFileAsync('/usr/bin/open', ['-a', target]);
+      // 4. App by name
+      const appToOpen = target || tokenStr;
+      console.log('[LAUNCH COMMAND]: /usr/bin/open -a ' + (appToOpen.includes(' ') ? `"${appToOpen}"` : appToOpen));
+      await execFileAsync('/usr/bin/open', ['-a', appToOpen]);
     }
     return { success: true };
   } catch (err: any) {
@@ -359,13 +533,18 @@ export async function launch(appName: string): Promise<{ success: boolean; error
   }
 }
 
-
 const ACTION_ARGS: Record<string, (t: string, zap?: boolean) => { command: string; args: string[]; cwd?: string }> = {
-  install: (t) => ({ command: getBrewPath(), args: ['install', '--force', '--cask', t] }),
-  upgrade: (t) => ({ command: getBrewPath(), args: ['upgrade', '--force', '--cask', t] }),
+  install: (t) => ({
+    command: getBrewPath(),
+    args: ['install', t]
+  }),
+  upgrade: (t) => ({
+    command: getBrewPath(),
+    args: ['upgrade', t]
+  }),
   uninstall: (t, zap) => ({
     command: getBrewPath(),
-    args: zap ? ['uninstall', '--force', '--zap', '--cask', t] : ['uninstall', '--force', '--cask', t]
+    args: zap ? ['uninstall', '--zap', t] : ['uninstall', t]
   }),
   refresh: () => ({ command: getBrewPath(), args: ['update'] }),
   cleanup: () => ({ command: getBrewPath(), args: ['cleanup', '--prune=all'] })

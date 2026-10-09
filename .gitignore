@@ -1,6 +1,7 @@
 bin/
 cache/
 dist/
+docs/font-thumbnails/
 renderer/dist/
 node_modules/
 .DS_Store
@@ -8,4 +9,3 @@ node_modules/
 *.dmg
 *.log
 _*
-docs/font-thumbnails/

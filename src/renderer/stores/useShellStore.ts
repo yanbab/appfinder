@@ -104,7 +104,7 @@ export const useShellStore = create<ShellStoreState>((set, get) => ({
         infoCache.set(token, info);
         set({ appDetails: info });
       }
-    } catch (_) {}
+    } catch (_) { }
     set({ loadingAppDetails: false });
   },
 

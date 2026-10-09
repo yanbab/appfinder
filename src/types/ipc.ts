@@ -56,6 +56,7 @@ export interface IpcBridge {
   getCaskInfo: (token: string) => Promise<any>;
   getInstalled: () => Promise<any>;
   getUpdates: (force?: boolean) => Promise<any>;
+  getServicesStatus: () => Promise<Record<string, { status: string; pid?: number; user?: string }>>;
 
   getMessages: () => Promise<Record<string, string>>;
   getAvailableLocales: () => Promise<LocaleInfo[]>;
@@ -65,6 +66,7 @@ export interface IpcBridge {
   updateConfig: (newConfig: Partial<AppConfig>) => Promise<AppConfig>;
 
   openApp: (token: string, appName?: string) => Promise<any>;
+  revealApp: (token: string, appName?: string) => Promise<any>;
   openExternal: (url: string) => Promise<any>;
   showErrorDialog: (title: string, content: string) => Promise<any>;
   showMessage: (options: any) => Promise<any>;
@@ -77,8 +79,10 @@ export interface IpcBridge {
   setContentSize: (width: number, height: number) => void;
   showContextMenu: (data: any) => void;
   sidebarChanged: (visible: boolean) => void;
+  terminalChanged: (visible: boolean) => void;
 
   // Unified Event Bus (Main -> Renderer)
   on<K extends keyof IpcEventMap>(channel: K, callback: (data: IpcEventMap[K]) => void): Unsubscribe;
   on(channel: string, callback: (...args: any[]) => void): Unsubscribe;
 }
+

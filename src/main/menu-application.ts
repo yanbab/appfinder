@@ -23,6 +23,7 @@ function sendToShell(channel: string, ...args: any[]): void {
 
 let isSidebarVisible = true;
 let isStatusbarVisible = false;
+let isTerminalVisible = false;
 
 export function updateSidebarChecked(visible: boolean): void {
   isSidebarVisible = visible;
@@ -40,6 +41,17 @@ export function updateStatusbarChecked(visible: boolean): void {
   const menu = Menu.getApplicationMenu();
   if (menu) {
     const item = menu.getMenuItemById('show-statusbar');
+    if (item) {
+      item.checked = visible;
+    }
+  }
+}
+
+export function updateTerminalChecked(visible: boolean): void {
+  isTerminalVisible = visible;
+  const menu = Menu.getApplicationMenu();
+  if (menu) {
+    const item = menu.getMenuItemById('show-terminal');
     if (item) {
       item.checked = visible;
     }
@@ -199,10 +211,36 @@ export function setupApplicationMenu(): void {
             });
           }
         },
+        {
+          id: 'show-terminal',
+          label: __('Show Console'),
+          type: 'checkbox',
+          checked: isTerminalVisible,
+          accelerator: 'Option+Cmd+C',
+          click: (menuItem) => {
+            isTerminalVisible = menuItem.checked;
+            sendToShell('menu:click', { command: 'toggle-terminal', value: menuItem.checked });
+          }
+        },
         { type: 'separator' },
         { role: 'reload', label: __('Reload') },
         { role: 'forceReload', label: __('Force Reload') },
-        { role: 'toggleDevTools', label: __('Toggle Developer Tools') }
+        { role: 'toggleDevTools', label: __('Toggle Developer Tools') },
+        { type: 'separator' },
+        {
+          label: __('Restart in Debug Mode'),
+          click: () => {
+            app.relaunch({ args: process.argv.slice(1).concat(['--debug']) });
+            app.exit(0);
+          }
+        },
+        {
+          label: __('Restart'),
+          click: () => {
+            app.relaunch();
+            app.exit(0);
+          }
+        }
       ]
     },
     { role: 'windowMenu', label: __('Window') },

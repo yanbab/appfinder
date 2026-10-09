@@ -34,46 +34,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const APPS_FILE = path.join(ROOT_DIR, 'data', 'apps.json');
-const FONTS_DATA_FILE = path.join(ROOT_DIR, 'data', 'fonts.json');
 const OUTPUT_DIR = path.join(ROOT_DIR, 'docs', 'font-thumbnails');
 const CACHE_DIR = path.join(os.tmpdir(), 'appfinder-font-cache');
-
-let fontsMap = {};
-if (fs.existsSync(FONTS_DATA_FILE)) {
-  try {
-    fontsMap = JSON.parse(fs.readFileSync(FONTS_DATA_FILE, 'utf-8'));
-  } catch (_) { }
-}
-
-function saveFontsMap() {
-  const sorted = Object.keys(fontsMap).sort().reduce((acc, k) => {
-    acc[k] = fontsMap[k];
-    return acc;
-  }, {});
-  fs.writeFileSync(FONTS_DATA_FILE, JSON.stringify(sorted, null, 2), 'utf-8');
-}
-
-function syncAppsJsonWithFonts() {
-  if (!fs.existsSync(APPS_FILE)) return;
-  try {
-    const allApps = JSON.parse(fs.readFileSync(APPS_FILE, 'utf-8'));
-    let updatedCount = 0;
-    for (const item of allApps) {
-      if (item.category === 'font' || item.token.startsWith('font-')) {
-        if (fontsMap[item.token] && item.app !== fontsMap[item.token]) {
-          item.app = fontsMap[item.token];
-          updatedCount++;
-        }
-      }
-    }
-    if (updatedCount > 0) {
-      fs.writeFileSync(APPS_FILE, JSON.stringify(allApps, null, 2), 'utf-8');
-      console.log(`📝 Updated "app" field for ${updatedCount} font(s) in data/apps.json`);
-    }
-  } catch (err) {
-    console.error(`Failed to sync apps.json:`, err);
-  }
-}
 
 export const CONFIG = {
   CANVAS_SIZE: 256,         // Total output PNG width & height (in pixels)
@@ -103,7 +65,6 @@ const glyphColor = args.find((a) => a.startsWith('--color='))?.split('=')[1] || 
 
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 fs.mkdirSync(CACHE_DIR, { recursive: true });
-
 
 /**
  * Loads all font casks from apps.json
@@ -203,74 +164,6 @@ const KNOWN_MIRRORS = {
   'font-profontx': 'https://raw.githubusercontent.com/google/fonts/main/ofl/profont/ProFont-Regular.ttf',
   'font-golos-ui': 'https://raw.githubusercontent.com/google/fonts/main/ofl/golostext/GolosText%5Bwght%5D.ttf',
 };
-
-const RAW_CASK_CACHE = path.join(os.homedir(), '.cache', 'appfinder', 'fetch', 'cask.json');
-let rawCasksMap = new Map();
-if (fs.existsSync(RAW_CASK_CACHE)) {
-  try {
-    const rawList = JSON.parse(fs.readFileSync(RAW_CASK_CACHE, 'utf8'));
-    for (const item of rawList) {
-      if (item.token) rawCasksMap.set(item.token, item);
-    }
-  } catch (_) { }
-}
-
-/**
- * Fast resolution of font artifact filename without rendering PNG
- */
-async function resolveFontFileName(cask) {
-  if (fontsMap[cask.token]) return fontsMap[cask.token];
-
-  const displayName = cask.name || cask.token.replace(/^font-/, '').replace(/-/g, ' ');
-  const local = findLocalFontFile(cask.token, displayName);
-  if (local) {
-    return `~/Library/Fonts/${path.basename(local)}`;
-  }
-
-  if (KNOWN_MIRRORS[cask.token]) {
-    const mirrorUrl = KNOWN_MIRRORS[cask.token];
-    return `~/Library/Fonts/${path.basename(mirrorUrl.split('?')[0])}`;
-  }
-
-  // 1. Check local cached cask metadata
-  const info = rawCasksMap.get(cask.token);
-  if (info && info.artifacts) {
-    const fontList = (info.artifacts || []).flatMap((a) => (a.font ? (Array.isArray(a.font) ? a.font : [a.font]) : [])).flat();
-    if (fontList.length > 0) {
-      const preferred = fontList.find((f) => {
-        const s = (Array.isArray(f) ? f[0] : String(f)).toLowerCase();
-        return !s.includes('italic') && !s.includes('oblique') && !s.includes('bold');
-      }) || fontList[0];
-      const rawFileName = Array.isArray(preferred) ? preferred[0] : String(preferred);
-      if (rawFileName) {
-        return `~/Library/Fonts/${path.basename(rawFileName)}`;
-      }
-    }
-  }
-
-  // 2. Fallback to API if not in local cache
-  try {
-    const res = await fetch(`https://formulae.brew.sh/api/cask/${cask.token}.json`);
-    if (res.ok) {
-      const apiInfo = await res.json();
-      const fontList = (apiInfo.artifacts || []).flatMap((a) => (a.font ? (Array.isArray(a.font) ? a.font : [a.font]) : [])).flat();
-      if (fontList.length > 0) {
-        const preferred = fontList.find((f) => {
-          const s = (Array.isArray(f) ? f[0] : String(f)).toLowerCase();
-          return !s.includes('italic') && !s.includes('oblique') && !s.includes('bold');
-        }) || fontList[0];
-        const rawFileName = Array.isArray(preferred) ? preferred[0] : String(preferred);
-        if (rawFileName) {
-          return `~/Library/Fonts/${path.basename(rawFileName)}`;
-        }
-      }
-    }
-  } catch (_) { }
-
-  return null;
-}
-
-
 
 /**
  * Downloads and extracts font archive to extract primary TTF/OTF/TTC
@@ -573,9 +466,6 @@ async function processCask(cask) {
       fontFilePath = await downloadAndExtractFont(cask);
     }
 
-    const fileName = path.basename(fontFilePath);
-    fontsMap[cask.token] = `~/Library/Fonts/${fileName}`;
-
     await renderFontPng(fontFilePath, outPng);
     const stat = fs.statSync(outPng);
     if (fs.existsSync(failPath)) {
@@ -627,7 +517,7 @@ async function runPool(items, workerFn, maxWorkers, startTime, initialCompleted,
         console.log(`✅ ${progress.padEnd(14)} ${status.padEnd(20)} → ${current.token.padEnd(30)} ${formatSize(res.size)} (${durationMs}ms)`);
       } else {
         failed++;
-        console.log(`❌ ${progress.padEnd(14)} ${status.padEnd(20)} → ${current.token.padEnd(30)} --- KB (${durationMs}ms)  ⚠️   ${res.error} `);
+        console.log(`❌ ${progress.padEnd(14)} ${status.padEnd(20)} → ${current.token.padEnd(30)} --- KB (${durationMs}ms) ⚠️ ${res.error} `);
       }
     }
   }
@@ -644,46 +534,6 @@ async function main() {
   const startTime = Date.now();
   const fontCasks = loadFontCasks();
   const totalFonts = fontCasks.length;
-
-  // Pre-populate fontsMap for all font casks missing from fontsMap (including existing/failed previews)
-  const missingFromMap = fontCasks.filter((c) => !fontsMap[c.token]);
-  if (missingFromMap.length > 0) {
-    console.log(`\n======================================================`);
-    console.log(`🔍 Resolving font file paths for ${missingFromMap.length} font cask(s) for fonts.json...`);
-    console.log(`======================================================\n`);
-    let mapIdx = 0;
-    let doneCount = 0;
-    const resStartTime = Date.now();
-    const mapWorkers = Array.from({ length: 16 }, async () => {
-      while (mapIdx < missingFromMap.length) {
-        const c = missingFromMap[mapIdx++];
-        const itemStart = Date.now();
-        const fontPath = await resolveFontFileName(c);
-        if (fontPath) {
-          fontsMap[c.token] = fontPath;
-        }
-        doneCount++;
-        const durationMs = Date.now() - itemStart;
-        const elapsed = Date.now() - resStartTime;
-        const avgMs = elapsed / doneCount;
-        const remainingMs = (missingFromMap.length - doneCount) * avgMs;
-        const pct = Math.floor((doneCount / missingFromMap.length) * 100);
-        const progress = `[${doneCount}/${missingFromMap.length}]`;
-        const status = `[${pct}% - ${formatEta(remainingMs)}]`;
-
-        if (fontPath) {
-          console.log(`📄 ${progress.padEnd(14)} ${status.padEnd(20)} → ${c.token.padEnd(30)} ${fontPath} (${durationMs}ms)`);
-        } else {
-          console.log(`⚠️ ${progress.padEnd(14)} ${status.padEnd(20)} → ${c.token.padEnd(30)} (no artifact found) (${durationMs}ms)`);
-        }
-      }
-    });
-    await Promise.all(mapWorkers);
-    saveFontsMap();
-    console.log(`\n✔ Saved ${Object.keys(fontsMap).length} font paths to data/fonts.json\n`);
-  }
-
-
 
   // Count already existing generated previews or known failed items
   const existingCount = force
@@ -742,9 +592,6 @@ async function main() {
     progressTotal
   );
 
-  saveFontsMap();
-  syncAppsJsonWithFonts();
-
   const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
   const avgMs = targetList.length > 0 ? ((Date.now() - startTime) / targetList.length).toFixed(0) : 0;
 
@@ -755,5 +602,4 @@ async function main() {
 }
 
 main().catch(console.error);
-
 

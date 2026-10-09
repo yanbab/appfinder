@@ -43,6 +43,7 @@ const ipcApi: IpcBridge = {
   getCategories: () => invoke('cask:get-categories'),
   getCaskInfo: (token: string) => invoke('cask:get-info', token),
   getInstalled: () => invoke('cask:get-installed'),
+  getServicesStatus: () => invoke('services:get-status'),
 
   getUpdates: (force: boolean = false) => invoke('cask:get-updates', force),
   getMessages: () => invoke('i18n:get-messages'),
@@ -68,6 +69,7 @@ const ipcApi: IpcBridge = {
     return cachedConfig!;
   },
   openApp: (token: string, appName?: string) => invoke('cask:open', token, appName),
+  revealApp: (token: string, appName?: string) => invoke('cask:reveal', token, appName),
   openExternal: (url: string) => invoke('external:open', url),
   showErrorDialog: (title: string, content: string) => invoke('dialog:error', title, content),
   showMessage: (options: any) => invoke('dialog:message', options),
@@ -81,6 +83,7 @@ const ipcApi: IpcBridge = {
   setContentSize: (width: number, height: number) => ipcRenderer.send('window:set-content-size', width, height),
   showContextMenu: (data: any) => ipcRenderer.send('context-menu:show', data),
   sidebarChanged: (visible: boolean) => ipcRenderer.send('shell:sidebar-changed', visible),
+  terminalChanged: (visible: boolean) => ipcRenderer.send('shell:terminal-changed', visible),
 
   // Unified Event Bus
   on: (signal: any, callback: any) => on(signal, callback),

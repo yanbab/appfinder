@@ -58,16 +58,24 @@ export function setupContextMenu(): void {
       const { token, app, homepage, isInstalled, isOutdated, isRunning, name } = appInfo;
 
       if (isRunning) {
+        const actionVerb = appInfo.runningAction
+          ? (appInfo.runningAction === 'install' ? __('Installing...')
+            : appInfo.runningAction === 'uninstall' ? __('Removing...')
+            : appInfo.runningAction === 'upgrade' ? __('Upgrading...')
+            : appInfo.runningAction === 'refresh' || appInfo.runningAction === 'fetch' ? __('Updating...')
+            : __('Working...'))
+          : __('Working...');
         template.push({
-          label: __('Working...'),
+          label: actionVerb,
           enabled: false
         });
       } else {
-        if (isInstalled && app) {
+        if (isInstalled && (app || token)) {
           template.push({
             label: __('Open'),
             click: () => win.webContents.send('context-menu:action', { action: 'open', token })
           });
+          template.push({ type: 'separator' });
         }
 
         if (!isInstalled) {
@@ -136,5 +144,6 @@ export function setupContextMenu(): void {
     });
   });
 }
+
 
 

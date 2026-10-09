@@ -21,8 +21,8 @@ export function useNativeContextMenu() {
       const selectedText = selection ? selection.toString().trim() : '';
 
       const searchInput = (target.closest('#search-input') || (target.tagName === 'INPUT' ? target : null)) as HTMLElement | null;
-      const link = target.closest('a[href]:not([href="#"]):not([href^="javascript:"])') as HTMLAnchorElement | null;
-      const selectableEl = target.closest('.selectable-text, .info-app-title, .info-app-desc, .info-app-version, .info-caveats-text');
+      const link = (target.closest('a[href]:not([href="#"]):not([href^="javascript:"])') || target.closest('[data-external-url]')) as HTMLElement | null;
+      const selectableEl = target.closest('.selectable-text, .info-app-title, .info-app-desc, .info-app-version, .info-caveats-text, .info-hero-block');
       const card = target.closest('[data-token]') as HTMLElement | null;
       const inInfoDrawer = target.closest('[data-drawer-content]');
 
@@ -36,7 +36,7 @@ export function useNativeContextMenu() {
         searchInput.focus();
       } else if (link) {
         type = 'link';
-        linkUrl = link.href;
+        linkUrl = (link as HTMLAnchorElement).href || link.getAttribute('data-external-url') || (link as any).dataset?.externalUrl || null;
       } else if (targetText.length > 0) {
         type = 'text';
       } else if (selectableEl) {
@@ -50,7 +50,9 @@ export function useNativeContextMenu() {
           type = 'app';
           const isInstalled = installed.includes(token);
           const isOutdated = Boolean(outdatedMap[token]);
-          const isRunning = Boolean(runningTasks[token]);
+          const runningTaskAction = runningTasks[token];
+          const isRunning = Boolean(runningTaskAction);
+          const runningAction = runningTaskAction || undefined;
           const item = items.find((i: CaskItem) => i.token === token);
           const name = item ? getAppName(item) : token;
 
@@ -62,6 +64,7 @@ export function useNativeContextMenu() {
             isInstalled,
             isOutdated,
             isRunning,
+            runningAction,
           };
         }
       }
@@ -94,3 +97,5 @@ export function useNativeContextMenu() {
     }
   }, [startAction]);
 }
+
+export default useNativeContextMenu;

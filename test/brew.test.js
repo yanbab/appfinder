@@ -105,3 +105,20 @@ test('fetcher.processAppsData transforms raw casks and metadata correctly', () =
   assert.equal(font.category, 'font');
   assert.equal(font.desc, 'Font');
 });
+
+test('brew.getApps includes services and getCategories includes services category', () => {
+  const categories = brew.getCategories(true);
+  const servicesCategory = categories.find(c => c.name === 'services');
+  assert.ok(servicesCategory, 'Services category should exist in categories');
+  assert.equal(servicesCategory.displayName, 'Services');
+  assert.equal(servicesCategory.symbolName, 'server.rack');
+
+  const apps = brew.getApps(true);
+  const services = apps.filter(a => a.category === 'services');
+  assert.ok(services.length > 0, 'Services items should be present in apps catalog');
+
+  const redis = services.find(s => s.token === 'redis');
+  assert.ok(redis, 'redis service should be present');
+  assert.equal(redis.app, 'service:redis');
+  assert.ok(redis.serviceCommand, 'redis serviceCommand should be present');
+});

@@ -23,3 +23,6 @@ export * from './ShellWindow';
 export * from './ErrorWindow';
 export * from './DiscoverHub';
 export * from './Card';
+export * from './ListRowContainer';
+export * from './Switch';
+export * from './category-views/registry';

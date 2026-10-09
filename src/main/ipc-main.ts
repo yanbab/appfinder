@@ -3,7 +3,7 @@ import i18n from './i18n';
 import * as Backend from './backend/brew';
 import { getConfig, updateConfig } from './config';
 import { createSettingsWindow } from './window-settings';
-import { updateSidebarChecked, updateStatusbarChecked, setupApplicationMenu } from './menu-application';
+import { updateSidebarChecked, updateStatusbarChecked, updateTerminalChecked, setupApplicationMenu } from './menu-application';
 
 function broadcast(channel: string, ...args: any[]): void {
   BrowserWindow.getAllWindows().forEach(win => {
@@ -20,7 +20,9 @@ export function setupIpcMain(): void {
   ipcMain.handle('cask:get-installed', async () => Backend.getInstalled());
   ipcMain.handle('cask:get-updates', async (_, force) => Backend.getUpdates(force));
   ipcMain.handle('cask:get-info', async (_, token) => Backend.getInfo(token));
-  ipcMain.handle('cask:open', async (_, token, appName) => Backend.launch(appName || token));
+  ipcMain.handle('cask:open', async (_, token, appName) => Backend.launch(appName || token, token));
+  ipcMain.handle('cask:reveal', async (_, token, appName) => Backend.reveal(appName || token, token));
+  ipcMain.handle('services:get-status', async () => Backend.getServicesStatus());
 
   ipcMain.on('cask:run-action', (event, data) => {
     console.log('[IPC-MAIN RUN ACTION]:', data.taskId);
@@ -163,6 +165,10 @@ export function setupIpcMain(): void {
 
   ipcMain.on('shell:sidebar-changed', (_, visible) => {
     updateSidebarChecked(visible);
+  });
+
+  ipcMain.on('shell:terminal-changed', (_, visible) => {
+    updateTerminalChecked(visible);
   });
 
   ipcMain.handle('settings:clear-caches', async () => {

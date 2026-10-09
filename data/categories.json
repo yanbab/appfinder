@@ -90,6 +90,11 @@
     "symbolName": "textformat"
   },
   {
+    "name": "services",
+    "displayName": "Services",
+    "symbolName": "server.rack"
+  },
+  {
     "name": "other",
     "displayName": "Other",
     "symbolName": "square.grid.2x2"

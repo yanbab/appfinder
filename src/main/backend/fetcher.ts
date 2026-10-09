@@ -34,6 +34,7 @@ export const CATEGORIES_DEF: CategoryItem[] = [
   { "name": "screensaverWallpaper", "displayName": "Screensaver & Wallpaper", "symbolName": "photo.stack" },
   { "name": "ai", "displayName": "AI & LLMs", "symbolName": "sparkles" },
   { "name": "font", "displayName": "Fonts", "symbolName": "textformat" },
+  { "name": "services", "displayName": "Services", "symbolName": "server.rack" },
   { "name": "other", "displayName": "Other", "symbolName": "square.grid.2x2" }
 ];
 

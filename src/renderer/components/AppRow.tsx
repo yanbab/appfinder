@@ -35,9 +35,8 @@ export function AppRow({ item, className }: AppRowProps) {
           openAppInfo(item);
         }
       }}
-      className={`app-card app-row group flex items-center justify-between pl-2 pr-4 py-2 bg-card text-card-foreground select-none cursor-default focus:outline-none focus-visible:bg-[var(--card-active-bg)] ${
-        isSelected ? 'bg-[var(--card-active-bg)]' : ''
-      } ${className || ''}`}
+      className={`app-card app-row group flex items-center justify-between pl-2 pr-4 py-2 bg-card text-card-foreground select-none cursor-default focus:outline-none focus-visible:bg-[var(--card-active-bg)] ${isSelected ? 'bg-[var(--card-active-bg)]' : ''
+        } ${className || ''}`}
     >
       {/* Icon & Details */}
       <div className="flex items-center gap-3.5 min-w-0 flex-1 mr-3">

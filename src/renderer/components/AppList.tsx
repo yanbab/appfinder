@@ -1,9 +1,9 @@
 import React, { useRef, useMemo } from 'react';
 import { useAppStore, useShellStore, selectFilteredItems } from '@/stores';
-import { AppCard } from './AppCard';
-import { AppRow } from './AppRow';
 import { EmptyState } from './EmptyState';
-import { Card } from './Card';
+import { ListRowContainer } from './ListRowContainer';
+import { getCategoryViews } from './category-views/registry';
+import type { CaskItem } from '@/types';
 
 export interface AppListProps {
   header?: React.ReactNode;
@@ -45,6 +45,11 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
     }
   };
 
+  const resolveViews = (item: CaskItem) => {
+    const cat = currentTab === 'services' || currentTab === 'font' ? currentTab : item.category;
+    return getCategoryViews(cat);
+  };
+
   if (loading) {
     return <EmptyState loading />;
   }
@@ -69,16 +74,18 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
         {header}
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5">
-            {displayedItems.map((item) => (
-              <AppCard key={item.token} item={item} />
-            ))}
+            {displayedItems.map((item) => {
+              const { Tile } = resolveViews(item);
+              return <Tile key={item.token} item={item} />;
+            })}
           </div>
         ) : (
-          <Card padding="none" className="overflow-hidden divide-y divide-border/20 w-full">
-            {displayedItems.map((item) => (
-              <AppRow key={item.token} item={item} />
-            ))}
-          </Card>
+          <ListRowContainer>
+            {displayedItems.map((item) => {
+              const { Row } = resolveViews(item);
+              return <Row key={item.token} item={item} />;
+            })}
+          </ListRowContainer>
         )}
         {footer}
       </div>

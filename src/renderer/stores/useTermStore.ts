@@ -262,8 +262,18 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
     });
 
     if (data.code === 0) {
+      if (activeTaskToken) {
+        if (activeTaskAction === 'install') {
+          useAppStore.getState().optimisticInstall(activeTaskToken);
+        } else if (activeTaskAction === 'uninstall') {
+          useAppStore.getState().optimisticUninstall(activeTaskToken);
+        } else if (activeTaskAction === 'upgrade') {
+          useAppStore.getState().optimisticUpgrade(activeTaskToken);
+        }
+      }
       useAppStore.getState().refreshInstalled();
       useAppStore.getState().refreshUpdates(true);
+      useAppStore.getState().refreshServiceStatuses();
       if (isUpdatingAll) {
         get().processNextQueuedUpdate();
         return;

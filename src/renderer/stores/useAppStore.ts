@@ -23,14 +23,18 @@ export interface UpdateInfo {
 }
 
 export function parseUpdatesMap(upds: any): Record<string, UpdateInfo> {
-  const casks = upds?.casks || (Array.isArray(upds) ? upds : []);
+  const casks = upds?.casks || [];
+  const formulae = upds?.formulae || [];
+  const all = Array.isArray(upds) ? upds : [...casks, ...formulae];
   const map: Record<string, UpdateInfo> = {};
-  for (const item of casks) {
+  for (const item of all) {
     const token = item.token || item.name;
-    map[token] = {
-      installedVersion: item.installed_versions?.[0] || item.installed_version || null,
-      currentVersion: item.current_version || item.latest_version
-    };
+    if (token) {
+      map[token] = {
+        installedVersion: item.installed_versions?.[0] || item.installed_version || null,
+        currentVersion: item.current_version || item.latest_version
+      };
+    }
   }
   return map;
 }
@@ -42,6 +46,7 @@ export interface AppStoreState {
   installed: string[];
   installedVersions: Record<string, string>;
   outdatedMap: Record<string, UpdateInfo>;
+  serviceStatusMap: Record<string, { status: string; pid?: number; user?: string }>;
   lastCheckedTime: Date | null;
   isCheckingUpdates: boolean;
   loading: boolean;
@@ -59,6 +64,10 @@ export interface AppStoreState {
   syncCategoriesWithMessages: (messages: Record<string, string>) => void;
   refreshInstalled: () => Promise<void>;
   refreshUpdates: (force?: boolean) => Promise<void>;
+  refreshServiceStatuses: () => Promise<void>;
+  optimisticInstall: (token: string) => void;
+  optimisticUninstall: (token: string) => void;
+  optimisticUpgrade: (token: string) => void;
 }
 
 export const useAppStore = create<AppStoreState>((set, get) => ({
@@ -69,6 +78,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   installed: [],
   installedVersions: {},
   outdatedMap: {},
+  serviceStatusMap: {},
   lastCheckedTime: null,
   isCheckingUpdates: false,
   loading: true,
@@ -99,6 +109,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
       });
       get().refreshInstalled();
       get().refreshUpdates(false);
+      get().refreshServiceStatuses();
     } catch (e) {
       console.error('[useAppStore] initCatalog failed:', e);
       set({ loading: false });
@@ -120,7 +131,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
         installed: Array.isArray(inst) ? inst : (inst?.tokens || inst?.list || []),
         installedVersions: inst?.versions || {}
       });
-    } catch (_) {}
+    } catch (_) { }
   },
 
   refreshUpdates: async (force: boolean = false) => {
@@ -136,7 +147,54 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
     } catch (_) {
       set({ isCheckingUpdates: false });
     }
-  }
+  },
+
+  refreshServiceStatuses: async () => {
+    if (!window.ipc?.getServicesStatus) return;
+    try {
+      const statuses = await window.ipc.getServicesStatus();
+      set({ serviceStatusMap: statuses || {} });
+    } catch (_) { }
+  },
+
+  optimisticInstall: (token: string) => {
+    set((state) => {
+      const nextInstalled = state.installed.includes(token) ? state.installed : [...state.installed, token];
+      const nextOutdated = { ...state.outdatedMap };
+      delete nextOutdated[token];
+      return {
+        installed: nextInstalled,
+        outdatedMap: nextOutdated,
+      };
+    });
+  },
+
+  optimisticUninstall: (token: string) => {
+    set((state) => {
+      const nextInstalled = state.installed.filter((t) => t !== token);
+      const nextVersions = { ...state.installedVersions };
+      delete nextVersions[token];
+      const nextOutdated = { ...state.outdatedMap };
+      delete nextOutdated[token];
+      return {
+        installed: nextInstalled,
+        installedVersions: nextVersions,
+        outdatedMap: nextOutdated,
+      };
+    });
+  },
+
+  optimisticUpgrade: (token: string) => {
+    set((state) => {
+      const nextInstalled = state.installed.includes(token) ? state.installed : [...state.installed, token];
+      const nextOutdated = { ...state.outdatedMap };
+      delete nextOutdated[token];
+      return {
+        installed: nextInstalled,
+        outdatedMap: nextOutdated,
+      };
+    });
+  },
 }));
 
 export type FilterableAppState = Pick<

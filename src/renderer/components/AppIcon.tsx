@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { cn, name2initials, name2color } from '@/hooks/utils';
 import type { CaskItem } from '@/types';
+import { ShellIcon } from './ShellIcon';
+import { useAppStore } from '@/stores';
 
 export interface AppIconProps {
   item?: CaskItem | { name?: string; token?: string; category?: string; iconUrl?: string | null } | null;
@@ -32,6 +34,19 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
   const name = item?.name || item?.token || "";
   const token = item?.token || "";
   const isFont = Boolean(item?.category === 'font' || (token && token.startsWith('font-')));
+  const isService = Boolean(item?.category === 'services');
+  const isInstalled = useAppStore((s) => Boolean(token && s.installed.includes(token)));
+
+  const SERVICE_ICONS: Record<string, string> = {
+    database: 'cylinder',
+    webServer: 'network',
+    cacheQueue: 'tray.2',
+    aiLlm: 'sparkles',
+    networkingDns: 'antenna.radiowaves.left.and.right',
+    monitoring: 'chart.xyaxis.line',
+    developerTools: 'hammer',
+    otherServices: 'server.rack',
+  };
 
   React.useEffect(() => {
     setLoaded(false);
@@ -47,18 +62,32 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
   const activeIconUrl = item?.iconUrl || fontThumbnailUrl;
   const hasIcon = Boolean(activeIconUrl && !hasError);
 
+  const isLargeFont = isFont && ['128', 'hero', 'xl', '2xl', 'grid', 'tile', 'lg'].includes(size);
+  const isEmojiOrColorFont = isFont && (
+    Boolean((item as any)?.isColorFont) ||
+    token.toLowerCase().includes('emoji') ||
+    name.toLowerCase().includes('emoji') ||
+    Boolean((item as any)?.secondCategory?.toLowerCase().includes('emoji')) ||
+    Boolean((item as any)?.thirdCategory?.toLowerCase().includes('emoji')) ||
+    Boolean((item as any)?.desc?.toLowerCase().includes('emoji'))
+  );
+
   return (
     <div
+      style={isFont && !isInstalled ? { opacity: 0.85 } : undefined}
       className={cn(
         "relative shrink-0 select-none overflow-hidden flex items-center justify-center [container-type:inline-size]",
-        isFont && "bg-neutral-100 dark:bg-neutral-800/90 border border-black/5 dark:border-white/10 shadow-2xs",
+        isService
+          ? "bg-muted/60 dark:bg-muted/40 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs"
+          : "bg-neutral-100 dark:bg-neutral-800/90 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs",
         currentSizeClass,
-        className
+        className,
+        isFont && "bg-transparent dark:bg-transparent shadow-none ring-0 border-0 rounded-none"
       )}
     >
       {hasIcon && activeIconUrl && (
         <>
-          {!loaded && (
+          {!loaded && !isFont && (
             <div className="absolute inset-0 bg-muted/60 animate-pulse rounded-[inherit]" />
           )}
           <img
@@ -68,8 +97,8 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
             decoding="async"
             fetchPriority="low"
             className={cn(
-              "w-full h-full object-contain rounded-[inherit]",
-              isFont && "p-[10%] dark:invert",
+              "w-full h-full object-contain",
+              isFont ? (isEmojiOrColorFont ? "rounded-none" : "dark:invert rounded-none") : "absolute inset-0 rounded-[inherit]",
               loaded ? "block" : "invisible"
             )}
             onLoad={() => setLoaded(true)}
@@ -81,9 +110,18 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
       {(!hasIcon || hasError) && (
         isFont ? (
           <div
-            className="w-[87.5%] h-[87.5%] flex items-center justify-center font-serif text-neutral-800 dark:text-neutral-200 tracking-tight select-none text-[41cqw] rounded-[inherit]"
+            className="w-full h-full flex items-center justify-center font-serif text-neutral-800 dark:text-neutral-200 tracking-tight select-none text-[32cqw] bg-transparent"
           >
             Aa
+          </div>
+        ) : isService ? (
+          <div
+            className="w-full h-full flex items-center justify-center text-foreground/80 rounded-[inherit]"
+          >
+            <ShellIcon
+              name={SERVICE_ICONS[(item as any)?.secondCategory || ''] || 'server.rack'}
+              className="w-[50%] h-[50%]"
+            />
           </div>
         ) : (
           <div
