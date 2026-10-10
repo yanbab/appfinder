@@ -42,7 +42,11 @@ export function getLocales(): LocaleInfo[] {
         .map(f => {
           const code = f.replace('.json', '');
           const msg = loadMessages(code);
-          return { code, name: msg._languageName || code };
+          return {
+            code,
+            name: msg._languageName || code,
+            description: msg._description || undefined,
+          };
         });
     } catch {
       availableLocales = [{ code: 'en', name: 'English' }];

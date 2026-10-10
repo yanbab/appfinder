@@ -12,6 +12,7 @@ export interface CaskItem {
   thirdCategory?: string;
   count?: number;
   added?: string | null;
+  icon?: string | boolean;
   iconUrl?: string;
 
   // Runtime / Status fields
@@ -40,4 +41,5 @@ export interface AppConfig {
 export interface LocaleInfo {
   code: string;
   name: string;
+  description?: string;
 }

@@ -125,6 +125,11 @@ export function SettingsWindow() {
     }
   };
 
+  const currentLocaleInfo = language === 'system'
+    ? locales.find((l) => l.name === systemLanguageName || l.code === (navigator.language || 'en').split('-')[0].toLowerCase())
+    : locales.find((l) => l.code === language);
+  const currentLocaleDescription = currentLocaleInfo?.description;
+
   return (
     <div
       ref={containerRef}
@@ -133,9 +138,16 @@ export function SettingsWindow() {
       <List>
         {/* Language select row */}
         <ListRow>
-          <label htmlFor="settings-language" className="font-medium text-foreground cursor-default">
-            {__('Language')}
-          </label>
+          <div className="space-y-0.5">
+            <label htmlFor="settings-language" className="font-medium text-foreground cursor-default">
+              {__('Language')}
+            </label>
+            {currentLocaleDescription && (
+              <div className="text-[11px] text-muted-foreground leading-tight">
+                {currentLocaleDescription}
+              </div>
+            )}
+          </div>
           <Select
             id="settings-language"
             value={language}

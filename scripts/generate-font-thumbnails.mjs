@@ -34,16 +34,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const APPS_FILE = path.join(ROOT_DIR, 'data', 'apps.json');
-const OUTPUT_DIR = path.join(ROOT_DIR, 'docs', 'font-thumbnails');
+const THUMBNAILS_DIR = path.join(ROOT_DIR, 'docs', 'font-thumbnails');
+const PREVIEWS_DIR = path.join(ROOT_DIR, 'docs', 'font-previews');
 const CACHE_DIR = path.join(os.tmpdir(), 'appfinder-font-cache');
 
 export const CONFIG = {
-  CANVAS_SIZE: 256,         // Total output PNG width & height (in pixels)
+  CANVAS_SIZE: 256,         // Total output PNG width & height for thumbnails (in pixels)
+  PREVIEW_HEIGHT: 128,      // Total output PNG height for previews (in pixels)
   FONT_SIZE: 155,           // Inner font point size (controls the scale of "Aa")
+  PREVIEW_FONT_SIZE: 64,    // Base font point size for preview text
   GLYPH_COLOR: '#000000',   // Glyph fill color (pure black)
   LETTER_SPACING_RATIO: 0.04, // Space between 'A' and 'a' relative to font units
   OPTICAL_Y_OFFSET: 0,      // Fine optical vertical adjustment (+ down, - up in px)
-  TEXT: 'Aa',               // Specimen characters to render
+  TEXT: 'Aa',               // Specimen characters to render for thumbnail
   CONCURRENCY: 6,           // Parallel workers for fast batch processing
   COLORS: 256
 };
@@ -63,7 +66,8 @@ const size = parseInt(args.find((a) => a.startsWith('--size='))?.split('=')[1] |
 const fontSize = parseInt(args.find((a) => a.startsWith('--font-size='))?.split('=')[1] || String(CONFIG.FONT_SIZE), 10);
 const glyphColor = args.find((a) => a.startsWith('--color='))?.split('=')[1] || CONFIG.GLYPH_COLOR;
 
-fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+fs.mkdirSync(THUMBNAILS_DIR, { recursive: true });
+fs.mkdirSync(PREVIEWS_DIR, { recursive: true });
 fs.mkdirSync(CACHE_DIR, { recursive: true });
 
 /**
@@ -366,14 +370,19 @@ function unpackFontBuffer(fileBuffer, fontIndex = 0) {
 }
 
 /**
- * Parses font file, extracts vector glyphs, and renders an optimized PNG (palette + max compression)
+ * Loads opentype Font object from file path
  */
-async function renderFontPng(fontFilePath, outputPngPath) {
+function loadOpentypeFont(fontFilePath) {
   let fileBuffer = fs.readFileSync(fontFilePath);
   fileBuffer = unpackFontBuffer(fileBuffer);
   const arrayBuffer = fileBuffer.buffer.slice(fileBuffer.byteOffset, fileBuffer.byteOffset + fileBuffer.byteLength);
-  const font = opentype.parse(arrayBuffer);
+  return opentype.parse(arrayBuffer);
+}
 
+/**
+ * Renders thumbnail PNG (256x256 "Aa")
+ */
+async function renderFontThumbnailPng(font, outputPngPath) {
   const unitsPerEm = font.unitsPerEm || 1000;
   const scale = (1 / unitsPerEm) * fontSize;
 
@@ -431,6 +440,75 @@ async function renderFontPng(fontFilePath, outputPngPath) {
   fs.writeFileSync(outputPngPath, optimizedPng);
 }
 
+/**
+ * Cleans and capitalizes font name for preview text
+ */
+function getPreviewText(cask) {
+  const rawName = cask.name || cask.token.replace(/^font-/, '').replace(/-/g, ' ');
+  // Remove text in parentheses (e.g. "Fira Code (v2)" -> "Fira Code")
+  const withoutParens = rawName.replace(/\s*\([^)]*\)/g, '').trim();
+  // Capitalize words
+  return withoutParens
+    .split(/\s+/)
+    .map((w) => (w.length > 0 ? w.charAt(0).toUpperCase() + w.slice(1) : ''))
+    .join(' ');
+}
+
+/**
+ * Renders preview PNG (128px high, dynamic width based on font name text)
+ */
+async function renderFontPreviewPng(font, previewText, outputPngPath) {
+  const height = CONFIG.PREVIEW_HEIGHT; // 128px
+  let previewFontSize = CONFIG.PREVIEW_FONT_SIZE; // 64
+
+  // Get path for preview text
+  let textPath = font.getPath(previewText, 0, 0, previewFontSize);
+  let bbox = textPath.getBoundingBox();
+  let glyphHeight = bbox.y2 - bbox.y1;
+  let glyphWidth = bbox.x2 - bbox.x1;
+
+  // Scale down if font ascenders/descenders exceed target height (e.g. 92px)
+  const maxAllowedHeight = 92;
+  if (glyphHeight > maxAllowedHeight) {
+    previewFontSize = Math.floor(previewFontSize * (maxAllowedHeight / glyphHeight));
+    textPath = font.getPath(previewText, 0, 0, previewFontSize);
+    bbox = textPath.getBoundingBox();
+    glyphHeight = bbox.y2 - bbox.y1;
+    glyphWidth = bbox.x2 - bbox.x1;
+  }
+
+  const paddingX = 24;
+  const width = Math.max(128, Math.ceil(glyphWidth + paddingX * 2));
+
+  // Center horizontally within padded bounds or left-aligned with paddingX
+  const xOffset = Math.round(paddingX - bbox.x1);
+  const yOffset = Math.round((height - glyphHeight) / 2 + glyphHeight - bbox.y2);
+
+  const centeredPath = font.getPath(previewText, xOffset, yOffset, previewFontSize);
+  const pathData = centeredPath.toPathData(2);
+
+  const svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <path d="${pathData}" fill="${glyphColor}" />
+</svg>`;
+
+  const resvg = new Resvg(svgTemplate, {
+    fitTo: { mode: 'original' },
+    background: 'rgba(0,0,0,0)',
+  });
+  const rawPng = resvg.render().asPng();
+
+  const optimizedPng = await sharp(rawPng)
+    .png({
+      palette: true,
+      compressionLevel: 9,
+      effort: 10,
+      colours: CONFIG.COLORS,
+    })
+    .toBuffer();
+
+  fs.writeFileSync(outputPngPath, optimizedPng);
+}
+
 function formatEta(remainingMs) {
   if (remainingMs <= 0) return '0 sec. left';
   if (remainingMs < 60000) {
@@ -452,11 +530,13 @@ function formatSize(bytes) {
 }
 
 /**
- * Process a single cask
+ * Process a single cask: renders both thumbnail and preview PNGs
  */
 async function processCask(cask) {
-  const outPng = path.join(OUTPUT_DIR, `${cask.token}.png`);
-  const failPath = path.join(OUTPUT_DIR, `${cask.token}.fail`);
+  const outThumbPng = path.join(THUMBNAILS_DIR, `${cask.token}.png`);
+  const failThumbPath = path.join(THUMBNAILS_DIR, `${cask.token}.fail`);
+  const outPreviewPng = path.join(PREVIEWS_DIR, `${cask.token}.png`);
+  const failPreviewPath = path.join(PREVIEWS_DIR, `${cask.token}.fail`);
   const targetDir = path.join(CACHE_DIR, cask.token);
   const displayName = cask.name || cask.token.replace(/^font-/, '').replace(/-/g, ' ');
 
@@ -466,15 +546,39 @@ async function processCask(cask) {
       fontFilePath = await downloadAndExtractFont(cask);
     }
 
-    await renderFontPng(fontFilePath, outPng);
-    const stat = fs.statSync(outPng);
-    if (fs.existsSync(failPath)) {
-      try { fs.unlinkSync(failPath); } catch (_) { }
+    const font = loadOpentypeFont(fontFilePath);
+
+    // 1. Render Thumbnail ("Aa" 256x256)
+    try {
+      await renderFontThumbnailPng(font, outThumbPng);
+      if (fs.existsSync(failThumbPath)) {
+        try { fs.unlinkSync(failThumbPath); } catch (_) { }
+      }
+    } catch (err) {
+      fs.writeFileSync(failThumbPath, '');
+      throw err;
     }
-    return { ok: true, size: stat.size };
+
+    // 2. Render Preview (Font name 128px high)
+    try {
+      const previewText = getPreviewText(cask);
+      await renderFontPreviewPng(font, previewText, outPreviewPng);
+      if (fs.existsSync(failPreviewPath)) {
+        try { fs.unlinkSync(failPreviewPath); } catch (_) { }
+      }
+    } catch (err) {
+      fs.writeFileSync(failPreviewPath, '');
+      throw err;
+    }
+
+    const statThumb = fs.statSync(outThumbPng);
+    const statPreview = fs.statSync(outPreviewPng);
+
+    return { ok: true, size: statThumb.size + statPreview.size };
   } catch (err) {
     try {
-      fs.writeFileSync(failPath, '');
+      if (!fs.existsSync(outThumbPng)) fs.writeFileSync(failThumbPath, '');
+      if (!fs.existsSync(outPreviewPng)) fs.writeFileSync(failPreviewPath, '');
     } catch (_) { }
     return { ok: false, error: err.message };
   } finally {
@@ -535,13 +639,13 @@ async function main() {
   const fontCasks = loadFontCasks();
   const totalFonts = fontCasks.length;
 
-  // Count already existing generated previews or known failed items
+  // Count already existing generated thumbnails and previews
   const existingCount = force
     ? 0
     : fontCasks.filter((c) => {
-      const pngPath = path.join(OUTPUT_DIR, `${c.token}.png`);
-      const failPath = path.join(OUTPUT_DIR, `${c.token}.fail`);
-      return fs.existsSync(pngPath) || fs.existsSync(failPath);
+      const thumbDone = fs.existsSync(path.join(THUMBNAILS_DIR, `${c.token}.png`)) || fs.existsSync(path.join(THUMBNAILS_DIR, `${c.token}.fail`));
+      const previewDone = fs.existsSync(path.join(PREVIEWS_DIR, `${c.token}.png`)) || fs.existsSync(path.join(PREVIEWS_DIR, `${c.token}.fail`));
+      return thumbDone && previewDone;
     }).length;
 
   let targetList = [];
@@ -559,28 +663,29 @@ async function main() {
     progressTotal = 1;
   } else if (onlyFailed) {
     targetList = fontCasks
-      .filter((c) => fs.existsSync(path.join(OUTPUT_DIR, `${c.token}.fail`)))
+      .filter((c) => fs.existsSync(path.join(THUMBNAILS_DIR, `${c.token}.fail`)) || fs.existsSync(path.join(PREVIEWS_DIR, `${c.token}.fail`)))
       .slice(0, limit);
     initialCompleted = 0;
     progressTotal = targetList.length;
   } else {
     targetList = fontCasks
       .filter((c) => {
-        const pngPath = path.join(OUTPUT_DIR, `${c.token}.png`);
-        const failPath = path.join(OUTPUT_DIR, `${c.token}.fail`);
-        return force || (!fs.existsSync(pngPath) && !fs.existsSync(failPath));
+        const thumbDone = fs.existsSync(path.join(THUMBNAILS_DIR, `${c.token}.png`)) || fs.existsSync(path.join(THUMBNAILS_DIR, `${c.token}.fail`));
+        const previewDone = fs.existsSync(path.join(PREVIEWS_DIR, `${c.token}.png`)) || fs.existsSync(path.join(PREVIEWS_DIR, `${c.token}.fail`));
+        return force || !thumbDone || !previewDone;
       })
       .slice(0, limit);
   }
 
   console.log(`\n======================================================`);
-  console.log(`🎨 AppFinder Optimized PNG Font Specimen Generator`);
+  console.log(`🎨 AppFinder Font Specimen & Preview Generator`);
   if (onlyFailed) {
     console.log(`📦 Target: ${targetList.length} failed font cask(s) to retry (Concurrency: ${concurrency})`);
   } else {
     console.log(`📦 Target: ${targetList.length} font cask(s) (Total fonts: ${totalFonts}, Already done: ${existingCount}, Concurrency: ${concurrency})`);
   }
-  console.log(`📁 Output: ${OUTPUT_DIR}`);
+  console.log(`📁 Thumbnails: ${THUMBNAILS_DIR}`);
+  console.log(`📁 Previews:   ${PREVIEWS_DIR}`);
   console.log(`======================================================\n`);
 
   const { successful, failed } = await runPool(
