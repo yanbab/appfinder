@@ -16,111 +16,113 @@ export interface AppButtonsProps {
 export function AppButtons({
   item,
   variant = 'row',
-  className,
+  className = '',
   caskStatus,
 }: AppButtonsProps) {
   const __ = useShellStore((s) => s.__);
   const { isRunning, isInstalled, isOutdated, canOpen, install, upgrade, uninstall, open } = useAppItemState(item);
 
-  // Stop propagation helper for cards / rows
-  const stopProp = (fn: () => void) => (e: React.MouseEvent) => {
+  const stopProp = (fn?: () => void) => (e: React.MouseEvent) => {
     e.stopPropagation();
-    fn();
+    fn?.();
   };
 
-  // 1. ICON MODE (Used in Grid/Cards)
+  const stopContainer = (e: React.MouseEvent) => e.stopPropagation();
+
+  // 1. Working / Spinner state
+  if (isRunning) {
+    if (variant === 'icon') {
+      return (
+        <div className={`shrink-0 flex items-center ${className}`} onClick={stopContainer}>
+          <Button variant="ghost" disabled icon={<ShellIcon name="spinner" className="size-4 animate-spin text-muted-foreground" />} title={__('Working...')} />
+        </div>
+      );
+    }
+    if (variant === 'hero') {
+      return (
+        <div className={`pt-0.5 flex items-center gap-2 ${className}`} onClick={stopContainer}>
+          <Button size="sm" variant="secondary" disabled className="bg-white/20 text-white border-0">
+            <ShellIcon name="spinner" className="size-3.5 animate-spin mr-1.5" />
+            <span>{__('Working...')}</span>
+          </Button>
+        </div>
+      );
+    }
+    if (variant === 'panel') {
+      return (
+        <div className={`flex items-center gap-2 pt-0.5 ${className}`}>
+          <Button className="w-full gap-2" variant="secondary" disabled icon={<ShellIcon name="spinner" className="size-3.5 animate-spin" />}>
+            {__('Working...')}
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <div className={`flex items-center gap-2 shrink-0 ${className}`} onClick={stopContainer}>
+        <Button variant="secondary" disabled icon={<ShellIcon name="spinner" className="size-3.5 animate-spin mr-1.5" />}>
+          {__('Working...')}
+        </Button>
+      </div>
+    );
+  }
+
+  // 2. InfoPanel multi-button layout
+  if (variant === 'panel') {
+    return (
+      <div className={`flex items-center gap-2 pt-0.5 ${className}`}>
+        {isOutdated && <Button className="flex-1" variant="default" onClick={upgrade}>{__('Upgrade')}</Button>}
+        {isInstalled && item.app && !isOutdated && <Button className="flex-1" variant="default" onClick={open}>{__('Open')}</Button>}
+        {isInstalled && <Button variant="destructive" className="flex-1" onClick={uninstall}>{__('Delete')}</Button>}
+        {!isInstalled && caskStatus?.isDisabled ? (
+          <Button className="w-full opacity-60 cursor-not-allowed" variant="secondary" disabled title={formatReason(caskStatus.disableReason || '', __) || __('Cask Disabled')}>
+            {__('Disabled')}
+          </Button>
+        ) : !isInstalled ? (
+          <Button className="w-full" variant="default" onClick={install}>{__('Install')}</Button>
+        ) : null}
+      </div>
+    );
+  }
+
+  // 3. Icon Mode (Grid Cards)
   if (variant === 'icon') {
     return (
-      <div
-        className={`shrink-0 flex items-center ${className || ''}`}
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        {isRunning ? (
-          <Button
-            variant="ghost"
-            disabled
-            icon={<ShellIcon name="spinner" className="size-4 animate-spin text-muted-foreground" />}
-            title={__('Working...')}
-          />
-        ) : isOutdated ? (
-          <Button
-            variant="ghost"
-            onClick={stopProp(upgrade)}
-            icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-4" />}
-            title={__('Upgrade')}
-          />
+      <div className={`shrink-0 flex items-center ${className}`} onClick={stopContainer} onMouseDown={stopContainer} onPointerDown={stopContainer}>
+        {isOutdated ? (
+          <Button variant="ghost" onClick={stopProp(upgrade)} icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-4" />} title={__('Upgrade')} />
         ) : isInstalled ? (
           canOpen ? (
-            <Button
-              variant="ghost"
-              onClick={stopProp(open)}
-              icon={<ShellIcon name="play.fill" className="size-3.5" />}
-              title={__('Open')}
-            />
+            <Button variant="ghost" onClick={stopProp(open)} icon={<ShellIcon name="play.fill" className="size-3.5" />} title={__('Open')} />
           ) : (
-            <Button
-              variant="ghost"
-              onClick={stopProp(uninstall)}
-              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 [&:hover_svg]:text-destructive"
-              icon={<ShellIcon name="trash" className="size-4" />}
-              title={__('Uninstall')}
-            />
+            <Button variant="ghost" onClick={stopProp(uninstall)} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 [&:hover_svg]:text-destructive" icon={<ShellIcon name="trash" className="size-4" />} title={__('Uninstall')} />
           )
         ) : (
-          <Button
-            variant="ghost"
-            onClick={stopProp(install)}
-            icon={<ShellIcon name="arrow.down.to.line" className="size-4" />}
-            title={__('Install')}
-          />
+          <Button variant="ghost" onClick={stopProp(install)} icon={<ShellIcon name="arrow.down.to.line" className="size-4" />} title={__('Install')} />
         )}
       </div>
     );
   }
 
-  // 2. HERO MODE (Used in Featured Carousel / Banner)
+  // 4. Hero Mode (Featured Carousel)
   if (variant === 'hero') {
     return (
-      <div className={`pt-0.5 flex items-center gap-2 ${className || ''}`} onClick={(e) => e.stopPropagation()}>
-        {isRunning ? (
-          <Button size="sm" variant="secondary" disabled className="bg-white/20 text-white border-0">
-            <ShellIcon name="spinner" className="size-3.5 animate-spin mr-1.5" />
-            <span>{__('Working...')}</span>
-          </Button>
-        ) : isOutdated ? (
-          <Button
-            size="sm"
-            onClick={stopProp(upgrade)}
-            className="bg-white hover:bg-white/90 text-black font-medium border-0 cursor-default"
-          >
+      <div className={`pt-0.5 flex items-center gap-2 ${className}`} onClick={stopContainer}>
+        {isOutdated ? (
+          <Button size="sm" onClick={stopProp(upgrade)} className="bg-white hover:bg-white/90 text-black font-medium border-0 cursor-default">
             <span>{__('Upgrade')}</span>
           </Button>
         ) : isInstalled ? (
           canOpen ? (
-            <Button
-              size="sm"
-              onClick={stopProp(open)}
-              className="bg-white hover:bg-white/90 text-black font-medium border-0 cursor-default"
-            >
+            <Button size="sm" onClick={stopProp(open)} className="bg-white hover:bg-white/90 text-black font-medium border-0 cursor-default">
               <span>{__('Open')}</span>
             </Button>
           ) : (
-            <Button
-              size="sm"
-              disabled
-              className="bg-white/30 text-white font-medium border-0 cursor-not-allowed"
-            >
+            <Button size="sm" disabled className="bg-white/30 text-white font-medium border-0 cursor-not-allowed">
               <span>{__('Open')}</span>
             </Button>
           )
         ) : (
-          <Button
-            size="sm"
-            onClick={stopProp(install)}
-            className="bg-white hover:bg-white/90 text-black font-medium border-0 cursor-default"
-          >
+          <Button size="sm" onClick={stopProp(install)} className="bg-white hover:bg-white/90 text-black font-medium border-0 cursor-default">
             <span>{__('Install')}</span>
           </Button>
         )}
@@ -128,108 +130,22 @@ export function AppButtons({
     );
   }
 
-  // 3. PANEL MODE (Used in InfoPanel)
-  if (variant === 'panel') {
-    return (
-      <div className={`flex items-center gap-2 pt-0.5 ${className || ''}`}>
-        {isRunning ? (
-          <Button className="w-full gap-2" variant="secondary" disabled icon={<ShellIcon name="spinner" className="size-3.5 animate-spin" />}>
-            {__('Working...')}
-          </Button>
-        ) : (
-          <>
-            {isOutdated && (
-              <Button
-                className="flex-1"
-                variant="default"
-                onClick={upgrade}
-              >
-                {__('Upgrade')}
-              </Button>
-            )}
-
-            {isInstalled && item.app && !isOutdated && (
-              <Button
-                className="flex-1"
-                variant="default"
-                onClick={open}
-              >
-                {__('Open')}
-              </Button>
-            )}
-
-            {isInstalled && (
-              <Button
-                variant="destructive"
-                className="flex-1"
-                onClick={uninstall}
-              >
-                {__('Delete')}
-              </Button>
-            )}
-
-            {!isInstalled && caskStatus?.isDisabled ? (
-              <Button
-                className="w-full opacity-60 cursor-not-allowed"
-                variant="secondary"
-                disabled
-                title={formatReason(caskStatus.disableReason || '', __) || __('Cask Disabled')}
-              >
-                {__('Disabled')}
-              </Button>
-            ) : !isInstalled ? (
-              <Button
-                className="w-full"
-                variant="default"
-                onClick={install}
-              >
-                {__('Install')}
-              </Button>
-            ) : null}
-          </>
-        )}
-      </div>
-    );
-  }
-
-  // 4. ROW / COMPACT MODE (Used in List View)
+  // 5. Row / Compact Mode (List View)
   return (
-    <div
-      className={`flex items-center gap-2 shrink-0 ${className || ''}`}
-      onClick={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-    >
-      {isRunning ? (
-        <Button variant="secondary" disabled icon={<ShellIcon name="spinner" className="size-3.5 animate-spin mr-1.5" />}>
-          {__('Working...')}
-        </Button>
-      ) : isOutdated ? (
-        <Button variant="secondary" onClick={stopProp(upgrade)}>
-          {__('Upgrade')}
-        </Button>
+    <div className={`flex items-center gap-2 shrink-0 ${className}`} onClick={stopContainer} onMouseDown={stopContainer} onPointerDown={stopContainer}>
+      {isOutdated ? (
+        <Button variant="secondary" onClick={stopProp(upgrade)}>{__('Upgrade')}</Button>
       ) : isInstalled ? (
         <>
-          <Button
-            icon={<ShellIcon name="trash" className="size-[18px]" />}
-            onClick={stopProp(uninstall)}
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 [&:hover_svg]:text-destructive"
-            title={__('Uninstall')}
-          />
+          <Button icon={<ShellIcon name="trash" className="size-[18px]" />} onClick={stopProp(uninstall)} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 [&:hover_svg]:text-destructive" title={__('Uninstall')} />
           {item.app ? (
-            <Button variant="secondary" onClick={stopProp(open)}>
-              {__('Open')}
-            </Button>
+            <Button variant="secondary" onClick={stopProp(open)}>{__('Open')}</Button>
           ) : (
-            <Button variant="secondary" disabled className="opacity-40 cursor-not-allowed">
-              {__('Open')}
-            </Button>
+            <Button variant="secondary" disabled className="opacity-40 cursor-not-allowed">{__('Open')}</Button>
           )}
         </>
       ) : (
-        <Button variant="secondary" onClick={stopProp(install)}>
-          {__('Install')}
-        </Button>
+        <Button variant="secondary" onClick={stopProp(install)}>{__('Install')}</Button>
       )}
     </div>
   );

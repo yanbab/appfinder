@@ -35,63 +35,30 @@ export function InfoPanel() {
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
   const isOpen = Boolean(selectedApp);
 
-  // Steal focus on open & restore previous focus on close
+  // Focus management & Escape key handling
   useEffect(() => {
-    if (isOpen) {
-      previousActiveElementRef.current = document.activeElement as HTMLElement | null;
-      // Focus the dialog container itself
-      const focusTimer = setTimeout(() => {
-        dialogRef.current?.focus();
-      }, 30);
-      return () => clearTimeout(focusTimer);
-    } else if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
-      previousActiveElementRef.current.focus();
-      previousActiveElementRef.current = null;
+    if (!isOpen) {
+      if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
+        previousActiveElementRef.current.focus();
+        previousActiveElementRef.current = null;
+      }
+      return;
     }
-  }, [isOpen, selectedApp?.token]);
 
-  // Global Escape key listener to close panel
-  useEffect(() => {
-    if (!isOpen) return;
+    previousActiveElementRef.current = document.activeElement as HTMLElement | null;
+    const focusTimer = setTimeout(() => dialogRef.current?.focus(), 30);
 
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        e.stopPropagation();
         closeAppInfo();
       }
     };
 
-    window.addEventListener('keydown', handleGlobalKeyDown, true);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown, true);
-  }, [isOpen, closeAppInfo]);
-
-  // Click / pointerdown outside panel listener to close panel
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handlePointerDownOutside = (e: MouseEvent | TouchEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-
-      // Ignore clicks inside the info panel dialog
-      if (dialogRef.current && dialogRef.current.contains(target)) {
-        return;
-      }
-
-      closeAppInfo();
-    };
-
-    // Small timeout ensures the opening click event doesn't immediately trigger close
-    const timer = setTimeout(() => {
-      window.addEventListener('mousedown', handlePointerDownOutside, true);
-      window.addEventListener('touchstart', handlePointerDownOutside, true);
-    }, 10);
-
+    window.addEventListener('keydown', handleGlobalKeyDown);
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('mousedown', handlePointerDownOutside, true);
-      window.removeEventListener('touchstart', handlePointerDownOutside, true);
+      clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleGlobalKeyDown);
     };
   }, [isOpen, closeAppInfo]);
 

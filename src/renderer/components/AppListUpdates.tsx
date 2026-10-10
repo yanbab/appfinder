@@ -1,37 +1,10 @@
 import React, { useMemo } from 'react';
 import { useAppStore, useTermStore, useShellStore, selectFilteredItems } from '@/stores';
+import { formatDate } from '@/hooks/utils';
 import { AppList } from './AppList';
 import { EmptyState } from './EmptyState';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
-
-function formatLastChecked(date: Date | string | null | undefined, __: (key: string) => string): string {
-  if (!date) return __('Never');
-  const d = date instanceof Date ? date : new Date(date);
-  if (isNaN(d.getTime())) return __('Never');
-
-  const now = new Date();
-  const isToday = d.toDateString() === now.toDateString();
-
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday = d.toDateString() === yesterday.toDateString();
-
-  const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-  if (isToday) {
-    return `${__('Today')}, ${timeStr}`;
-  }
-  if (isYesterday) {
-    return `${__('Yesterday')}, ${timeStr}`;
-  }
-  return d.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export function AppListUpdates(): React.JSX.Element {
   const lastCheckedTime = useAppStore((s) => s.lastCheckedTime);
@@ -54,7 +27,7 @@ export function AppListUpdates(): React.JSX.Element {
   const filteredCount = filteredItems.length;
 
   const isRefreshRunning = Boolean(runningTasks['refresh']);
-  const formattedLastChecked = formatLastChecked(lastCheckedTime, __);
+  const formattedLastChecked = lastCheckedTime ? formatDate(lastCheckedTime, __) : __('Never');
   const isSearchActive = Boolean(search && search.trim().length > 0);
 
   // If empty and refreshing, show loading spinner state

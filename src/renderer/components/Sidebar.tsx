@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useShellStore, useAppStore, selectFilteredItems } from '@/stores';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
@@ -17,6 +17,8 @@ export function Sidebar(): React.JSX.Element {
   const outdatedMap = useAppStore((s) => s.outdatedMap);
   const search = useAppStore((s) => s.search);
   const order = useAppStore((s) => s.order);
+
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const allAppsCount = useMemo(() => items.filter((c) => c.category !== 'font').length, [items]);
   const updatesCount = useMemo(() => Object.keys(outdatedMap).length, [outdatedMap]);
@@ -60,11 +62,21 @@ export function Sidebar(): React.JSX.Element {
       <div className="w-[200px] flex flex-col h-full shrink-0 overflow-hidden">
         <div className="h-[52px] shrink-0 [-webkit-app-region:drag]" />
 
-        <div className="px-2.5 pb-2.5">
+        <div
+          className={`px-2.5 pb-2.5 border-b transition-colors duration-150 ${
+            isScrolled ? 'border-sidebar-border' : 'border-transparent'
+          }`}
+        >
           <SearchInput />
         </div>
 
-        <div className="flex-1 overflow-y-auto px-2 space-y-3.5">
+        <div
+          onScroll={(e) => {
+            const scrolled = e.currentTarget.scrollTop > 0;
+            if (scrolled !== isScrolled) setIsScrolled(scrolled);
+          }}
+          className="flex-1 overflow-y-auto px-2 space-y-3.5"
+        >
           <NavGroup>
             {navItems.map((item) => (
               <Button

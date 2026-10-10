@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { useShellStore, useAppStore, useTermStore, selectFilteredItems } from '@/stores';
+import { useEffect } from 'react';
+import { useShellStore, useAppStore, useTermStore } from '@/stores';
 
 export function useKeyboardNav() {
   const currentTab = useShellStore((s) => s.currentTab);
@@ -14,23 +14,11 @@ export function useKeyboardNav() {
   const setViewMode = useShellStore((s) => s.setViewMode);
 
   const categories = useAppStore((s) => s.categories);
-  const items = useAppStore((s) => s.items);
   const search = useAppStore((s) => s.search);
   const setSearch = useAppStore((s) => s.setSearch);
-  const order = useAppStore((s) => s.order);
-  const installed = useAppStore((s) => s.installed);
-  const outdatedMap = useAppStore((s) => s.outdatedMap);
-  const displayedCount = useAppStore((s) => s.displayedCount);
   const loadMore = useAppStore((s) => s.loadMore);
 
   const showPasswordModal = useTermStore((s) => s.showPasswordModal);
-
-  const filteredItems = useMemo(
-    () => selectFilteredItems({ items, search, order, installed, outdatedMap, categories }, currentTab),
-    [items, search, order, installed, outdatedMap, categories, currentTab]
-  );
-  const filteredCount = filteredItems.length;
-  const displayedItems = useMemo(() => filteredItems.slice(0, displayedCount), [filteredItems, displayedCount]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -129,9 +117,7 @@ export function useKeyboardNav() {
           e.preventDefault();
           if (e.metaKey) {
             // Meta+ArrowDown -> Jump to last
-            if (displayedItems.length < filteredCount) {
-              loadMore?.();
-            }
+            loadMore?.();
             setTimeout(() => {
               const updated = Array.from(document.querySelectorAll('.app-card')) as HTMLElement[];
               const last = updated[updated.length - 1];
@@ -141,7 +127,7 @@ export function useKeyboardNav() {
           } else if (currentIndex < cards.length - 1) {
             cards[currentIndex + 1].focus();
             cards[currentIndex + 1].scrollIntoView({ block: 'nearest', behavior: 'auto' });
-          } else if (displayedItems.length < filteredCount) {
+          } else {
             loadMore?.();
             setTimeout(() => {
               const updated = Array.from(document.querySelectorAll('.app-card')) as HTMLElement[];
@@ -171,8 +157,7 @@ export function useKeyboardNav() {
         if (e.key === 'ArrowRight' || e.key === 'Enter') {
           e.preventDefault();
           const token = activeCard.dataset.token;
-          const item = displayedItems.find((c) => c.token === token);
-          if (item) openAppInfo(item);
+          if (token) openAppInfo(token);
           return;
         }
 
@@ -190,7 +175,7 @@ export function useKeyboardNav() {
           const target = Math.min(cards.length - 1, currentIndex + 5);
           cards[target]?.focus();
           cards[target]?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-          if (target >= cards.length - 2 && displayedItems.length < filteredCount) {
+          if (target >= cards.length - 2) {
             loadMore?.();
           }
           return;
@@ -216,9 +201,7 @@ export function useKeyboardNav() {
         // End -> Last card
         if (e.key === 'End') {
           e.preventDefault();
-          if (displayedItems.length < filteredCount) {
-            loadMore?.();
-          }
+          loadMore?.();
           setTimeout(() => {
             const updated = Array.from(document.querySelectorAll('.app-card')) as HTMLElement[];
             const last = updated[updated.length - 1];
@@ -305,8 +288,6 @@ export function useKeyboardNav() {
     closeAppInfo,
     openAppInfo,
     showPasswordModal,
-    displayedItems,
-    filteredCount,
     loadMore,
     nextSlide,
     prevSlide,

@@ -127,20 +127,6 @@ export function formatReason(reason: string, __?: (key: string) => string): stri
   return map[reason] || reason.replace(/_/g, ' ');
 }
 
-export function detectPrompt(text: string): {
-  isRetry: boolean;
-  isPasswordPrompt: boolean;
-  isInteractivePrompt: boolean;
-  isConfirmPrompt: boolean;
-} {
-  const clean = stripAnsi(text);
-  const isRetry = /sorry, try again|incorrect password|authentication failure/i.test(clean);
-  const isPasswordPrompt = /password\s*[:?]|passphrase\s*[:?]|mot de passe\s*[:?]|(?:sudo|admin).*(?:password|passphrase)/i.test(clean);
-  const isConfirmPrompt = !isPasswordPrompt && (/\[y\/n\]/i.test(clean) || /\(y\/n\)/i.test(clean));
-  const isInteractivePrompt = isPasswordPrompt || isConfirmPrompt;
-  return { isRetry, isPasswordPrompt, isInteractivePrompt, isConfirmPrompt };
-}
-
 export async function getIconDataUrl(url: string): Promise<string | null> {
   if (!url) return null;
   if (url.startsWith('data:')) return url;

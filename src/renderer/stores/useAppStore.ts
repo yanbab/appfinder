@@ -158,42 +158,29 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   },
 
   optimisticInstall: (token: string) => {
-    set((state) => {
-      const nextInstalled = state.installed.includes(token) ? state.installed : [...state.installed, token];
-      const nextOutdated = { ...state.outdatedMap };
-      delete nextOutdated[token];
-      return {
-        installed: nextInstalled,
-        outdatedMap: nextOutdated,
-      };
-    });
+    set((state) => ({
+      installed: state.installed.includes(token) ? state.installed : [...state.installed, token],
+      outdatedMap: Object.fromEntries(Object.entries(state.outdatedMap).filter(([k]) => k !== token)),
+    }));
   },
 
   optimisticUninstall: (token: string) => {
     set((state) => {
-      const nextInstalled = state.installed.filter((t) => t !== token);
       const nextVersions = { ...state.installedVersions };
       delete nextVersions[token];
-      const nextOutdated = { ...state.outdatedMap };
-      delete nextOutdated[token];
       return {
-        installed: nextInstalled,
+        installed: state.installed.filter((t) => t !== token),
         installedVersions: nextVersions,
-        outdatedMap: nextOutdated,
+        outdatedMap: Object.fromEntries(Object.entries(state.outdatedMap).filter(([k]) => k !== token)),
       };
     });
   },
 
   optimisticUpgrade: (token: string) => {
-    set((state) => {
-      const nextInstalled = state.installed.includes(token) ? state.installed : [...state.installed, token];
-      const nextOutdated = { ...state.outdatedMap };
-      delete nextOutdated[token];
-      return {
-        installed: nextInstalled,
-        outdatedMap: nextOutdated,
-      };
-    });
+    set((state) => ({
+      installed: state.installed.includes(token) ? state.installed : [...state.installed, token],
+      outdatedMap: Object.fromEntries(Object.entries(state.outdatedMap).filter(([k]) => k !== token)),
+    }));
   },
 }));
 
@@ -217,18 +204,15 @@ export function selectFilteredItems(state: FilterableAppState, currentTab: strin
     list = items.filter(c => outdatedMap[c.token] !== undefined);
   } else {
     const catObj = categories.find(c => c.name === currentTab || (c.displayName && c.displayName.toLowerCase() === currentTab.toLowerCase()));
-    const targetName = currentTab.toLowerCase();
-    const targetDisplay = (catObj?.displayName || '').toLowerCase();
+    const matchTargets = new Set<string>([
+      currentTab.toLowerCase(),
+      ...(catObj?.name ? [catObj.name.toLowerCase()] : []),
+      ...(catObj?.displayName ? [catObj.displayName.toLowerCase()] : [])
+    ]);
 
     list = items.filter(item => {
       const itemCats = [item.category, item.secondCategory, item.thirdCategory, item.secondaryCategory, ...(item.categories || [])];
-      return itemCats.some(c => {
-        if (!c) return false;
-        const s = String(c).toLowerCase().trim();
-        if (s === targetName || (targetDisplay && s === targetDisplay)) return true;
-        const m = categories.find(cat => cat.name?.toLowerCase() === s || cat.displayName?.toLowerCase() === s);
-        return m && (m.name?.toLowerCase() === targetName || (targetDisplay && m.displayName?.toLowerCase() === targetDisplay));
-      });
+      return itemCats.some(c => c && matchTargets.has(String(c).toLowerCase().trim()));
     });
   }
 
