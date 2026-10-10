@@ -24,9 +24,9 @@ test('generateCask generates valid Homebrew Cask Ruby definition with expected f
   assert.ok(code.includes('desc "App store for the Homebrew package manager"'));
   assert.ok(code.includes('homepage "https://github.com/yanbab/appfinder"'));
   assert.ok(code.includes('auto_updates true'));
-  assert.ok(code.includes('depends_on macos: ">= :ventura"'));
+  assert.ok(code.includes('depends_on macos: :ventura'));
   assert.ok(code.includes('app "AppFinder.app"'));
-  assert.ok(code.includes('postflight do'));
+  assert.ok(code.includes('postflight_steps do'));
   assert.ok(code.includes('system_command "xattr"'));
   assert.ok(code.includes('zap trash: ['));
   assert.ok(code.includes('end'));

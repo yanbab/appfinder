@@ -2,6 +2,7 @@ import React from 'react';
 import { useShellStore, useAppStore } from '@/stores';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
+import { Select } from './Select';
 
 export function TitleBar() {
   const currentTab = useShellStore((s) => s.currentTab);
@@ -38,16 +39,14 @@ export function TitleBar() {
       <div className="flex items-center gap-3 [-webkit-app-region:no-drag]">
         {currentTab !== 'discover' && currentTab !== 'updates' && (
           <div className="window-select flex items-center transition-opacity duration-150">
-            <select
+            <Select
               value={order}
               onChange={(e) => setOrder(e.target.value)}
-              className="h-7 text-xs font-medium bg-transparent border-0 rounded-[var(--radius-btn)] pl-1 pr-1.5 text-right text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:outline-none ring-0 cursor-default [text-align-last:right]"
-              style={{ textAlign: 'right', textAlignLast: 'right', outline: 'none', boxShadow: 'none' }}
             >
               <option value="popularity" className="bg-popover text-popover-foreground">{__('Popular')}</option>
               <option value="date" className="bg-popover text-popover-foreground">{__('Recent')}</option>
               <option value="name" className="bg-popover text-popover-foreground">{__('A-Z')}</option>
-            </select>
+            </Select>
           </div>
         )}
 

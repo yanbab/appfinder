@@ -53,7 +53,6 @@ export function initStoreListeners(): void {
         if (value) shellStore.selectTab(value);
         break;
       case 'focus-search':
-        shellStore.closeAppInfo();
         shellStore.setShowSidebar(true);
         setTimeout(() => document.getElementById('search-input')?.focus(), 50);
         break;

@@ -1,19 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useTermStore, useShellStore, useAppStore } from '@/stores';
+import { useTermStore, useShellStore } from '@/stores';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 import { Input } from './Input';
-import { getAppName } from '@/hooks/utils';
-import type { CaskItem } from '@/types';
+import lockedIcon from '@/assets/LockedIcon.png';
 
 export function PasswordModal() {
   const showPasswordModal = useTermStore((s) => s.showPasswordModal);
   const submitPassword = useTermStore((s) => s.submitPassword);
   const cancelPassword = useTermStore((s) => s.cancelPassword);
-  const activeTaskToken = useTermStore((s) => s.activeTaskToken);
-  const activeTaskAction = useTermStore((s) => s.activeTaskAction);
 
-  const items = useAppStore((s) => s.items);
   const __ = useShellStore((s) => s.__);
 
   const [password, setPassword] = useState<string>('');
@@ -50,12 +46,8 @@ export function PasswordModal() {
 
   if (!showPasswordModal) return null;
 
-  const cask = items.find((c: CaskItem) => c.token === activeTaskToken);
-  const name = cask ? getAppName(cask) : activeTaskToken || 'Homebrew';
-
-  const title = activeTaskAction === 'uninstall'
-    ? __('%s removal requires your password').replace('%s', name)
-    : __('%s installation requires your password').replace('%s', name);
+  const title = __('AppFinder wants to make changes.');
+  const subtitle = __('Enter your password to allow this operation.');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,16 +97,18 @@ export function PasswordModal() {
           {/* AppFinder App icon with lock emblem in the bottom-right corner */}
           <div className="relative mb-3 flex items-center justify-center">
             <ShellIcon name="appfinder" className="size-16 drop-shadow-xs" />
-            <div className="absolute -bottom-1 -right-1 size-6 rounded-full bg-secondary dark:bg-[#18181b] border border-black/10 dark:border-white/15 shadow-sm flex items-center justify-center text-foreground">
-              <ShellIcon name="lock" className="size-3.5 text-foreground" />
-            </div>
+            <img
+              src={lockedIcon}
+              alt=""
+              className="absolute -bottom-1 -right-1 size-6 drop-shadow-sm select-none pointer-events-none"
+            />
           </div>
 
           <h3 id="password-modal-title" className="font-semibold text-xs text-foreground mb-1 leading-snug">
             {title}
           </h3>
           <p id="password-modal-desc" className="text-[11px] text-muted-foreground mb-3.5">
-            {__('Type your password to allow this action.')}
+            {subtitle}
           </p>
         </div>
 

@@ -5,7 +5,7 @@ import { createSettingsWindow } from './window-settings';
 import { getShellWindow } from './window-shell';
 
 const websiteUrl = 'https://yanbab.github.io/appfinder';
-const githubUrl = 'https://github.com/yanbab/appfinder';
+const issuesUrl = 'https://github.com/yanbab/appfinder/issues';
 
 function sendToShell(channel: string, ...args: any[]): void {
   const win = getShellWindow();
@@ -131,9 +131,15 @@ export function setupApplicationMenu(): void {
         { role: 'cut', label: __('Cut') },
         { role: 'copy', label: __('Copy') },
         { role: 'paste', label: __('Paste') },
-        { role: 'pasteAndMatchStyle', label: __('Paste and Match Style') },
+        { role: 'pasteAndMatchStyle', label: __('Paste and match style') },
         { role: 'delete', label: __('Delete') },
-        { role: 'selectAll', label: __('Select All') }
+        { role: 'selectAll', label: __('Select All') },
+        { type: 'separator' },
+        {
+          label: __('Search'),
+          accelerator: 'CmdOrCtrl+F',
+          click: () => sendToShell('menu:click', { command: 'focus-search' })
+        }
       ]
     },
     {
@@ -142,23 +148,17 @@ export function setupApplicationMenu(): void {
       submenu: [
         {
           id: 'view-as-icons',
-          label: __('as Icons'),
+          label: __('As grid'),
           enabled: false,
           accelerator: 'CmdOrCtrl+1',
           click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'grid' })
         },
         {
           id: 'view-as-list',
-          label: __('as List'),
+          label: __('As list'),
           enabled: false,
           accelerator: 'CmdOrCtrl+2',
           click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'list' })
-        },
-        { type: 'separator' },
-        {
-          label: __('Search'),
-          accelerator: 'CmdOrCtrl+F',
-          click: () => sendToShell('menu:click', { command: 'focus-search' })
         },
         { type: 'separator' },
         {
@@ -232,29 +232,11 @@ export function setupApplicationMenu(): void {
             });
           }
         },
-        {
-          id: 'show-terminal',
-          label: __('Show Console'),
-          type: 'checkbox',
-          checked: isTerminalVisible,
-          accelerator: 'Option+Cmd+C',
-          click: (menuItem) => {
-            isTerminalVisible = menuItem.checked;
-            sendToShell('menu:click', { command: 'toggle-terminal', value: menuItem.checked });
-          }
-        },
         { type: 'separator' },
         { role: 'reload', label: __('Reload') },
         { role: 'forceReload', label: __('Force Reload') },
         { role: 'toggleDevTools', label: __('Toggle Developer Tools') },
         { type: 'separator' },
-        {
-          label: __('Restart in Debug Mode'),
-          click: () => {
-            app.relaunch({ args: process.argv.slice(1).concat(['--debug']) });
-            app.exit(0);
-          }
-        },
         {
           label: __('Restart'),
           click: () => {
@@ -269,11 +251,11 @@ export function setupApplicationMenu(): void {
       role: 'help',
       label: __('Help'),
       submenu: [{
-        label: __('Website'),
+        label: __('%s website', app.name),
         click: async () => shell.openExternal(websiteUrl)
       }, {
-        label: __('GitHub Repository'),
-        click: async () => shell.openExternal(githubUrl)
+        label: __('Report an issue'),
+        click: async () => shell.openExternal(issuesUrl)
       }]
     }
   ];

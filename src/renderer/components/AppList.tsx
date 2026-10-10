@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { useAppStore, useShellStore, selectFilteredItems } from '@/stores';
 import { EmptyState } from './EmptyState';
-import { ListRowContainer } from './ListRowContainer';
+import { List } from './List';
 import { getCategoryViews } from './category-views/registry';
 import type { CaskItem } from '@/types';
 
@@ -80,12 +80,12 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
             })}
           </div>
         ) : (
-          <ListRowContainer>
+          <List>
             {displayedItems.map((item) => {
               const { Row } = resolveViews(item);
               return <Row key={item.token} item={item} />;
             })}
-          </ListRowContainer>
+          </List>
         )}
         {footer}
       </div>

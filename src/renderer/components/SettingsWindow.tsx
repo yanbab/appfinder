@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { LocaleInfo } from '@/types';
+import { List } from './List';
+import { ListRow } from './ListRow';
+import { Select } from './Select';
+import { Switch } from './Switch';
 
 export function SettingsWindow() {
   const [alwaysShowStatusBar, setAlwaysShowStatusBar] = useState(false);
@@ -23,6 +27,10 @@ export function SettingsWindow() {
     },
     [messages]
   );
+
+  useEffect(() => {
+    document.title = __('Settings');
+  }, [__]);
 
   const resizeToContent = useCallback(() => {
     requestAnimationFrame(() => {
@@ -122,65 +130,46 @@ export function SettingsWindow() {
       ref={containerRef}
       className="w-[380px] bg-background text-foreground select-none p-4 space-y-4 font-sans text-xs antialiased overflow-hidden"
     >
-      <div className="space-y-3">
-        {/* Language select */}
-        <div className="flex items-center justify-between">
+      <List>
+        {/* Language select row */}
+        <ListRow>
           <label htmlFor="settings-language" className="font-medium text-foreground cursor-default">
             {__('Language')}
           </label>
-          <select
+          <Select
             id="settings-language"
             value={language}
             onChange={handleLanguageChange}
-            className="h-7 text-xs bg-muted/50 border border-input rounded-[var(--radius-btn)] px-2 text-foreground outline-none cursor-default focus:ring-1 focus:ring-ring"
           >
-            <option value="system">
-              {__('System Default (%s)', systemLanguageName)}
+            <option value="system" className="bg-popover text-popover-foreground">
+              {`${__('System')} (${__(systemLanguageName)})`}
             </option>
+            <hr />
             {locales
               .filter((l) => l.code !== 'system')
               .map((loc) => (
-                <option key={loc.code} value={loc.code}>
+                <option key={loc.code} value={loc.code} className="bg-popover text-popover-foreground">
                   {loc.name}
                 </option>
               ))}
-          </select>
-        </div>
+          </Select>
+        </ListRow>
 
-        {/* Always Show Status Bar */}
-        <div className="flex items-center justify-between">
+        {/* Always Show Status Bar row */}
+        <ListRow>
           <div className="space-y-0.5">
             <div className="font-medium text-foreground">{__('Always Show Status Bar')}</div>
             <div className="text-[11px] text-muted-foreground leading-tight">
               {__('Keep the footer bar visible even when idle')}
             </div>
           </div>
-          <div className="inline-flex rounded-md p-0.5 bg-muted border border-border shrink-0">
-            <button
-              type="button"
-              onClick={() => handleToggleStatusBar(false)}
-              className={`px-2.5 py-0.5 text-xs rounded-sm transition-all cursor-default select-none ${
-                !alwaysShowStatusBar
-                  ? 'bg-background text-foreground shadow-2xs font-semibold'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {__('Off')}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleToggleStatusBar(true)}
-              className={`px-2.5 py-0.5 text-xs rounded-sm transition-all cursor-default select-none ${
-                alwaysShowStatusBar
-                  ? 'bg-background text-foreground shadow-2xs font-semibold'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {__('On')}
-            </button>
-          </div>
-        </div>
-      </div>
+          <Switch
+            checked={alwaysShowStatusBar}
+            onChange={handleToggleStatusBar}
+            title={alwaysShowStatusBar ? __('On') : __('Off')}
+          />
+        </ListRow>
+      </List>
     </div>
   );
 }

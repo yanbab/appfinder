@@ -24,5 +24,8 @@ export * from './ErrorWindow';
 export * from './DiscoverHub';
 export * from './Card';
 export * from './ListRowContainer';
+export * from './List';
+export * from './ListRow';
+export * from './Select';
 export * from './Switch';
 export * from './category-views/registry';

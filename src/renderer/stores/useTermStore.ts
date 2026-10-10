@@ -1,7 +1,7 @@
 import { create } from './createStore';
 import { useAppStore } from './useAppStore';
 import { useShellStore } from './useShellStore';
-import { getAppName, getIconDataUrl, extractTaskError, formatStatusBarMessage } from '../hooks/utils';
+import { getAppName, getIconDataUrl, extractTaskError, formatStatusBarMessage, stripAnsi } from '../hooks/utils';
 import type { TaskLogEvent, TaskPromptEvent, TaskCompleteEvent } from '../../types/ipc';
 
 export type TerminalSubscriber = (text: string, clear?: boolean) => void;
@@ -127,26 +127,23 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
       return;
     }
 
-    if (action === 'refresh' || action === 'cleanup' || action === 'fetch') {
-      get().clearTerminal();
-      const taskId = `cask-${action}-${Date.now()}`;
-      set((state) => ({
-        activeTaskId: taskId,
-        activeTaskToken: action,
-        activeTaskAction: action,
-        errorLog: '',
-        runningTasks: { ...state.runningTasks, [action]: action },
-        drawerTitle:
-          action === 'refresh' ? __('Checking for updates...')
-            : action === 'fetch' ? __('Checking for new applications...')
-              : __('Cleaning up Homebrew cache...')
-      }));
-      if (action === 'cleanup') {
-        useShellStore.getState().setShowTerminal(true);
+      if (action === 'refresh' || action === 'cleanup' || action === 'fetch') {
+        get().clearTerminal();
+        const taskId = `cask-${action}-${Date.now()}`;
+        set((state) => ({
+          activeTaskId: taskId,
+          activeTaskToken: action,
+          activeTaskAction: action,
+          errorLog: '',
+          runningTasks: { ...state.runningTasks, [action]: action },
+          drawerTitle:
+            action === 'refresh' ? __('Checking for updates...')
+              : action === 'fetch' ? __('Checking for new applications...')
+                : __('Cleaning up Homebrew cache...')
+        }));
+        window.ipc?.runAction?.(taskId, action, '', false);
+        return;
       }
-      window.ipc?.runAction?.(taskId, action, '', false);
-      return;
-    }
 
     let zap = false;
     if (action === 'uninstall') {
@@ -262,6 +259,18 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
     });
 
     if (data.code === 0) {
+      if (activeTaskAction === 'cleanup') {
+        const { terminalHistory, drawerTitle } = get();
+        const lines = (terminalHistory || errorLog || '').split('\n').map((l) => stripAnsi(l).trim()).filter(Boolean);
+        const freedLine = [...lines].reverse().find((l) => /freed approximately/i.test(l) || /disk space/i.test(l));
+        const lastStatus = freedLine ? freedLine.replace(/^==>\s*/, '') : (drawerTitle || __('No files cleaned up.'));
+        window.ipc?.showMessage?.({
+          type: 'info',
+          message: __('Cleanup Finished'),
+          detail: lastStatus,
+          buttons: ['OK']
+        });
+      }
       if (activeTaskToken) {
         if (activeTaskAction === 'install') {
           useAppStore.getState().optimisticInstall(activeTaskToken);
