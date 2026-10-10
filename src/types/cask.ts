@@ -14,6 +14,7 @@ export interface CaskItem {
   added?: string | null;
   icon?: string | boolean;
   iconUrl?: string;
+  screenshotUrl?: string;
 
   // Font specific metadata
   foundry?: string;

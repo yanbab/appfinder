@@ -18,15 +18,15 @@ export function FontRow({ item, className }: FontRowProps) {
   const __ = useShellStore((s) => s.__);
   const { isRunning, isInstalled, install, open, uninstall } = useAppItemState(item);
 
-  const hasIcon = Boolean(item.icon || item.iconUrl);
+  const hasPreview = Boolean(item.screenshotUrl);
 
-  if (!hasIcon) {
+  if (!hasPreview) {
     return <AppRow item={item} className={`font-row ${className || ''}`.trim()} />;
   }
 
   const isSelected = selectedApp?.token === item.token;
   const name = getAppName(item);
-  const previewUrl = `https://yanbab.github.io/appfinder/font-previews/${item.token}.png`;
+  const previewUrl = item.screenshotUrl!;
 
   return (
     <div

@@ -18079,7 +18079,8 @@
     "count": 527,
     "added": "2024-05-12T21:55:59Z",
     "secondCategory": "monospace",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-0xproto.png"
   },
   {
     "token": "font-0xproto-nerd-font",
@@ -18092,7 +18093,8 @@
     "count": 15179,
     "added": "2024-05-16T03:11:18Z",
     "secondCategory": "monospace",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-0xproto-nerd-font.png"
   },
   {
     "token": "font-3270",
@@ -18105,7 +18107,8 @@
     "count": 240,
     "added": "2024-05-15T06:38:28Z",
     "secondCategory": "monospace",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-3270.png"
   },
   {
     "token": "font-3270-nerd-font",
@@ -18118,7 +18121,8 @@
     "count": 3453,
     "added": "2024-05-16T03:11:18Z",
     "secondCategory": "monospace",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-3270-nerd-font.png"
   },
   {
     "token": "font-42dot-sans",
@@ -18131,7 +18135,8 @@
     "count": 53,
     "added": "2025-01-19T01:35:31Z",
     "secondCategory": "sans-serif",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-42dot-sans.png"
   },
   {
     "token": "font-437-plus",
@@ -18144,7 +18149,8 @@
     "count": 62,
     "added": "2024-05-15T06:38:28Z",
     "secondCategory": "sans-serif",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-437-plus.png"
   },
   {
     "token": "font-abeezee",
@@ -47017,7 +47023,8 @@
     "count": 3922,
     "added": "2024-05-16T03:11:18Z",
     "secondCategory": "monospace",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-sf-mono.png"
   },
   {
     "token": "font-sf-mono-for-powerline",

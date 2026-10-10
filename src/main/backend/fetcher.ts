@@ -156,6 +156,10 @@ export function processAppsData(
       caskItem.iconUrl = `${ICON_BASE_URL}${token}.png`;
     }
 
+    if (c.screenshotUrl) {
+      caskItem.screenshotUrl = c.screenshotUrl;
+    }
+
     return caskItem;
   });
 }

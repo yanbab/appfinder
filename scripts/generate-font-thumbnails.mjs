@@ -82,6 +82,41 @@ if (fs.existsSync(FONTS_FILE)) {
   }
 }
 
+let allAppsData = null;
+
+function loadAppsData() {
+  if (!allAppsData && fs.existsSync(APPS_FILE)) {
+    try {
+      allAppsData = JSON.parse(fs.readFileSync(APPS_FILE, 'utf-8'));
+    } catch (_) {
+      allAppsData = [];
+    }
+  }
+  return allAppsData || [];
+}
+
+function saveAppsData() {
+  if (!allAppsData) return;
+  try {
+    const tmp = `${APPS_FILE}.tmp.${Date.now()}`;
+    fs.writeFileSync(tmp, JSON.stringify(allAppsData, null, 2) + '\n', 'utf-8');
+    fs.renameSync(tmp, APPS_FILE);
+  } catch (err) {
+    try {
+      fs.writeFileSync(APPS_FILE, JSON.stringify(allAppsData, null, 2) + '\n', 'utf-8');
+    } catch (_) { }
+  }
+}
+
+function updateAppScreenshotUrl(token, screenshotUrl) {
+  const apps = loadAppsData();
+  const entry = apps.find((a) => a.token === token);
+  if (entry) {
+    entry.screenshotUrl = screenshotUrl;
+    saveAppsData();
+  }
+}
+
 /**
  * Persists in-memory fonts database to data/fonts.json atomically
  */
@@ -727,6 +762,8 @@ async function processCask(cask) {
       if (fs.existsSync(failPreviewPath)) {
         try { fs.unlinkSync(failPreviewPath); } catch (_) { }
       }
+      const screenshotUrl = `https://yanbab.github.io/appfinder/font-previews/${cask.token}.png`;
+      updateAppScreenshotUrl(cask.token, screenshotUrl);
     } catch (err) {
       fs.writeFileSync(failPreviewPath, '');
       throw err;
