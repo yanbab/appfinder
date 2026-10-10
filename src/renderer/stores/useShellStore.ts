@@ -32,6 +32,13 @@ export interface ShellStoreState {
   getPageTitle: () => string;
 }
 
+export function syncTabMenu(tab: string): void {
+  const isDiscover = tab === 'discover';
+  window.ipc?.updateMenu?.('view-as-icons', { enabled: !isDiscover });
+  window.ipc?.updateMenu?.('view-as-list', { enabled: !isDiscover });
+  window.ipc?.updateMenu?.('view-order-by', { enabled: !isDiscover });
+}
+
 export const useShellStore = create<ShellStoreState>((set, get) => ({
   // State
   currentTab: 'discover',
@@ -52,6 +59,7 @@ export const useShellStore = create<ShellStoreState>((set, get) => ({
       selectedApp: null,
       appDetails: null
     });
+    syncTabMenu(tab);
     useAppStore.getState().setDisplayedCount(50);
     if (typeof window !== 'undefined' && window.innerWidth <= 560) {
       set({ showSidebar: false });

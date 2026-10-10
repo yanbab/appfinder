@@ -80,6 +80,8 @@ export interface IpcBridge {
   showContextMenu: (data: any) => void;
   sidebarChanged: (visible: boolean) => void;
   terminalChanged: (visible: boolean) => void;
+  updateMenu: (id: string, status: { checked?: boolean; enabled?: boolean }) => void;
+  updateMenuItem?: (id: string, status: { checked?: boolean; enabled?: boolean }) => void;
 
   // Unified Event Bus (Main -> Renderer)
   on<K extends keyof IpcEventMap>(channel: K, callback: (data: IpcEventMap[K]) => void): Unsubscribe;

@@ -58,6 +58,21 @@ export function updateTerminalChecked(visible: boolean): void {
   }
 }
 
+export function updateMenuItem(id: string, status: { checked?: boolean; enabled?: boolean }): void {
+  const menu = Menu.getApplicationMenu();
+  if (menu) {
+    const item = menu.getMenuItemById(id);
+    if (item) {
+      if (typeof status.checked === 'boolean') {
+        item.checked = status.checked;
+      }
+      if (typeof status.enabled === 'boolean') {
+        item.enabled = status.enabled;
+      }
+    }
+  }
+}
+
 export function setupApplicationMenu(): void {
   const config = getConfig();
   isStatusbarVisible = !!config.alwaysShowStatusBar;
@@ -126,12 +141,16 @@ export function setupApplicationMenu(): void {
       label: __('View'),
       submenu: [
         {
+          id: 'view-as-icons',
           label: __('as Icons'),
+          enabled: false,
           accelerator: 'CmdOrCtrl+1',
           click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'grid' })
         },
         {
+          id: 'view-as-list',
           label: __('as List'),
+          enabled: false,
           accelerator: 'CmdOrCtrl+2',
           click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'list' })
         },
@@ -164,7 +183,9 @@ export function setupApplicationMenu(): void {
         },
         { type: 'separator' },
         {
+          id: 'view-order-by',
           label: __('Order By'),
+          enabled: false,
           submenu: [
             {
               label: __('Popular'),

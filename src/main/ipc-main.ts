@@ -3,7 +3,7 @@ import i18n from './i18n';
 import * as Backend from './backend/brew';
 import { getConfig, updateConfig } from './config';
 import { createSettingsWindow } from './window-settings';
-import { updateSidebarChecked, updateStatusbarChecked, updateTerminalChecked, setupApplicationMenu } from './menu-application';
+import { updateSidebarChecked, updateStatusbarChecked, updateTerminalChecked, updateMenuItem, setupApplicationMenu } from './menu-application';
 
 function broadcast(channel: string, ...args: any[]): void {
   BrowserWindow.getAllWindows().forEach(win => {
@@ -169,6 +169,15 @@ export function setupIpcMain(): void {
 
   ipcMain.on('shell:terminal-changed', (_, visible) => {
     updateTerminalChecked(visible);
+  });
+
+  ipcMain.on('menu:update', (_, idOrPayload: any, status?: any) => {
+    if (typeof idOrPayload === 'string') {
+      updateMenuItem(idOrPayload, status || {});
+    } else if (idOrPayload && typeof idOrPayload.id === 'string') {
+      const { id, ...rest } = idOrPayload;
+      updateMenuItem(id, rest);
+    }
   });
 
   ipcMain.handle('settings:clear-caches', async () => {

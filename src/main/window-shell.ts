@@ -14,6 +14,8 @@ export function createShellWindow(): BrowserWindow {
 
   mainWindow = createWindow({
     title: 'AppFinder',
+    name: 'shell',
+    windowStatePersistence: true,
     width: 800,
     height: 750,
     minWidth: 360,

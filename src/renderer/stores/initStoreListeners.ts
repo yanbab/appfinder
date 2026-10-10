@@ -1,6 +1,6 @@
 import { useAppStore } from './useAppStore';
 import { useTermStore } from './useTermStore';
-import { useShellStore } from './useShellStore';
+import { useShellStore, syncTabMenu } from './useShellStore';
 
 let isInitialized = false;
 
@@ -15,7 +15,8 @@ export function initStoreListeners(): void {
   const termStore = useTermStore.getState();
   const shellStore = useShellStore.getState();
 
-  // 1. Initial data fetching
+  // 1. Initial data fetching & state sync
+  syncTabMenu(shellStore.currentTab);
   window.ipc.getMessages?.().then((msgs) => {
     if (msgs) shellStore.setMessages(msgs);
   });

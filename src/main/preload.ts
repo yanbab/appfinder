@@ -84,6 +84,10 @@ const ipcApi: IpcBridge = {
   showContextMenu: (data: any) => ipcRenderer.send('context-menu:show', data),
   sidebarChanged: (visible: boolean) => ipcRenderer.send('shell:sidebar-changed', visible),
   terminalChanged: (visible: boolean) => ipcRenderer.send('shell:terminal-changed', visible),
+  updateMenu: (id: string, status: { checked?: boolean; enabled?: boolean }) =>
+    ipcRenderer.send('menu:update', id, status),
+  updateMenuItem: (id: string, status: { checked?: boolean; enabled?: boolean }) =>
+    ipcRenderer.send('menu:update', id, status),
 
   // Unified Event Bus
   on: (signal: any, callback: any) => on(signal, callback),
