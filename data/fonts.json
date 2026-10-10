@@ -1,8 +1,94 @@
 {
-  "font-0xproto": "~/Library/Fonts/0xProto-Regular.otf",
-  "font-0xproto-nerd-font": "~/Library/Fonts/0xProtoNerdFont-Regular.ttf",
-  "font-3270": "~/Library/Fonts/3270-Regular.otf",
-  "font-3270-nerd-font": "~/Library/Fonts/3270NerdFont-Condensed.ttf",
+  "font-0xproto": {
+    "file": "~/Library/Fonts/0xProto-Regular.otf",
+    "family": "0xProto",
+    "desc": "Monospace • 9 styles",
+    "homepage": "https://github.com/0xType/0xProto",
+    "styles": [
+      "Bold",
+      "Italic",
+      "Regular",
+      "NL"
+    ],
+    "stylesCount": 4,
+    "variants": [
+      "Bold",
+      "Italic",
+      "Regular",
+      "NL"
+    ],
+    "isMonospace": true,
+    "isVariable": false,
+    "glyphCount": 863,
+    "format": "otf",
+    "version": "Version 2.502"
+  },
+  "font-0xproto-nerd-font": {
+    "file": "~/Library/Fonts/0xProtoNerdFont-Regular.ttf",
+    "family": "0xProto Nerd Font",
+    "desc": "Monospace • 9 styles",
+    "homepage": "https://github.com/ryanoasis/nerd-fonts",
+    "styles": [
+      "Bold",
+      "Italic",
+      "Regular"
+    ],
+    "stylesCount": 3,
+    "variants": [
+      "Bold",
+      "Italic",
+      "Regular"
+    ],
+    "isMonospace": true,
+    "isVariable": false,
+    "glyphCount": 11777,
+    "format": "ttf",
+    "version": "Version 2.502; ttfautohint (v1.8.4.16-eb64);Nerd Fonts 3.5.1"
+  },
+  "font-3270": {
+    "file": "~/Library/Fonts/3270-Regular.otf",
+    "family": "IBM 3270",
+    "desc": "Monospace • 3 styles",
+    "homepage": "https://github.com/rbanffy/3270font",
+    "styles": [
+      "Regular"
+    ],
+    "stylesCount": 1,
+    "variants": [
+      "Regular"
+    ],
+    "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL",
+    "licenseUrl": "https://scripts.sil.org/OFL",
+    "isMonospace": true,
+    "isVariable": false,
+    "glyphCount": 2224,
+    "format": "otf",
+    "version": "Version 3.0.1"
+  },
+  "font-3270-nerd-font": {
+    "file": "~/Library/Fonts/3270NerdFont-Condensed.ttf",
+    "family": "3270 Nerd Font Cond",
+    "desc": "Monospace • 9 styles",
+    "homepage": "https://github.com/ryanoasis/nerd-fonts",
+    "styles": [
+      "Condensed",
+      "Regular",
+      "Semi Condensed"
+    ],
+    "stylesCount": 3,
+    "variants": [
+      "Condensed",
+      "Regular",
+      "Semi Condensed"
+    ],
+    "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL",
+    "licenseUrl": "https://scripts.sil.org/OFL",
+    "isMonospace": true,
+    "isVariable": false,
+    "glyphCount": 13170,
+    "format": "ttf",
+    "version": "Version 3.0.1;Nerd Fonts 3.5.1"
+  },
   "font-42dot-sans": "~/Library/Fonts/font.ttf",
   "font-437-plus": "~/Library/Fonts/Ac437_ACM_VGA_8x14.ttf",
   "font-abeezee": "~/Library/Fonts/font.ttf",
@@ -2225,7 +2311,56 @@
   "font-sf-compact": "~/Library/Fonts/SF-Pro-Text-Regular.otf",
   "font-sf-georgian": "~/Library/Fonts/SF-Pro-Text-Regular.otf",
   "font-sf-hebrew": "~/Library/Fonts/SF-Pro-Text-Regular.otf",
-  "font-sf-mono": "~/Library/Fonts/SFNSMono.ttf",
+  "font-sf-mono": {
+    "file": "~/Library/Fonts/SFNSMono.ttf",
+    "family": ".SF NS Mono",
+    "foundry": "Apple Inc.",
+    "designer": "Apple Inc.",
+    "desc": "Monospace • 1 style",
+    "homepage": "https://developer.apple.com/fonts/",
+    "styles": [
+      "SFNSMono",
+      "Light",
+      "Regular",
+      "Medium",
+      "Semibold",
+      "Bold",
+      "Heavy"
+    ],
+    "stylesCount": 7,
+    "variants": [
+      "SFNSMono",
+      "Light",
+      "Regular",
+      "Medium",
+      "Semibold",
+      "Bold",
+      "Heavy"
+    ],
+    "license": "This .SF NS Mono Font (the “Apple Font”) is licensed to you by Apple Inc. (“Apple”) in consideration of your agreement to the following terms. If you do not agree with these terms, do not use the Apple Font.\n\nYou may use the Apple Font solely in conjunction with Apple-branded applications, including, but not limited to, Xcode, Terminal.app and Console.app. You may not embed or use the Apple Font in or with any other software applications or programs or other products and you may not use the Apple Font to create, develop, display or otherwise distribute any content, documentation, artwork or any other work product.\n\nYou may use the Apple Font only for the purposes described in this License or as otherwise expressly permitted by Apple in writing.",
+    "licenseUrl": "http://www.apple.com/",
+    "isMonospace": true,
+    "isVariable": true,
+    "variableAxes": [
+      {
+        "tag": "YAXS",
+        "min": 294.67310597390707,
+        "max": 900,
+        "default": 294.67310597390707,
+        "name": "YAXS"
+      },
+      {
+        "tag": "wght",
+        "min": 294.67310597390707,
+        "max": 900,
+        "default": 294.67310597390707,
+        "name": "Weight"
+      }
+    ],
+    "glyphCount": 1628,
+    "format": "ttf",
+    "version": "16.0d2e1"
+  },
   "font-sf-mono-for-powerline": "~/Library/Fonts/SF-Mono-Powerline-Heavy.otf",
   "font-sf-mono-nerd-font-ligaturized": "~/Library/Fonts/LigaSFMonoNerdFont-Heavy.otf",
   "font-sf-pro": "~/Library/Fonts/SF-Pro-Text-Regular.otf",

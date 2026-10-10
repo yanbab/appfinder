@@ -34,6 +34,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const APPS_FILE = path.join(ROOT_DIR, 'data', 'apps.json');
+const FONTS_FILE = path.join(ROOT_DIR, 'data', 'fonts.json');
 const THUMBNAILS_DIR = path.join(ROOT_DIR, 'docs', 'font-thumbnails');
 const PREVIEWS_DIR = path.join(ROOT_DIR, 'docs', 'font-previews');
 const CACHE_DIR = path.join(os.tmpdir(), 'appfinder-font-cache');
@@ -55,6 +56,7 @@ export const CONFIG = {
 const args = process.argv.slice(2);
 const targetCask = args.find((a) => a.startsWith('--cask='))?.split('=')[1]?.trim();
 const onlyFailed = args.includes('--failed');
+const consolidate = args.includes('--consolidate') || args.includes('--consolidate-only');
 const limitArg = args.find((a) => a.startsWith('--limit='))?.split('=')[1];
 const limit = limitArg ? parseInt(limitArg, 10) : (targetCask ? 1 : (onlyFailed ? Infinity : 10));
 const force = args.includes('--force');
@@ -69,6 +71,161 @@ const glyphColor = args.find((a) => a.startsWith('--color='))?.split('=')[1] || 
 fs.mkdirSync(THUMBNAILS_DIR, { recursive: true });
 fs.mkdirSync(PREVIEWS_DIR, { recursive: true });
 fs.mkdirSync(CACHE_DIR, { recursive: true });
+
+// In-memory fonts database loaded from data/fonts.json
+let fontsDatabase = {};
+if (fs.existsSync(FONTS_FILE)) {
+  try {
+    fontsDatabase = JSON.parse(fs.readFileSync(FONTS_FILE, 'utf-8'));
+  } catch (_) {
+    fontsDatabase = {};
+  }
+}
+
+/**
+ * Persists in-memory fonts database to data/fonts.json atomically
+ */
+function saveFontsDatabase() {
+  try {
+    const tmp = `${FONTS_FILE}.tmp.${Date.now()}`;
+    fs.writeFileSync(tmp, JSON.stringify(fontsDatabase, null, 2) + '\n', 'utf-8');
+    fs.renameSync(tmp, FONTS_FILE);
+  } catch (err) {
+    try {
+      fs.writeFileSync(FONTS_FILE, JSON.stringify(fontsDatabase, null, 2) + '\n', 'utf-8');
+    } catch (_) { }
+  }
+}
+
+/**
+ * Updates a single font entry in fonts database
+ */
+function updateFontMetadata(token, metadata) {
+  const existing = fontsDatabase[token];
+  if (typeof existing === 'object' && existing !== null) {
+    fontsDatabase[token] = { ...existing, ...metadata };
+  } else {
+    fontsDatabase[token] = metadata;
+  }
+  saveFontsDatabase();
+}
+
+/**
+ * Extracts localized or preferred string from opentype.js font.names
+ */
+function getFontName(names, key) {
+  if (!names) return undefined;
+  for (const plat of ['', 'windows', 'macintosh']) {
+    const target = plat ? names[plat] : names;
+    if (target && target[key]) {
+      const val = target[key];
+      if (typeof val === 'string' && val.trim()) return val.trim();
+      if (typeof val === 'object' && val !== null) {
+        const str = val.en || Object.values(val)[0];
+        if (typeof str === 'string' && str.trim()) return str.trim();
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Extracts style names from list of font file paths
+ */
+function extractStyleNamesFromFiles(filePaths, fallbackSubfamily = 'Regular') {
+  const styles = new Set();
+  for (const fp of filePaths) {
+    const filename = path.basename(fp, path.extname(fp));
+    const match = filename.match(/[-_ ]([A-Za-z0-9]+(?:[A-Za-z0-9]+)?)$/);
+    if (match && match[1]) {
+      let styleName = match[1]
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+        .trim();
+      styles.add(styleName);
+    } else {
+      styles.add(filename);
+    }
+  }
+  if (styles.size === 0 && fallbackSubfamily) {
+    styles.add(fallbackSubfamily);
+  }
+  return Array.from(styles);
+}
+
+/**
+ * Extracts rich font metadata from parsed opentype font & cask metadata
+ */
+function extractFontMetadata(font, cask, allFontFiles = [], primaryFilePath = '') {
+  const family = getFontName(font.names, 'fontFamily') || getFontName(font.names, 'preferredFamily') || cask.name || cask.token.replace(/^font-/, '');
+  const subfamily = getFontName(font.names, 'fontSubfamily') || getFontName(font.names, 'preferredSubfamily') || 'Regular';
+  const designer = getFontName(font.names, 'designer');
+  const foundry = getFontName(font.names, 'manufacturer') || getFontName(font.names, 'vendorURL') || getFontName(font.names, 'designerURL');
+  const license = getFontName(font.names, 'license');
+  const licenseUrl = getFontName(font.names, 'licenseURL');
+  const version = getFontName(font.names, 'version') || cask.version;
+  const desc = (cask.desc && cask.desc !== 'Font') ? cask.desc : getFontName(font.names, 'description');
+
+  // Monospace detection
+  const isMonospace = Boolean(
+    font.tables?.post?.isFixedPitch ||
+    (font.tables?.os2?.panose && (font.tables.os2.panose[3] === 9 || font.tables.os2.panose.bProportion === 9)) ||
+    cask.token.includes('mono') ||
+    cask.token.includes('code')
+  );
+
+  // Variable font detection
+  const fvarAxes = font.tables?.fvar?.axes;
+  const isVariable = Boolean(fvarAxes && fvarAxes.length > 0);
+  const variableAxes = isVariable
+    ? fvarAxes.map((axis) => ({
+      tag: axis.tag,
+      min: axis.minValue,
+      max: axis.maxValue,
+      default: axis.defaultValue,
+      name: axis.name?.en || (typeof axis.name === 'string' ? axis.name : axis.tag)
+    }))
+    : undefined;
+
+  // Format detection
+  const ext = path.extname(primaryFilePath).replace(/^\./, '').toLowerCase() || (font.tables?.cff ? 'otf' : 'ttf');
+
+  // Styles & Variants
+  const styles = extractStyleNamesFromFiles(allFontFiles, subfamily);
+  if (font.tables?.fvar?.instances && font.tables.fvar.instances.length > 0) {
+    for (const inst of font.tables.fvar.instances) {
+      const instName = inst.name?.en || (typeof inst.name === 'string' ? inst.name : null);
+      if (instName && !styles.includes(instName)) {
+        styles.push(instName);
+      }
+    }
+  }
+
+  const fontFileName = path.basename(primaryFilePath);
+  const fontPath = `~/Library/Fonts/${fontFileName}`;
+
+  const meta = {
+    file: fontPath,
+    family,
+    ...(foundry ? { foundry } : {}),
+    ...(designer ? { designer } : {}),
+    ...(desc && desc !== 'Font' ? { desc } : {}),
+    ...(cask.homepage ? { homepage: cask.homepage } : {}),
+    styles,
+    stylesCount: styles.length,
+    variants: styles,
+    ...(license ? { license } : {}),
+    ...(licenseUrl ? { licenseUrl } : {}),
+    isMonospace,
+    isVariable,
+    ...(variableAxes ? { variableAxes } : {}),
+    glyphCount: font.numGlyphs || (font.glyphs ? font.glyphs.length : 0),
+    format: ext,
+    ...(version ? { version } : {})
+  };
+
+  return meta;
+}
 
 /**
  * Loads all font casks from apps.json
@@ -93,12 +250,12 @@ function findLocalFontFile(token, name) {
   // Specific local system font aliases for Apple San Francisco fonts
   if (token === 'font-sf-mono') {
     const monoPath = '/System/Library/Fonts/SFNSMono.ttf';
-    if (fs.existsSync(monoPath)) return monoPath;
+    if (fs.existsSync(monoPath)) return { primary: monoPath, all: [monoPath] };
   }
   if (['font-sf-armenian', 'font-sf-hebrew', 'font-sf-georgian', 'font-sf-compact', 'font-sf-pro'].includes(token)) {
     const sfPaths = ['/Library/Fonts/SF-Pro-Text-Regular.otf', '/System/Library/Fonts/SFNS.ttf', '/System/Library/Fonts/SFCompact.ttf'];
     for (const p of sfPaths) {
-      if (fs.existsSync(p)) return p;
+      if (fs.existsSync(p)) return { primary: p, all: [p] };
     }
   }
 
@@ -119,31 +276,22 @@ function findLocalFontFile(token, name) {
 
     try {
       const files = fs.readdirSync(dir, { recursive: true });
-      const matched = files.find((f) => {
-        const s = String(f).toLowerCase();
-        const norm = s.replace(/[^a-z0-9]/g, '');
-        const isMatch = norm.includes(normalizedToken) || (normalizedName && norm.includes(normalizedName));
-        return (
-          isMatch &&
-          /\.(ttf|otf|ttc|otc)$/i.test(s) &&
-          !s.includes('italic') &&
-          !s.includes('oblique') &&
-          !s.includes('bold') &&
-          !s.includes('light') &&
-          !s.includes('thin')
-        );
-      }) || files.find((f) => {
-        const s = String(f).toLowerCase();
-        const norm = s.replace(/[^a-z0-9]/g, '');
-        const isMatch = norm.includes(normalizedToken) || (normalizedName && norm.includes(normalizedName));
-        return isMatch && /\.(ttf|otf|ttc|otc)$/i.test(s);
-      });
+      const fontFiles = files
+        .map((f) => (path.isAbsolute(String(f)) ? String(f) : path.join(dir, String(f))))
+        .filter((f) => {
+          const s = path.basename(f).toLowerCase();
+          const norm = s.replace(/[^a-z0-9]/g, '');
+          const isMatch = norm.includes(normalizedToken) || (normalizedName && norm.includes(normalizedName));
+          return isMatch && /\.(ttf|otf|ttc|otc)$/i.test(s) && fs.existsSync(f) && fs.statSync(f).isFile();
+        });
 
-      if (matched) {
-        const fullPath = path.isAbsolute(String(matched)) ? String(matched) : path.join(dir, String(matched));
-        if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
-          return fullPath;
-        }
+      if (fontFiles.length > 0) {
+        const preferred = fontFiles.find((f) => {
+          const s = path.basename(f).toLowerCase();
+          return !s.includes('italic') && !s.includes('oblique') && !s.includes('bold') && !s.includes('light') && !s.includes('thin');
+        }) || fontFiles[0];
+
+        return { primary: preferred, all: fontFiles };
       }
     } catch (_) { }
   }
@@ -269,7 +417,7 @@ async function downloadAndExtractFont(cask) {
     const ext = path.extname(cleanUrl) || '.ttf';
     const fontOut = path.join(targetDir, `font${ext}`);
     fs.renameSync(archivePath, fontOut);
-    return fontOut;
+    return { primary: fontOut, all: [fontOut] };
   } else if (isZip) {
     try {
       execSync(`unzip -q -o "${archivePath}" -d "${targetDir}" 2>/dev/null`);
@@ -290,16 +438,20 @@ async function downloadAndExtractFont(cask) {
 
   // Find extracted font
   const extractedFiles = fs.readdirSync(targetDir, { recursive: true });
-  const fontFile = extractedFiles.find((f) => {
-    const s = String(f).toLowerCase();
-    return /\.(ttf|otf|ttc|otc)$/i.test(s) && !s.includes('italic') && !s.includes('oblique') && !s.includes('bold');
-  }) || extractedFiles.find((f) => /\.(ttf|otf|ttc|otc)$/i.test(String(f)));
+  const allFontFiles = extractedFiles
+    .map((f) => (path.isAbsolute(String(f)) ? String(f) : path.join(targetDir, String(f))))
+    .filter((f) => /\.(ttf|otf|ttc|otc)$/i.test(path.basename(f)) && fs.existsSync(f) && fs.statSync(f).isFile());
+
+  const fontFile = allFontFiles.find((f) => {
+    const s = path.basename(f).toLowerCase();
+    return !s.includes('italic') && !s.includes('oblique') && !s.includes('bold');
+  }) || allFontFiles[0];
 
   if (!fontFile) {
     throw new Error(`No valid font (.ttf/.otf/.ttc) file extracted from archive for ${caskToken}`);
   }
 
-  return path.isAbsolute(String(fontFile)) ? String(fontFile) : path.join(targetDir, String(fontFile));
+  return { primary: fontFile, all: allFontFiles };
 }
 
 /**
@@ -530,7 +682,7 @@ function formatSize(bytes) {
 }
 
 /**
- * Process a single cask: renders both thumbnail and preview PNGs
+ * Process a single cask: renders both thumbnail and preview PNGs, and enriches fonts.json
  */
 async function processCask(cask) {
   const outThumbPng = path.join(THUMBNAILS_DIR, `${cask.token}.png`);
@@ -541,12 +693,21 @@ async function processCask(cask) {
   const displayName = cask.name || cask.token.replace(/^font-/, '').replace(/-/g, ' ');
 
   try {
-    let fontFilePath = findLocalFontFile(cask.token, displayName);
-    if (!fontFilePath) {
-      fontFilePath = await downloadAndExtractFont(cask);
+    let fontResult = findLocalFontFile(cask.token, displayName);
+    if (!fontResult) {
+      fontResult = await downloadAndExtractFont(cask);
     }
 
+    const fontFilePath = typeof fontResult === 'string' ? fontResult : fontResult.primary;
+    const allFontFiles = (typeof fontResult === 'object' && fontResult.all) ? fontResult.all : [fontFilePath];
+
     const font = loadOpentypeFont(fontFilePath);
+
+    // Consolidate rich font metadata into data/fonts.json
+    try {
+      const metadata = extractFontMetadata(font, cask, allFontFiles, fontFilePath);
+      updateFontMetadata(cask.token, metadata);
+    } catch (_) { }
 
     // 1. Render Thumbnail ("Aa" 256x256)
     try {
@@ -639,6 +800,52 @@ async function main() {
   const fontCasks = loadFontCasks();
   const totalFonts = fontCasks.length;
 
+  if (consolidate) {
+    console.log(`\n======================================================`);
+    console.log(`📚 AppFinder Font Database Consolidator`);
+    console.log(`📦 Scanning ${fontCasks.length} font cask(s) to consolidate into data/fonts.json`);
+    console.log(`======================================================\n`);
+
+    let updated = 0;
+    let failed = 0;
+
+    for (let i = 0; i < fontCasks.length; i++) {
+      const cask = fontCasks[i];
+      const displayName = cask.name || cask.token.replace(/^font-/, '').replace(/-/g, ' ');
+      try {
+        let fontResult = findLocalFontFile(cask.token, displayName);
+        if (!fontResult) {
+          try {
+            fontResult = await downloadAndExtractFont(cask);
+          } catch (_) { }
+        }
+        if (fontResult) {
+          const fontFilePath = typeof fontResult === 'string' ? fontResult : fontResult.primary;
+          const allFontFiles = (typeof fontResult === 'object' && fontResult.all) ? fontResult.all : [fontFilePath];
+          const font = loadOpentypeFont(fontFilePath);
+          const metadata = extractFontMetadata(font, cask, allFontFiles, fontFilePath);
+          updateFontMetadata(cask.token, metadata);
+          updated++;
+          if (updated % 20 === 0 || i === fontCasks.length - 1) {
+            console.log(`✨ Consolidated [${i + 1}/${fontCasks.length}] fonts (${updated} enriched)`);
+          }
+        }
+      } catch (err) {
+        failed++;
+      } finally {
+        const targetDir = path.join(CACHE_DIR, cask.token);
+        if (fs.existsSync(targetDir)) {
+          try { fs.rmSync(targetDir, { recursive: true, force: true }); } catch (_) { }
+        }
+      }
+    }
+
+    console.log(`\n======================================================`);
+    console.log(`🎉 Consolidation complete: ${updated} fonts enriched, saved to ${FONTS_FILE}`);
+    console.log(`======================================================\n`);
+    return;
+  }
+
   // Count already existing generated thumbnails and previews
   const existingCount = force
     ? 0
@@ -686,6 +893,7 @@ async function main() {
   }
   console.log(`📁 Thumbnails: ${THUMBNAILS_DIR}`);
   console.log(`📁 Previews:   ${PREVIEWS_DIR}`);
+  console.log(`📁 Fonts DB:   ${FONTS_FILE}`);
   console.log(`======================================================\n`);
 
   const { successful, failed } = await runPool(

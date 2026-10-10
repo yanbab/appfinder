@@ -16,14 +16,14 @@ const BUTTON_VARIANTS: Record<string, string> = {
 };
 
 const BUTTON_SIZES: Record<string, string> = {
-  default: "h-7 px-3 text-xs gap-1.5 rounded-[var(--radius-btn)]",
-  sm: "h-6.5 px-2.5 text-xs rounded-[var(--radius-btn)] gap-1",
-  xs: "h-5.5 px-2 text-[11px] rounded-[var(--radius-btn)] gap-1",
+  default: "h-[var(--btn-height,26px)] min-h-[var(--btn-height,26px)] px-2.5 text-xs gap-1.5 rounded-[var(--radius-btn)]",
+  sm: "h-[var(--btn-height,26px)] min-h-[var(--btn-height,26px)] px-2.5 text-xs rounded-[var(--radius-btn)] gap-1",
+  xs: "h-[var(--btn-height,26px)] min-h-[var(--btn-height,26px)] px-2 text-[11px] rounded-[var(--radius-btn)] gap-1",
   lg: "h-8 px-4 text-xs gap-2 rounded-[var(--radius-btn)]",
-  icon: "size-7 p-0 rounded-[var(--radius-btn)]",
-  "icon-sm": "size-6.5 p-0 rounded-[var(--radius-btn)]",
-  "icon-xs": "size-5.5 p-0 rounded-[var(--radius-btn)]",
-  pill: "h-6.5 px-3.5 text-xs gap-1",
+  icon: "size-[var(--btn-height,26px)] p-0 rounded-[var(--radius-btn)]",
+  "icon-sm": "size-[var(--btn-height,26px)] p-0 rounded-[var(--radius-btn)]",
+  "icon-xs": "size-[var(--btn-height,26px)] p-0 rounded-[var(--radius-btn)]",
+  pill: "h-[var(--btn-height,26px)] px-3 text-xs gap-1",
 };
 
 export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'title'> {

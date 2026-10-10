@@ -37,6 +37,7 @@ export function AppListUpdates(): React.JSX.Element {
   const lastCheckedTime = useAppStore((s) => s.lastCheckedTime);
   const items = useAppStore((s) => s.items);
   const search = useAppStore((s) => s.search);
+  const setSearch = useAppStore((s) => s.setSearch);
   const order = useAppStore((s) => s.order);
   const installed = useAppStore((s) => s.installed);
   const outdatedMap = useAppStore((s) => s.outdatedMap);
@@ -54,32 +55,46 @@ export function AppListUpdates(): React.JSX.Element {
 
   const isRefreshRunning = Boolean(runningTasks['refresh']);
   const formattedLastChecked = formatLastChecked(lastCheckedTime, __);
+  const isSearchActive = Boolean(search && search.trim().length > 0);
 
   // If empty and refreshing, show loading spinner state
   if (filteredCount === 0 && isRefreshRunning) {
     return <EmptyState loading />;
   }
 
-  // If no updates available, show Empty state with refresh button and last check date
+  // If no updates available:
   if (filteredCount === 0) {
+    if (isSearchActive) {
+      return (
+        <EmptyState
+          icon="magnifyingglass"
+          title={__('No casks found')}
+          subtitle={__('Try adjusting your search or category filter.')}
+        >
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setSearch('')}
+          >
+            {__('Clear search')}
+          </Button>
+        </EmptyState>
+      );
+    }
+
     return (
       <EmptyState
         icon="checkmark"
         title={__('Up to date')}
-        subtitle={__('All installed casks are updated to their latest versions.')}
+        subtitle={`${__('Last check :')} ${formattedLastChecked}`}
       >
-        <div className="flex flex-col items-center gap-2">
-          <Button
-            disabled={isRefreshRunning}
-            onClick={() => startAction('refresh', 'refresh')}
-            icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className={`size-3.5 ${isRefreshRunning ? 'animate-spin' : ''}`} />}
-          >
-            {__('Refresh')}
-          </Button>
-          <div className="text-xs text-muted-foreground mt-1">
-            {__('Last check :')} <span className="font-medium text-muted-foreground">{formattedLastChecked}</span>
-          </div>
-        </div>
+        <Button
+          disabled={isRefreshRunning}
+          onClick={() => startAction('refresh', 'refresh')}
+          icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className={`size-3.5 ${isRefreshRunning ? 'animate-spin' : ''}`} />}
+        >
+          {__('Refresh')}
+        </Button>
       </EmptyState>
     );
   }
@@ -113,13 +128,7 @@ export function AppListUpdates(): React.JSX.Element {
     </div>
   );
 
-  const footer = (
-    <div className="text-center pt-1 pb-1 text-xs text-muted-foreground select-none">
-      {__('Last check :')} {formattedLastChecked}
-    </div>
-  );
-
-  return <AppList header={header} footer={footer} />;
+  return <AppList header={header} />;
 }
 
 export default AppListUpdates;

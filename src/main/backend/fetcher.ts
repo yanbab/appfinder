@@ -65,7 +65,7 @@ export function processAppsData(
   categoriesRaw?: any,
   downloadsRaw?: any,
   addedRaw?: any,
-  fontsRaw?: Record<string, string>
+  fontsRaw?: Record<string, string | any>
 ): CaskItem[] {
   const tokenToCategory = categoriesRaw?.tokenToCategory || {};
   const downloadsFormulae = downloadsRaw?.formulae || {};
@@ -88,9 +88,16 @@ export function processAppsData(
     }
 
     let appValue: string | null = null;
+    let fontMeta: any = null;
     if (primaryCat === 'font' || token.startsWith('font-')) {
       if (fontsRaw && fontsRaw[token]) {
-        appValue = fontsRaw[token];
+        const raw = fontsRaw[token];
+        if (typeof raw === 'string') {
+          appValue = raw;
+        } else if (raw && typeof raw === 'object') {
+          appValue = raw.file || raw.app || raw.path || null;
+          fontMeta = raw;
+        }
       } else if (c.artifacts && Array.isArray(c.artifacts)) {
         for (const art of c.artifacts) {
           if (art.font) {
@@ -122,15 +129,27 @@ export function processAppsData(
     const caskItem: CaskItem = {
       token: c.token,
       name: c.name && c.name[0] ? c.name[0] : c.token,
-      desc: c.desc,
-      homepage: c.homepage,
+      desc: (fontMeta?.desc && fontMeta.desc !== 'Font') ? fontMeta.desc : c.desc,
+      homepage: c.homepage || fontMeta?.homepage,
       app: appValue,
-      version: c.version,
+      version: c.version || fontMeta?.version,
       category: primaryCat,
       secondCategory: secondCategory || undefined,
       thirdCategory: thirdCategory || undefined,
       count: count,
-      added: addedDates[token] || null
+      added: addedDates[token] || null,
+      ...(fontMeta ? {
+        foundry: fontMeta.foundry,
+        designer: fontMeta.designer,
+        styles: fontMeta.styles,
+        stylesCount: fontMeta.stylesCount || (Array.isArray(fontMeta.styles) ? fontMeta.styles.length : undefined),
+        variants: fontMeta.variants,
+        isMonospace: fontMeta.isMonospace,
+        isVariable: fontMeta.isVariable,
+        glyphCount: fontMeta.glyphCount,
+        fontLicense: fontMeta.license,
+        fontFormat: fontMeta.format,
+      } : {})
     };
 
     if (iconTokensSet.has(token)) {
@@ -174,7 +193,7 @@ export async function fetchCatalog({ onLog, signal }: FetchCatalogOptions = {}):
   onLog?.('==> Updating CaskFlow dates...');
   const addedRaw = await downloadJson('https://github.com/alielsokary/CaskFlow/releases/latest/download/added_dates.json', path.join(FETCH_DIR, 'added_dates.json'), signal);
 
-  let fontsRaw: Record<string, string> = {};
+  let fontsRaw: Record<string, any> = {};
   const localFontsFile = path.join(__dirname, '../../../data/fonts.json');
   const packagedFontsFile = path.join(process.resourcesPath || '', 'data', 'fonts.json');
   if (fs.existsSync(localFontsFile)) {

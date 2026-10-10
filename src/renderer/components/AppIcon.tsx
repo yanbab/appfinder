@@ -30,12 +30,12 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
   const [loaded, setLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  const currentSizeClass = sizeClasses[size] || sizeClasses.md;
   const name = item?.name || item?.token || "";
   const token = item?.token || "";
   const isFont = Boolean(item?.category === 'font' || (token && token.startsWith('font-')));
   const isService = Boolean(item?.category === 'services');
   const isInstalled = useAppStore((s) => Boolean(token && s.installed.includes(token)));
+  const currentSizeClass = isFont ? (sizeClasses['128'] || "size-32") : (sizeClasses[size] || sizeClasses.md);
 
   const SERVICE_ICONS: Record<string, string> = {
     database: 'cylinder',
@@ -62,7 +62,6 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
   const activeIconUrl = item?.iconUrl || fontThumbnailUrl;
   const hasIcon = Boolean(activeIconUrl && !hasError);
 
-  const isLargeFont = isFont && ['128', 'hero', 'xl', '2xl', 'grid', 'tile', 'lg'].includes(size);
   const isEmojiOrColorFont = isFont && (
     Boolean((item as any)?.isColorFont) ||
     token.toLowerCase().includes('emoji') ||
@@ -77,34 +76,32 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
       style={isFont && !isInstalled ? { opacity: 0.85 } : undefined}
       className={cn(
         "relative shrink-0 select-none overflow-hidden flex items-center justify-center [container-type:inline-size]",
-        isService
+        hasIcon
+          ? "bg-transparent dark:bg-transparent ring-0 border-0 shadow-none"
+          : isService
           ? "bg-muted/60 dark:bg-muted/40 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs"
+          : isFont
+          ? "bg-transparent dark:bg-transparent shadow-none ring-0 border-0 rounded-none"
           : "bg-neutral-100 dark:bg-neutral-800/90 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs",
-        currentSizeClass,
-        className,
-        isFont && "bg-transparent dark:bg-transparent shadow-none ring-0 border-0 rounded-none"
+        isFont ? "size-32 w-32 h-32" : currentSizeClass,
+        className
       )}
     >
       {hasIcon && activeIconUrl && (
-        <>
-          {!loaded && !isFont && (
-            <div className="absolute inset-0 bg-muted/60 animate-pulse rounded-[inherit]" />
+        <img
+          src={activeIconUrl}
+          alt={name}
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
+          className={cn(
+            "w-full h-full object-contain",
+            isFont ? (isEmojiOrColorFont ? "rounded-none" : "dark:invert rounded-none") : "rounded-[inherit]",
+            loaded ? "block" : "invisible"
           )}
-          <img
-            src={activeIconUrl}
-            alt={name}
-            loading="lazy"
-            decoding="async"
-            fetchPriority="low"
-            className={cn(
-              "w-full h-full object-contain",
-              isFont ? (isEmojiOrColorFont ? "rounded-none" : "dark:invert rounded-none") : "absolute inset-0 rounded-[inherit]",
-              loaded ? "block" : "invisible"
-            )}
-            onLoad={() => setLoaded(true)}
-            onError={() => setHasError(true)}
-          />
-        </>
+          onLoad={() => setLoaded(true)}
+          onError={() => setHasError(true)}
+        />
       )}
 
       {(!hasIcon || hasError) && (

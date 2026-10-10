@@ -104,6 +104,39 @@ test('fetcher.processAppsData transforms raw casks and metadata correctly', () =
   const font = result.find(c => c.token === 'font-test');
   assert.equal(font.category, 'font');
   assert.equal(font.desc, 'Font');
+
+  // Test with rich font metadata object
+  const mockFontsRaw = {
+    'font-test': {
+      file: '~/Library/Fonts/TestFont-Regular.otf',
+      family: 'Test Font',
+      foundry: 'Test Foundry',
+      designer: 'Jane Doe',
+      desc: 'Clean geometric font',
+      styles: ['Regular', 'Bold', 'Italic'],
+      stylesCount: 3,
+      variants: ['Regular', 'Bold', 'Italic'],
+      isMonospace: true,
+      isVariable: false,
+      glyphCount: 500,
+      license: 'OFL-1.1',
+      format: 'otf'
+    }
+  };
+
+  const richResult = processAppsData(mockCasks, mockCategories, mockDownloads, mockAdded, mockFontsRaw);
+  const richFont = richResult.find(c => c.token === 'font-test');
+  assert.equal(richFont.app, '~/Library/Fonts/TestFont-Regular.otf');
+  assert.equal(richFont.foundry, 'Test Foundry');
+  assert.equal(richFont.designer, 'Jane Doe');
+  assert.equal(richFont.desc, 'Clean geometric font');
+  assert.equal(richFont.stylesCount, 3);
+  assert.deepEqual(richFont.styles, ['Regular', 'Bold', 'Italic']);
+  assert.equal(richFont.isMonospace, true);
+  assert.equal(richFont.isVariable, false);
+  assert.equal(richFont.glyphCount, 500);
+  assert.equal(richFont.fontLicense, 'OFL-1.1');
+  assert.equal(richFont.fontFormat, 'otf');
 });
 
 test('brew.getApps includes services and getCategories includes services category', () => {

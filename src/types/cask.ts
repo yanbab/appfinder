@@ -15,6 +15,18 @@ export interface CaskItem {
   icon?: string | boolean;
   iconUrl?: string;
 
+  // Font specific metadata
+  foundry?: string;
+  designer?: string;
+  styles?: string[];
+  stylesCount?: number;
+  variants?: string[];
+  isMonospace?: boolean;
+  isVariable?: boolean;
+  glyphCount?: number;
+  fontLicense?: string;
+  fontFormat?: string;
+
   // Runtime / Status fields
   installed?: boolean;
   installedVersion?: string;

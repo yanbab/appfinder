@@ -42,7 +42,7 @@ export function AppCard({ item, className }: AppCardProps) {
       className={`app-card relative flex items-center justify-between ${className || ''}`}
     >
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <AppIcon item={item} size="grid" className="size-14 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
+        <AppIcon item={item} size="64" className="size-16 rounded-[var(--radius-card)] shrink-0" />
         <div className="min-w-0 flex-1 flex flex-col justify-center">
           <h3 className="font-semibold text-[13px] text-foreground truncate leading-snug">
             {name}

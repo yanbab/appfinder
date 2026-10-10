@@ -3,8 +3,7 @@ import type { CaskItem } from '@/types';
 import { useShellStore } from '@/stores';
 import { useAppItemState } from '@/hooks/useAppItemState';
 import { Card } from '../../Card';
-import { Button } from '../../Button';
-import { ShellIcon } from '../../ShellIcon';
+import { AppButtons } from '../../AppButtons';
 import { AppIcon } from '../../AppIcon';
 import { getAppName } from '@/hooks/utils';
 
@@ -16,8 +15,7 @@ export interface FontTileProps {
 export function FontTile({ item, className }: FontTileProps) {
   const openAppInfo = useShellStore((s) => s.openAppInfo);
   const selectedApp = useShellStore((s) => s.selectedApp);
-  const __ = useShellStore((s) => s.__);
-  const { isRunning, isInstalled, install, open } = useAppItemState(item);
+  const { isInstalled } = useAppItemState(item);
 
   const isSelected = selectedApp?.token === item.token;
   const name = getAppName(item);
@@ -37,63 +35,30 @@ export function FontTile({ item, className }: FontTileProps) {
           openAppInfo(item);
         }
       }}
-      className={`app-card font-tile relative flex flex-col items-center justify-between aspect-square p-3 group select-none ${className || ''}`.trim()}
+      className={`app-card font-tile relative flex flex-col items-center justify-between aspect-square p-2 group select-none ${className || ''}`.trim()}
     >
-      {/* Top action badge */}
-      <div className="w-full flex items-center justify-end h-6">
-        <div
-          className="shrink-0"
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          {isRunning ? (
-            <ShellIcon name="spinner" className="size-4 animate-spin text-muted-foreground" />
-          ) : isInstalled ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                open();
-              }}
-              icon={<ShellIcon name="play.fill" className="size-3 text-muted-foreground hover:text-foreground" />}
-              title={__('Open in Font Book')}
-            />
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                install();
-              }}
-              icon={<ShellIcon name="arrow.down.to.line" className="size-3.5 text-muted-foreground hover:text-foreground" />}
-              title={__('Install')}
-            />
-          )}
-        </div>
+      {/* Top action button (same level as top of icon) */}
+      <div className="absolute top-2 right-2 z-10">
+        <AppButtons item={item} variant="icon" />
       </div>
 
-      {/* Large visual preview in center (Font Book style) */}
+      {/* Visual preview at top (fixed 128x128px, same level as button) */}
       <div
-        className="flex-1 w-full flex items-center justify-center p-0 min-h-0 overflow-hidden transition-opacity"
+        className="w-full flex items-center justify-center p-0 shrink-0 transition-opacity"
         style={!isInstalled ? { opacity: 0.85 } : undefined}
       >
         <AppIcon
           item={item}
           size="128"
-          className="w-full h-full object-contain shadow-none border-0 bg-transparent dark:bg-transparent"
+          className="size-32 w-32 h-32 shrink-0 object-contain shadow-none border-0 bg-transparent dark:bg-transparent"
         />
       </div>
 
-      {/* Font Name & Info at bottom */}
-      <div className="w-full text-center mt-1">
-        <h3 className="font-semibold text-xs text-foreground truncate leading-tight">
+      {/* Font Name moved up directly under icon (secondary text) */}
+      <div className="w-full text-center -mt-2 pb-0.5 shrink-0 px-1">
+        <span className="text-[11px] font-normal text-muted-foreground truncate block leading-tight">
           {name}
-        </h3>
-        <p className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
-          {isInstalled ? __('Installed') : __('Font')}
-        </p>
+        </span>
       </div>
     </Card>
   );

@@ -147,41 +147,38 @@ export function setupApplicationMenu(): void {
       label: __('View'),
       submenu: [
         {
-          id: 'view-as-icons',
-          label: __('As grid'),
-          enabled: false,
-          accelerator: 'CmdOrCtrl+1',
-          click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'grid' })
-        },
-        {
-          id: 'view-as-list',
-          label: __('As list'),
-          enabled: false,
-          accelerator: 'CmdOrCtrl+2',
-          click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'list' })
-        },
-        { type: 'separator' },
-        {
           label: __('Explore'),
-          accelerator: 'Option+Cmd+1',
+          accelerator: 'CmdOrCtrl+1',
           click: () => sendToShell('menu:click', { command: 'select-tab', value: 'discover' })
         },
         {
           label: __('All Apps'),
-          accelerator: 'Option+Cmd+2',
+          accelerator: 'CmdOrCtrl+2',
           click: () => sendToShell('menu:click', { command: 'select-tab', value: 'all-apps' })
         },
         {
           label: __('Installed'),
-          accelerator: 'Option+Cmd+3',
+          accelerator: 'CmdOrCtrl+3',
           click: () => sendToShell('menu:click', { command: 'select-tab', value: 'installed' })
         },
         {
           label: __('Updates'),
-          accelerator: 'Option+Cmd+4',
+          accelerator: 'CmdOrCtrl+4',
           click: () => sendToShell('menu:click', { command: 'select-tab', value: 'updates' })
         },
         { type: 'separator' },
+        {
+          id: 'view-as-icons',
+          label: __('View as grid'),
+          enabled: false,
+          click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'grid' })
+        },
+        {
+          id: 'view-as-list',
+          label: __('View as list'),
+          enabled: false,
+          click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'list' })
+        },
         {
           id: 'view-order-by',
           label: __('Order By'),
@@ -235,15 +232,7 @@ export function setupApplicationMenu(): void {
         { type: 'separator' },
         { role: 'reload', label: __('Reload') },
         { role: 'forceReload', label: __('Force Reload') },
-        { role: 'toggleDevTools', label: __('Toggle Developer Tools') },
-        { type: 'separator' },
-        {
-          label: __('Restart'),
-          click: () => {
-            app.relaunch();
-            app.exit(0);
-          }
-        }
+        { role: 'toggleDevTools', label: __('Toggle Developer Tools') }
       ]
     },
     { role: 'windowMenu', label: __('Window') },
