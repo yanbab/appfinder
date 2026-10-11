@@ -79,7 +79,8 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
     let title = action === 'install' ? `Installing ${name}...`
       : action === 'uninstall' ? `Deleting ${name}...`
         : action === 'upgrade' ? `Updating ${name}...`
-          : `${action}...`;
+          : action === 'reinstall' ? `Reinstalling ${name}...`
+            : `${action}...`;
 
     if (remainingCount !== null && remainingCount > 0) {
       title = `${action === 'upgrade' ? 'Updating' : 'Installing'} ${name}... (${remainingCount} remaining)`;
@@ -272,7 +273,7 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
         });
       }
       if (activeTaskToken) {
-        if (activeTaskAction === 'install') {
+        if (activeTaskAction === 'install' || activeTaskAction === 'reinstall') {
           useAppStore.getState().optimisticInstall(activeTaskToken);
         } else if (activeTaskAction === 'uninstall') {
           useAppStore.getState().optimisticUninstall(activeTaskToken);
@@ -295,7 +296,7 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
         const errDetail: string = typeof rawErr === 'object' && rawErr !== null
           ? (rawErr.details || rawErr.title || JSON.stringify(rawErr))
           : String(rawErr || __('No error details recorded.'));
-        const alertTitle = __(`%s ${activeTaskAction === 'install' ? 'installation' : activeTaskAction === 'uninstall' ? 'removal' : activeTaskAction === 'upgrade' ? 'update' : 'cleanup'} failed`, activeTaskToken || 'Task');
+        const alertTitle = __(`%s ${activeTaskAction === 'install' ? 'installation' : activeTaskAction === 'reinstall' ? 'reinstallation' : activeTaskAction === 'uninstall' ? 'removal' : activeTaskAction === 'upgrade' ? 'update' : 'cleanup'} failed`, activeTaskToken || 'Task');
         window.ipc?.showErrorDialog?.(alertTitle, errDetail);
       }
       set({ drawerTitle: '' });

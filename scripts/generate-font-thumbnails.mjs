@@ -206,6 +206,7 @@ function extractStyleNamesFromFiles(filePaths, fallbackSubfamily = 'Regular') {
   const styles = new Set();
   for (const fp of filePaths) {
     const filename = path.basename(fp, path.extname(fp));
+    if (filename.toLowerCase() === 'font') continue;
     const match = filename.match(/[-_ ]([A-Za-z0-9]+(?:[A-Za-z0-9]+)?)$/);
     if (match && match[1]) {
       let styleName = match[1]
@@ -213,7 +214,7 @@ function extractStyleNamesFromFiles(filePaths, fallbackSubfamily = 'Regular') {
         .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
         .trim();
       styles.add(styleName);
-    } else {
+    } else if (filename.toLowerCase() !== fallbackSubfamily.toLowerCase()) {
       styles.add(filename);
     }
   }
@@ -261,17 +262,21 @@ function extractFontMetadata(font, cask, allFontFiles = [], primaryFilePath = ''
   const ext = path.extname(primaryFilePath).replace(/^\./, '').toLowerCase() || (font.tables?.cff ? 'otf' : 'ttf');
 
   // Styles & Variants
-  const styles = extractStyleNamesFromFiles(allFontFiles, subfamily);
+  const extractedStyles = extractStyleNamesFromFiles(allFontFiles, subfamily);
+  const styles = extractedStyles.filter((s) => s.toLowerCase() !== 'font');
+  if (styles.length === 0 && subfamily) {
+    styles.push(subfamily);
+  }
   if (font.tables?.fvar?.instances && font.tables.fvar.instances.length > 0) {
     for (const inst of font.tables.fvar.instances) {
       const instName = inst.name?.en || (typeof inst.name === 'string' ? inst.name : null);
-      if (instName && !styles.includes(instName)) {
+      if (instName && !styles.includes(instName) && instName.toLowerCase() !== 'font') {
         styles.push(instName);
       }
     }
   }
 
-  const fontFileName = path.basename(primaryFilePath);
+  const fontFileName = (cask.app ? path.basename(cask.app) : null) || path.basename(primaryFilePath);
   const fontPath = `~/Library/Fonts/${fontFileName}`;
 
   const meta = {
@@ -329,29 +334,48 @@ function findLocalFontFile(token, name) {
     }
   }
 
-  const cleanToken = token.replace(/^font-/, '').toLowerCase();
-  const normalizedToken = cleanToken.replace(/[^a-z0-9]/g, '');
-  const normalizedName = name ? name.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
-  const searchDirs = [
-    path.join(os.homedir(), 'Library', 'Fonts'),
-    '/Library/Fonts',
-    '/System/Library/Fonts',
-    '/System/Library/Fonts/Supplemental',
+  // 1. Check Caskroom directories (exact cask installs - guaranteed accurate)
+  const caskDirs = [
     path.join('/opt/homebrew/Caskroom', token),
     path.join('/usr/local/Caskroom', token),
   ];
-
-  for (const dir of searchDirs) {
+  for (const dir of caskDirs) {
     if (!fs.existsSync(dir)) continue;
-
     try {
       const files = fs.readdirSync(dir, { recursive: true });
       const fontFiles = files
         .map((f) => (path.isAbsolute(String(f)) ? String(f) : path.join(dir, String(f))))
+        .filter((f) => /\.(ttf|otf|ttc|otc)$/i.test(path.basename(f)) && fs.existsSync(f) && fs.statSync(f).isFile());
+      if (fontFiles.length > 0) {
+        const preferred = fontFiles.find((f) => {
+          const s = path.basename(f).toLowerCase();
+          return !s.includes('italic') && !s.includes('oblique') && !s.includes('bold');
+        }) || fontFiles[0];
+        return { primary: preferred, all: fontFiles };
+      }
+    } catch (_) { }
+  }
+
+  // 2. Check installed font directories: ~/Library/Fonts and /Library/Fonts
+  // Strictly match prefix or exact name to avoid false positives (e.g. 'go' matching 'Chicago')
+  const cleanToken = token.replace(/^font-/, '').toLowerCase();
+  const normalizedToken = cleanToken.replace(/[^a-z0-9]/g, '');
+  const normalizedName = name ? name.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+  const userFontDirs = [
+    path.join(os.homedir(), 'Library', 'Fonts'),
+    '/Library/Fonts',
+  ];
+
+  for (const dir of userFontDirs) {
+    if (!fs.existsSync(dir)) continue;
+    try {
+      const files = fs.readdirSync(dir);
+      const fontFiles = files
+        .map((f) => path.join(dir, f))
         .filter((f) => {
           const s = path.basename(f).toLowerCase();
           const norm = s.replace(/[^a-z0-9]/g, '');
-          const isMatch = norm.includes(normalizedToken) || (normalizedName && norm.includes(normalizedName));
+          const isMatch = norm.startsWith(normalizedToken) || (normalizedName && norm.startsWith(normalizedName));
           return isMatch && /\.(ttf|otf|ttc|otc)$/i.test(s) && fs.existsSync(f) && fs.statSync(f).isFile();
         });
 
@@ -360,11 +384,11 @@ function findLocalFontFile(token, name) {
           const s = path.basename(f).toLowerCase();
           return !s.includes('italic') && !s.includes('oblique') && !s.includes('bold') && !s.includes('light') && !s.includes('thin');
         }) || fontFiles[0];
-
         return { primary: preferred, all: fontFiles };
       }
     } catch (_) { }
   }
+
   return null;
 }
 
@@ -485,7 +509,8 @@ async function downloadAndExtractFont(cask) {
 
   if (isDirectFont) {
     const ext = path.extname(cleanUrl) || '.ttf';
-    const fontOut = path.join(targetDir, `font${ext}`);
+    const baseName = path.basename(cleanUrl) || `${caskToken}${ext}`;
+    const fontOut = path.join(targetDir, baseName);
     fs.renameSync(archivePath, fontOut);
     return { primary: fontOut, all: [fontOut] };
   } else if (isZip) {

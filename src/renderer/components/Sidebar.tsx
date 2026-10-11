@@ -20,7 +20,13 @@ export function Sidebar(): React.JSX.Element {
 
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const allAppsCount = useMemo(() => items.filter((c) => c.category !== 'font').length, [items]);
+  const allAppsCount = useMemo(() => {
+    let count = 0;
+    for (const c of items) {
+      if (c.category !== 'font') count++;
+    }
+    return count;
+  }, [items]);
   const updatesCount = useMemo(() => Object.keys(outdatedMap).length, [outdatedMap]);
   const filteredCount = useMemo(() => {
     if (!search || !search.trim()) return 0;

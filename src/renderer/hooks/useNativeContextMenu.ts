@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useAppStore, useTermStore } from '@/stores';
+import { useAppStore, useShellStore, useTermStore } from '@/stores';
 import { getAppName } from '@/hooks/utils';
 import type { CaskItem } from '@/types';
 
@@ -7,6 +7,8 @@ export function useNativeContextMenu() {
   const items = useAppStore((s) => s.items);
   const installed = useAppStore((s) => s.installed);
   const outdatedMap = useAppStore((s) => s.outdatedMap);
+  const serviceStatusMap = useAppStore((s) => s.serviceStatusMap);
+  const selectedApp = useShellStore((s) => s.selectedApp);
   const runningTasks = useTermStore((s) => s.runningTasks);
   const startAction = useTermStore((s) => s.startAction);
 
@@ -37,36 +39,44 @@ export function useNativeContextMenu() {
       } else if (link) {
         type = 'link';
         linkUrl = (link as HTMLAnchorElement).href || link.getAttribute('data-external-url') || (link as any).dataset?.externalUrl || null;
-      } else if (targetText.length > 0) {
+      } else if (selectedText.length > 0) {
         type = 'text';
-      } else if (selectableEl) {
-        type = 'text';
-        targetText = selectableEl.textContent?.trim() || '';
-      } else if (inInfoDrawer && !card) {
-        type = 'other';
-      } else if (card) {
-        const token = card.dataset.token || card.getAttribute('data-token');
+      } else if (card || (inInfoDrawer && selectedApp)) {
+        const token = card?.dataset?.token || card?.getAttribute('data-token') || selectedApp?.token;
         if (token) {
           type = 'app';
+          const item = items.find((i: CaskItem) => i.token === token) || (selectedApp?.token === token ? selectedApp : null);
           const isInstalled = installed.includes(token);
           const isOutdated = Boolean(outdatedMap[token]);
           const runningTaskAction = runningTasks[token];
           const isRunning = Boolean(runningTaskAction);
           const runningAction = runningTaskAction || undefined;
-          const item = items.find((i: CaskItem) => i.token === token);
           const name = item ? getAppName(item) : token;
+          const category = item?.category;
+          const isFont = Boolean(category === 'font' || token.startsWith('font-'));
+          const isService = Boolean(category === 'services');
+          const isServiceRunning = serviceStatusMap[token]?.status === 'started';
+          const canOpen = Boolean(item?.app);
 
           appInfo = {
             token,
             name,
             app: item ? item.app : null,
             homepage: item ? item.homepage : null,
+            category,
             isInstalled,
             isOutdated,
             isRunning,
             runningAction,
+            isFont,
+            isService,
+            isServiceRunning,
+            canOpen,
           };
         }
+      } else if (selectableEl) {
+        type = 'text';
+        targetText = selectableEl.textContent?.trim() || '';
       }
 
       if (window.ipc?.showContextMenu) {
@@ -83,13 +93,40 @@ export function useNativeContextMenu() {
 
     window.addEventListener('contextmenu', handleContextMenu);
     return () => window.removeEventListener('contextmenu', handleContextMenu);
-  }, [items, installed, outdatedMap, runningTasks]);
+  }, [items, installed, outdatedMap, runningTasks, serviceStatusMap, selectedApp]);
 
   useEffect(() => {
     if (window.ipc?.on) {
       const unsub = window.ipc.on('context-menu:action', async (data: any) => {
         const { action, token } = typeof data === 'object' && data ? data : { action: data, token: undefined };
-        if (action && token && startAction) {
+        if (!action || !token) return;
+
+        if (action === 'info') {
+          useShellStore.getState().openAppInfo(token);
+          return;
+        }
+
+        if (action === 'reveal') {
+          const item = useAppStore.getState().items.find((i: CaskItem) => i.token === token);
+          window.ipc?.revealApp?.(token, item?.app || undefined);
+          return;
+        }
+
+        if (action === 'cancel') {
+          useTermStore.getState().cancelAction();
+          return;
+        }
+
+        if (action.startsWith('service-')) {
+          const subAction = action.replace('service-', '');
+          await window.ipc?.openApp?.(token, `service:${subAction}:${token}`);
+          setTimeout(() => {
+            useAppStore.getState().refreshServiceStatuses();
+          }, 500);
+          return;
+        }
+
+        if (startAction) {
           await startAction(action, token);
         }
       });
@@ -99,3 +136,4 @@ export function useNativeContextMenu() {
 }
 
 export default useNativeContextMenu;
+

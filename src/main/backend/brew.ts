@@ -489,11 +489,23 @@ export async function launch(appName: string, token?: string): Promise<{ success
     let target = (appName || '').trim();
     const tokenStr = (token || '').trim();
 
-    // 1. Service start/stop toggle
+    // 1. Service start/stop/restart
     if (target.startsWith('service:') || tokenStr.startsWith('service:')) {
-      const serviceName = (target.startsWith('service:') ? target : tokenStr).replace(/^service:/, '');
+      let raw = (target.startsWith('service:') ? target : tokenStr).replace(/^service:/, '');
+      let explicitAction: string | null = null;
+      if (raw.startsWith('start:')) {
+        explicitAction = 'start';
+        raw = raw.replace(/^start:/, '');
+      } else if (raw.startsWith('stop:')) {
+        explicitAction = 'stop';
+        raw = raw.replace(/^stop:/, '');
+      } else if (raw.startsWith('restart:')) {
+        explicitAction = 'restart';
+        raw = raw.replace(/^restart:/, '');
+      }
+      const serviceName = raw;
       const running = await isServiceRunning(serviceName);
-      const action = running ? 'stop' : 'start';
+      const action = explicitAction || (running ? 'stop' : 'start');
       console.log(`[LAUNCH COMMAND]: brew services ${action} ${serviceName}`);
       await runBrew(['services', action, serviceName]);
       return { success: true };
@@ -538,6 +550,10 @@ const ACTION_ARGS: Record<string, (t: string, zap?: boolean) => { command: strin
     command: getBrewPath(),
     args: ['install', t]
   }),
+  reinstall: (t) => ({
+    command: getBrewPath(),
+    args: ['reinstall', t]
+  }),
   upgrade: (t) => ({
     command: getBrewPath(),
     args: ['upgrade', t]
@@ -579,7 +595,7 @@ export function runAction(data: any, callbacks: any = {}): void {
     return;
   }
 
-  if (['install', 'upgrade', 'uninstall'].includes(action)) {
+  if (['install', 'reinstall', 'upgrade', 'uninstall'].includes(action)) {
     if (!token || typeof token !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_\-\.\@\/]*$/.test(token)) {
       onComplete?.({ taskId, code: 1, error: 'Invalid cask token format' });
       return;

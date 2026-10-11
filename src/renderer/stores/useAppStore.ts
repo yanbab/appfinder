@@ -158,29 +158,39 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   },
 
   optimisticInstall: (token: string) => {
-    set((state) => ({
-      installed: state.installed.includes(token) ? state.installed : [...state.installed, token],
-      outdatedMap: Object.fromEntries(Object.entries(state.outdatedMap).filter(([k]) => k !== token)),
-    }));
+    set((state) => {
+      const nextOutdated = { ...state.outdatedMap };
+      delete nextOutdated[token];
+      return {
+        installed: state.installed.includes(token) ? state.installed : [...state.installed, token],
+        outdatedMap: nextOutdated,
+      };
+    });
   },
 
   optimisticUninstall: (token: string) => {
     set((state) => {
       const nextVersions = { ...state.installedVersions };
       delete nextVersions[token];
+      const nextOutdated = { ...state.outdatedMap };
+      delete nextOutdated[token];
       return {
         installed: state.installed.filter((t) => t !== token),
         installedVersions: nextVersions,
-        outdatedMap: Object.fromEntries(Object.entries(state.outdatedMap).filter(([k]) => k !== token)),
+        outdatedMap: nextOutdated,
       };
     });
   },
 
   optimisticUpgrade: (token: string) => {
-    set((state) => ({
-      installed: state.installed.includes(token) ? state.installed : [...state.installed, token],
-      outdatedMap: Object.fromEntries(Object.entries(state.outdatedMap).filter(([k]) => k !== token)),
-    }));
+    set((state) => {
+      const nextOutdated = { ...state.outdatedMap };
+      delete nextOutdated[token];
+      return {
+        installed: state.installed.includes(token) ? state.installed : [...state.installed, token],
+        outdatedMap: nextOutdated,
+      };
+    });
   },
 }));
 
@@ -189,9 +199,27 @@ export type FilterableAppState = Pick<
   'items' | 'search' | 'order' | 'installed' | 'outdatedMap' | 'categories'
 >;
 
+let lastFilterState: FilterableAppState | null = null;
+let lastFilterTab: string | null = null;
+let lastFilterResult: CaskItem[] = [];
+
 // Memoized/Pure selector helpers
 export function selectFilteredItems(state: FilterableAppState, currentTab: string): CaskItem[] {
   const { items, search, order, installed, outdatedMap, categories } = state;
+
+  if (
+    lastFilterState &&
+    lastFilterTab === currentTab &&
+    lastFilterState.items === items &&
+    lastFilterState.search === search &&
+    lastFilterState.order === order &&
+    lastFilterState.installed === installed &&
+    lastFilterState.outdatedMap === outdatedMap &&
+    lastFilterState.categories === categories
+  ) {
+    return lastFilterResult;
+  }
+
   let list: CaskItem[] = [];
 
   if (currentTab === 'discover') {
@@ -199,7 +227,8 @@ export function selectFilteredItems(state: FilterableAppState, currentTab: strin
   } else if (currentTab === 'all-apps') {
     list = items.filter(c => c.category !== 'font');
   } else if (currentTab === 'installed') {
-    list = items.filter(c => installed.includes(c.token));
+    const installedSet = new Set(installed);
+    list = items.filter(c => installedSet.has(c.token));
   } else if (currentTab === 'updates') {
     list = items.filter(c => outdatedMap[c.token] !== undefined);
   } else {
@@ -245,6 +274,10 @@ export function selectFilteredItems(state: FilterableAppState, currentTab: strin
     }
   }
 
+  lastFilterState = { items, search, order, installed, outdatedMap, categories };
+  lastFilterTab = currentTab;
+  lastFilterResult = list;
+
   return list;
 }
 
@@ -252,7 +285,12 @@ export function selectFeaturedItems(items: CaskItem[]): CaskItem[] {
   return items.filter(c => FEATURED_TOKENS.has(c.token));
 }
 
+let lastTopItemsRef: CaskItem[] | null = null;
+let lastTopResult: CaskItem[] = [];
+
 export function selectTopInstalledItems(items: CaskItem[]): CaskItem[] {
+  if (items === lastTopItemsRef) return lastTopResult;
+
   const sorted = items
     .filter(c => (c.count || 0) > 0 && c.iconUrl && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
     .sort((a, b) => (b.count || 0) - (a.count || 0));
@@ -267,10 +305,18 @@ export function selectTopInstalledItems(items: CaskItem[]): CaskItem[] {
       if (top.length >= 6) break;
     }
   }
+
+  lastTopItemsRef = items;
+  lastTopResult = top;
   return top;
 }
 
+let lastRecentItemsRef: CaskItem[] | null = null;
+let lastRecentResult: CaskItem[] = [];
+
 export function selectRecentItems(items: CaskItem[]): CaskItem[] {
+  if (items === lastRecentItemsRef) return lastRecentResult;
+
   const sorted = items
     .filter(c => c.added && c.iconUrl && c.category !== 'font' && !FEATURED_TOKENS.has(c.token))
     .sort((a, b) => (b.added || '').localeCompare(a.added || ''));
@@ -285,5 +331,8 @@ export function selectRecentItems(items: CaskItem[]): CaskItem[] {
       if (top.length >= 6) break;
     }
   }
+
+  lastRecentItemsRef = items;
+  lastRecentResult = top;
   return top;
 }

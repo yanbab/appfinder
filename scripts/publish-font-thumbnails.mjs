@@ -23,9 +23,9 @@ function run(cmd, options = {}) {
   return execSync(cmd, { cwd: ROOT_DIR, encoding: 'utf8', stdio: options.silent ? 'pipe' : 'inherit', ...options });
 }
 
-function runOutput(cmd) {
+function runOutput(cmd, options = {}) {
   try {
-    return execSync(cmd, { cwd: ROOT_DIR, encoding: 'utf8' }).trim();
+    return execSync(cmd, { cwd: ROOT_DIR, encoding: 'utf8', ...options }).trim();
   } catch (e) {
     return '';
   }
@@ -70,12 +70,15 @@ async function main() {
   try {
     if (fs.existsSync(tempIndex)) fs.unlinkSync(tempIndex);
 
-    // Force add all docs/ files (including thumbnails and previews) into temporary index
-    run('git add -f docs/', { env: { ...process.env, GIT_INDEX_FILE: tempIndex } });
+    const env = { ...process.env, GIT_INDEX_FILE: tempIndex };
+    // Add contents of docs/ at root of gh-pages branch (e.g. font-thumbnails/, font-previews/)
+    run('git --work-tree=docs add -f .', { env });
+    // Also add under docs/ directory for fallback if gh-pages serves from docs/
+    run('git add -f docs/', { env });
 
-    const treeSha = runOutput('git write-tree', { env: { ...process.env, GIT_INDEX_FILE: tempIndex } });
+    const treeSha = runOutput('git write-tree', { env });
     if (treeSha) {
-      const commitSha = runOutput(`git commit-tree ${treeSha} -m "chore: deploy font thumbnails and previews to gh-pages [skip ci]"`);
+      const commitSha = runOutput(`git commit-tree ${treeSha} -m "chore: deploy font thumbnails and previews to gh-pages [skip ci]"`, { env });
       if (commitSha) {
         run(`git push origin ${commitSha}:refs/heads/gh-pages --force`);
         console.log('✅ gh-pages branch updated with all font assets.');

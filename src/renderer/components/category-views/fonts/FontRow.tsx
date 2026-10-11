@@ -40,18 +40,17 @@ export function FontRow({ item, className }: FontRowProps) {
           openAppInfo(item);
         }
       }}
-      className={`app-card app-row font-row group flex items-center justify-between px-3 py-2 bg-card text-card-foreground select-none cursor-default focus:outline-none focus-visible:bg-[var(--card-active-bg)] transition-colors ${
-        isSelected ? 'bg-[var(--card-active-bg)]' : ''
-      } ${className || ''}`.trim()}
+      className={`app-card app-row font-row group flex items-center justify-between px-3 py-2 bg-card text-card-foreground select-none cursor-default focus:outline-none focus-visible:bg-[var(--card-active-bg)] transition-colors ${isSelected ? 'bg-[var(--card-active-bg)]' : ''
+        } ${className || ''}`.trim()}
     >
-      {/* Left / Center: Font Preview (64px height) */}
-      <div className="flex items-center min-w-0 flex-1 mr-4 overflow-hidden h-16">
+      {/* Left / Center: Font Preview (always 64px height, overflow:hidden if too large) */}
+      <div className="flex items-center min-w-0 flex-1 mr-4 overflow-hidden h-8">
         <img
           src={previewUrl}
           alt={name}
           loading="lazy"
           decoding="async"
-          className="h-16 max-h-16 object-contain select-none pointer-events-none dark:invert shrink-0"
+          className="h-8 min-h-8 max-h-8 w-auto max-w-none object-left select-none pointer-events-none dark:invert shrink-0"
         />
       </div>
 

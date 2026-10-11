@@ -173,6 +173,7 @@ export function InfoPanel() {
         className="info-panel-dialog animate-in slide-in-from-right duration-200"
         style={{ backgroundColor: 'var(--background)' }}
         data-drawer-content="true"
+        data-token={selectedApp?.token}
       >
         {/* Header with Close Button on the Left */}
         <div className="app-header h-[52px] shrink-0 px-3 border-b border-border flex items-center justify-between select-none [-webkit-app-region:drag]">
