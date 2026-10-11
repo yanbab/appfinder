@@ -46,24 +46,28 @@
     "version": "Version 2.502; ttfautohint (v1.8.4.16-eb64);Nerd Fonts 3.5.1"
   },
   "font-3270": {
-    "file": "~/Library/Fonts/3270-Regular.otf",
-    "family": "IBM 3270",
+    "file": "~/Library/Fonts/3270NerdFont-Condensed.ttf",
+    "family": "3270 Nerd Font Cond",
     "desc": "Monospace • 3 styles",
     "homepage": "https://github.com/rbanffy/3270font",
     "styles": [
-      "Regular"
+      "Condensed",
+      "Regular",
+      "Semi Condensed"
     ],
-    "stylesCount": 1,
+    "stylesCount": 3,
     "variants": [
-      "Regular"
+      "Condensed",
+      "Regular",
+      "Semi Condensed"
     ],
     "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL",
     "licenseUrl": "https://scripts.sil.org/OFL",
     "isMonospace": true,
     "isVariable": false,
-    "glyphCount": 2224,
-    "format": "otf",
-    "version": "Version 3.0.1"
+    "glyphCount": 13170,
+    "format": "ttf",
+    "version": "Version 3.0.1;Nerd Fonts 3.5.1"
   },
   "font-3270-nerd-font": {
     "file": "~/Library/Fonts/3270NerdFont-Condensed.ttf",
@@ -346,10 +350,94 @@
     "format": "ttf",
     "version": "v2.2-2020-11"
   },
-  "font-abeezee": "~/Library/Fonts/font.ttf",
-  "font-abel": "~/Library/Fonts/font.ttf",
-  "font-abhaya-libre": "~/Library/Fonts/font.ttf",
-  "font-aboreto": "~/Library/Fonts/font.ttf",
+  "font-abeezee": {
+    "file": "~/Library/Fonts/font.ttf",
+    "family": "ABeeZee",
+    "foundry": "Anja Meiners",
+    "designer": "Anja Meiners",
+    "desc": "Sans serif • 2 styles",
+    "homepage": "https://fonts.google.com/specimen/ABeeZee",
+    "styles": [
+      "font"
+    ],
+    "stylesCount": 1,
+    "variants": [
+      "font"
+    ],
+    "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL",
+    "licenseUrl": "https://scripts.sil.org/OFL",
+    "isMonospace": false,
+    "isVariable": false,
+    "glyphCount": 268,
+    "format": "ttf",
+    "version": "Version 1.003; ttfautohint (v1.8.3)"
+  },
+  "font-abel": {
+    "file": "~/Library/Fonts/font.ttf",
+    "family": "Abel",
+    "foundry": "Matthew Desmond",
+    "designer": "Matthew Desmond",
+    "desc": "Sans serif • 1 style",
+    "homepage": "https://fonts.google.com/specimen/Abel",
+    "styles": [
+      "font"
+    ],
+    "stylesCount": 1,
+    "variants": [
+      "font"
+    ],
+    "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL",
+    "licenseUrl": "http://scripts.sil.org/OFL",
+    "isMonospace": false,
+    "isVariable": false,
+    "glyphCount": 259,
+    "format": "ttf",
+    "version": "Version 1.003"
+  },
+  "font-abhaya-libre": {
+    "file": "~/Library/Fonts/font.ttf",
+    "family": "Abhaya Libre Medium",
+    "foundry": "Mooniak",
+    "designer": "Pushpananda Ekanayake, Sol Matas, Pathum Egodawatta",
+    "desc": "Sans serif • 5 styles",
+    "homepage": "https://fonts.google.com/specimen/Abhaya+Libre",
+    "styles": [
+      "font"
+    ],
+    "stylesCount": 1,
+    "variants": [
+      "font"
+    ],
+    "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL",
+    "licenseUrl": "http://scripts.sil.org/OFL",
+    "isMonospace": false,
+    "isVariable": false,
+    "glyphCount": 943,
+    "format": "ttf",
+    "version": "Version 1.050 ; ttfautohint (v1.6)"
+  },
+  "font-aboreto": {
+    "file": "~/Library/Fonts/font.ttf",
+    "family": "Aboreto",
+    "foundry": "Dominik Jáger",
+    "designer": "Dominik Jáger",
+    "desc": "Sans serif • 1 style",
+    "homepage": "https://fonts.google.com/specimen/Aboreto",
+    "styles": [
+      "font"
+    ],
+    "stylesCount": 1,
+    "variants": [
+      "font"
+    ],
+    "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL",
+    "licenseUrl": "https://scripts.sil.org/OFL",
+    "isMonospace": false,
+    "isVariable": false,
+    "glyphCount": 349,
+    "format": "ttf",
+    "version": "Version 1.001; ttfautohint (v1.8.4.7-5d5b)"
+  },
   "font-aboriginal-sans": "~/Library/Fonts/AboriginalSansREGULAR.ttf",
   "font-aboriginal-serif": "~/Library/Fonts/AboriginalSerifREGULAR.ttf",
   "font-abril-fatface": "~/Library/Fonts/AbrilFatface-Regular.ttf",
