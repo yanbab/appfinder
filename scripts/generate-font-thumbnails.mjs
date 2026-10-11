@@ -41,9 +41,10 @@ const CACHE_DIR = path.join(os.tmpdir(), 'appfinder-font-cache');
 
 export const CONFIG = {
   CANVAS_SIZE: 256,         // Total output PNG width & height for thumbnails (in pixels)
-  PREVIEW_HEIGHT: 128,      // Total output PNG height for previews (in pixels)
   FONT_SIZE: 155,           // Inner font point size (controls the scale of "Aa")
-  PREVIEW_FONT_SIZE: 64,    // Base font point size for preview text
+  PREVIEW_FONT_SIZE: 72,    // Base font point size for preview text
+  PREVIEW_PADDING_Y: 8,     // Vertical padding on top and bottom of glyphs (in pixels)
+  PREVIEW_PADDING_X: 16,    // Horizontal padding on left and right of glyphs (in pixels)
   GLYPH_COLOR: '#000000',   // Glyph fill color (pure black)
   LETTER_SPACING_RATIO: 0.04, // Space between 'A' and 'a' relative to font units
   OPTICAL_Y_OFFSET: 0,      // Fine optical vertical adjustment (+ down, - up in px)
@@ -642,36 +643,68 @@ function getPreviewText(cask) {
 }
 
 /**
- * Renders preview PNG (128px high, dynamic width based on font name text)
+ * Safely generates vector path for text with fallback to glyph-by-glyph positioning
+ * if opentype.js throws on unsupported OpenType GSUB lookup features (e.g. coding ligatures).
+ */
+function getSafeTextPath(font, text, x = 0, y = 0, fontSize = 64) {
+  try {
+    return font.getPath(text, x, y, fontSize);
+  } catch (err) {
+    const path = new opentype.Path();
+    const unitsPerEm = font.unitsPerEm || 1000;
+    const scale = (1 / unitsPerEm) * fontSize;
+    let cursorX = x;
+
+    const glyphs = text.split('').map((c) => {
+      try {
+        return font.charToGlyph(c);
+      } catch (_) {
+        return null;
+      }
+    });
+
+    for (let i = 0; i < glyphs.length; i++) {
+      const glyph = glyphs[i];
+      if (!glyph) continue;
+      try {
+        const glyphPath = glyph.getPath(cursorX, y, fontSize);
+        path.commands.push(...glyphPath.commands);
+      } catch (_) { }
+      cursorX += (glyph.advanceWidth || unitsPerEm * 0.6) * scale;
+      if (i < glyphs.length - 1 && typeof font.getKerningValue === 'function' && glyphs[i + 1]) {
+        try {
+          const kerning = font.getKerningValue(glyph, glyphs[i + 1]);
+          cursorX += kerning * scale;
+        } catch (_) { }
+      }
+    }
+    return path;
+  }
+}
+
+/**
+ * Renders preview PNG tightly cropped to glyph bounding box with minimal top/bottom padding
  */
 async function renderFontPreviewPng(font, previewText, outputPngPath) {
-  const height = CONFIG.PREVIEW_HEIGHT; // 128px
-  let previewFontSize = CONFIG.PREVIEW_FONT_SIZE; // 64
+  const previewFontSize = CONFIG.PREVIEW_FONT_SIZE;
+  const paddingX = CONFIG.PREVIEW_PADDING_X;
+  const paddingY = CONFIG.PREVIEW_PADDING_Y;
 
-  // Get path for preview text
-  let textPath = font.getPath(previewText, 0, 0, previewFontSize);
-  let bbox = textPath.getBoundingBox();
-  let glyphHeight = bbox.y2 - bbox.y1;
-  let glyphWidth = bbox.x2 - bbox.x1;
+  // Get path for preview text safely
+  const textPath = getSafeTextPath(font, previewText, 0, 0, previewFontSize);
+  const bbox = textPath.getBoundingBox();
+  const glyphHeight = Math.ceil(bbox.y2 - bbox.y1);
+  const glyphWidth = Math.ceil(bbox.x2 - bbox.x1);
 
-  // Scale down if font ascenders/descenders exceed target height (e.g. 92px)
-  const maxAllowedHeight = 92;
-  if (glyphHeight > maxAllowedHeight) {
-    previewFontSize = Math.floor(previewFontSize * (maxAllowedHeight / glyphHeight));
-    textPath = font.getPath(previewText, 0, 0, previewFontSize);
-    bbox = textPath.getBoundingBox();
-    glyphHeight = bbox.y2 - bbox.y1;
-    glyphWidth = bbox.x2 - bbox.x1;
-  }
+  // Tightly fit canvas dimensions around glyphs plus crisp padding
+  const width = Math.max(64, glyphWidth + paddingX * 2);
+  const height = Math.max(32, glyphHeight + paddingY * 2);
 
-  const paddingX = 24;
-  const width = Math.max(128, Math.ceil(glyphWidth + paddingX * 2));
-
-  // Center horizontally within padded bounds or left-aligned with paddingX
+  // Align glyphs with exact padding offsets
   const xOffset = Math.round(paddingX - bbox.x1);
-  const yOffset = Math.round((height - glyphHeight) / 2 + glyphHeight - bbox.y2);
+  const yOffset = Math.round(paddingY - bbox.y1);
 
-  const centeredPath = font.getPath(previewText, xOffset, yOffset, previewFontSize);
+  const centeredPath = getSafeTextPath(font, previewText, xOffset, yOffset, previewFontSize);
   const pathData = centeredPath.toPathData(2);
 
   const svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">

@@ -38,37 +38,60 @@ async function main() {
 
   const branch = runOutput('git branch --show-current') || 'main';
 
-  // 1. Stage docs and data
-  console.log('📦 Staging docs/ and data/...');
-  run('git add docs/ data/fonts.json data/apps.json');
+  // 0. Ensure .nojekyll exists in docs/ to disable Jekyll processing
+  const nojekyllPath = path.join(ROOT_DIR, 'docs', '.nojekyll');
+  if (!fs.existsSync(nojekyllPath)) {
+    fs.writeFileSync(nojekyllPath, '# Disable Jekyll processing on GitHub Pages\n');
+  }
+
+  // 1. Stage and commit catalog data to current working branch (code branch)
+  console.log(`📦 Staging catalog updates on ${branch}...`);
+  run('git add data/fonts.json data/apps.json docs/.nojekyll');
 
   const staged = runOutput('git diff --cached --name-only');
   if (!staged) {
-    console.log('ℹ️  No changes to commit in docs/ or data/. Everything is up to date.');
+    console.log('ℹ️  No catalog changes to commit on working branch.');
   } else {
-    console.log('📝 Creating commit...');
-    run('git commit -m "chore: publish font thumbnails and previews [skip ci]"');
+    console.log('📝 Creating commit on working branch...');
+    run('git commit -m "chore(catalog): update font metadata and screenshot URLs [skip ci]"');
   }
 
-  // 2. Push to current branch
-  console.log(`\n🚀 Pushing to origin ${branch}...`);
+  // 2. Push to current branch (main or next)
+  console.log(`\n🚀 Pushing ${branch} to origin...`);
   try {
     run(`git push origin ${branch}`);
   } catch (err) {
     console.error(`⚠️  Failed to push to origin ${branch}:`, err.message);
   }
 
-  // 3. Also update gh-pages branch if subtree / branch is configured
+  // 3. Update gh-pages branch using an isolated index (force-includes all docs/ images without polluting working branch)
+  console.log('\n📄 Updating gh-pages branch with font assets...');
+  const tempIndex = path.join(ROOT_DIR, '.git', 'temp-gh-pages-index');
   try {
-    console.log('\n📄 Updating gh-pages branch from docs/...');
-    run('git push origin `git subtree split --prefix docs HEAD`:gh-pages --force');
-    console.log('✅ gh-pages branch updated.');
+    if (fs.existsSync(tempIndex)) fs.unlinkSync(tempIndex);
+
+    // Force add all docs/ files (including thumbnails and previews) into temporary index
+    run('git add -f docs/', { env: { ...process.env, GIT_INDEX_FILE: tempIndex } });
+
+    const treeSha = runOutput('git write-tree', { env: { ...process.env, GIT_INDEX_FILE: tempIndex } });
+    if (treeSha) {
+      const commitSha = runOutput(`git commit-tree ${treeSha} -m "chore: deploy font thumbnails and previews to gh-pages [skip ci]"`);
+      if (commitSha) {
+        run(`git push origin ${commitSha}:refs/heads/gh-pages --force`);
+        console.log('✅ gh-pages branch updated with all font assets.');
+      }
+    }
   } catch (err) {
-    console.log('ℹ️  GitHub Pages will serve directly from the repository.');
+    console.warn('⚠️  Failed to push to gh-pages branch:', err.message);
+  } finally {
+    if (fs.existsSync(tempIndex)) {
+      try { fs.unlinkSync(tempIndex); } catch (_) { }
+    }
   }
 
   console.log('\n======================================================');
   console.log('🎉 Published successfully!');
+  console.log('⏳ Note: GitHub Pages CDN typically takes 30-90 seconds to propagate.');
   console.log('🌐 URLs:');
   console.log('   https://yanbab.github.io/appfinder/font-thumbnails/<token>.png');
   console.log('   https://yanbab.github.io/appfinder/font-previews/<token>.png');

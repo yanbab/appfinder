@@ -2,6 +2,7 @@ bin/
 cache/
 dist/
 docs/font-thumbnails/
+docs/font-previews/
 renderer/dist/
 node_modules/
 .DS_Store
