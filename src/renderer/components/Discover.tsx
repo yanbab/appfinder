@@ -44,7 +44,7 @@ export function Discover(): React.JSX.Element {
       <div className="flex-1 overflow-y-auto p-4 select-none">
         <div className="max-w-[var(--content-max-width)] mx-auto w-full space-y-4">
           {/* Featured Hero Skeleton */}
-          <div className="relative overflow-hidden rounded-[calc(var(--radius-card)*2)] p-4 sm:p-5 h-[160px] bg-card shadow-2xs flex items-center">
+          <div className="relative overflow-hidden rounded-[calc(var(--radius-card)*2)] p-4 sm:p-5 h-[168px] sm:h-[176px] bg-card shadow-2xs flex items-center">
             <div className="flex items-center gap-5 w-full min-w-0">
               <div className="size-24 sm:size-28 rounded-[var(--radius-card)] bg-muted/70 animate-pulse shrink-0" />
               <div className="min-w-0 flex-1 space-y-2">

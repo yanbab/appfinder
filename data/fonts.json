@@ -46,7 +46,7 @@
     "version": "Version 2.502; ttfautohint (v1.8.4.16-eb64);Nerd Fonts 3.5.1"
   },
   "font-3270": {
-    "file": "~/Library/Fonts/3270NerdFont-Condensed.ttf",
+    "file": "~/Library/Fonts/3270-Regular.otf",
     "family": "3270 Nerd Font Cond",
     "desc": "Monospace • 3 styles",
     "homepage": "https://github.com/rbanffy/3270font",
@@ -101,7 +101,7 @@
     "desc": "Sans serif • 1 style",
     "homepage": "https://fonts.google.com/specimen/42dot+Sans",
     "styles": [
-      "font",
+      "42dotSans%5Bwght%5D",
       "Light",
       "Regular",
       "Medium",
@@ -111,7 +111,7 @@
     ],
     "stylesCount": 7,
     "variants": [
-      "font",
+      "42dotSans%5Bwght%5D",
       "Light",
       "Regular",
       "Medium",
@@ -358,11 +358,11 @@
     "desc": "Sans serif • 2 styles",
     "homepage": "https://fonts.google.com/specimen/ABeeZee",
     "styles": [
-      "font"
+      "Regular"
     ],
     "stylesCount": 1,
     "variants": [
-      "font"
+      "Regular"
     ],
     "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL",
     "licenseUrl": "https://scripts.sil.org/OFL",
@@ -380,11 +380,11 @@
     "desc": "Sans serif • 1 style",
     "homepage": "https://fonts.google.com/specimen/Abel",
     "styles": [
-      "font"
+      "Regular"
     ],
     "stylesCount": 1,
     "variants": [
-      "font"
+      "Regular"
     ],
     "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL",
     "licenseUrl": "http://scripts.sil.org/OFL",
@@ -402,11 +402,11 @@
     "desc": "Sans serif • 5 styles",
     "homepage": "https://fonts.google.com/specimen/Abhaya+Libre",
     "styles": [
-      "font"
+      "Medium"
     ],
     "stylesCount": 1,
     "variants": [
-      "font"
+      "Medium"
     ],
     "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL",
     "licenseUrl": "http://scripts.sil.org/OFL",
@@ -424,11 +424,11 @@
     "desc": "Sans serif • 1 style",
     "homepage": "https://fonts.google.com/specimen/Aboreto",
     "styles": [
-      "font"
+      "Regular"
     ],
     "stylesCount": 1,
     "variants": [
-      "font"
+      "Regular"
     ],
     "license": "This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL",
     "licenseUrl": "https://scripts.sil.org/OFL",
@@ -11140,16 +11140,16 @@
     "version": "Version 1.001"
   },
   "font-bowlby-one-sc": {
-    "file": "~/Library/Fonts/font.ttf",
+    "file": "~/Library/Fonts/BowlbyOneSC-Regular.ttf",
     "family": "Bowlby One SC",
     "desc": "Sans serif • 1 style",
     "homepage": "https://fonts.google.com/specimen/Bowlby+One+SC",
     "styles": [
-      "font"
+      "Regular"
     ],
     "stylesCount": 1,
     "variants": [
-      "font"
+      "Regular"
     ],
     "licenseUrl": "http://scripts.sil.org/OFL",
     "isMonospace": false,
