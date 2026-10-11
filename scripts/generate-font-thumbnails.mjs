@@ -30,6 +30,40 @@ import opentype from 'opentype.js';
 import { Resvg } from '@resvg/resvg-js';
 import sharp from 'sharp';
 
+// Polyfill minimal browser DOM APIs for opentype.js SVG table parsing in Node.js
+if (typeof globalThis.DOMParser === 'undefined') {
+  globalThis.DOMParser = class DOMParser {
+    parseFromString() {
+      return {
+        documentElement: {
+          viewBox: { baseVal: { x: 0, y: 0, width: 1000, height: 1000 } },
+          width: { baseVal: { unitType: 0, valueInSpecifiedUnits: 1000 } },
+          height: { baseVal: { unitType: 0, valueInSpecifiedUnits: 1000 } },
+          getBBox: () => ({ x: 0, y: 0, width: 1000, height: 1000 }),
+          setAttribute: () => {},
+          outerHTML: '<svg></svg>',
+        },
+      };
+    }
+  };
+}
+if (typeof globalThis.document === 'undefined') {
+  globalThis.document = {
+    createElement: () => ({ style: {}, appendChild: () => {} }),
+    body: { appendChild: () => {}, removeChild: () => {} },
+  };
+}
+if (typeof globalThis.Image === 'undefined') {
+  globalThis.Image = class Image {
+    constructor() {
+      this.src = '';
+    }
+    decode() {
+      return Promise.resolve();
+    }
+  };
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -564,7 +598,15 @@ function loadOpentypeFont(fontFilePath) {
   let fileBuffer = fs.readFileSync(fontFilePath);
   fileBuffer = unpackFontBuffer(fileBuffer);
   const arrayBuffer = fileBuffer.buffer.slice(fileBuffer.byteOffset, fileBuffer.byteOffset + fileBuffer.byteLength);
-  return opentype.parse(arrayBuffer);
+  const font = opentype.parse(arrayBuffer);
+  // Disable SVG table in headless Node environment to force standard vector glyph outlines
+  if (font.tables && font.tables.svg) {
+    delete font.tables.svg;
+  }
+  if (font.defaultRenderOptions) {
+    font.defaultRenderOptions.drawSVG = false;
+  }
+  return font;
 }
 
 /**
