@@ -125,6 +125,11 @@ export function processAppsData(
       if (catInfo.secondary[0]) secondCategory = catInfo.secondary[0];
       if (catInfo.secondary[1]) thirdCategory = catInfo.secondary[1];
     }
+    if (!secondCategory && c.secondCategory) secondCategory = c.secondCategory;
+    if (!thirdCategory && c.thirdCategory) thirdCategory = c.thirdCategory;
+    if (primaryCat === 'font' || (token && token.startsWith('font-'))) {
+      if (!secondCategory && fontMeta?.isMonospace) secondCategory = 'monospace';
+    }
 
     const caskItem: CaskItem = {
       token: c.token,
@@ -158,6 +163,8 @@ export function processAppsData(
 
     if (c.screenshotUrl) {
       caskItem.screenshotUrl = c.screenshotUrl;
+    } else if (primaryCat === 'font' || (token && token.startsWith('font-'))) {
+      caskItem.screenshotUrl = `https://yanbab.github.io/appfinder/font-previews/${token}.png`;
     }
 
     return caskItem;

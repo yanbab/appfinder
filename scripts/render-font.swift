@@ -92,29 +92,62 @@ func selectAdaptiveText(font: CTFont, raw: String) -> String {
 }
 
 func selectThumbnailText(font: CTFont, customText: String) -> String {
-    if !customText.isEmpty && customText != "Aa" && isTextFullySupported(font: font, text: customText) {
+    // 1. If custom text is passed and fully supported, use it!
+    if !customText.isEmpty && isTextFullySupported(font: font, text: customText) {
         return customText
     }
-    if isTextFullySupported(font: font, text: "Aa") { return "Aa" }
-    if isTextFullySupported(font: font, text: "AA") { return "AA" }
-    if isTextFullySupported(font: font, text: "aa") { return "aa" }
+
+    // 2. If customText is "Aa" or empty, test standard Latin
+    if customText == "Aa" || customText.isEmpty {
+        if isTextFullySupported(font: font, text: "Aa") { return "Aa" }
+        if isTextFullySupported(font: font, text: "AA") { return "AA" }
+        if isTextFullySupported(font: font, text: "aa") { return "aa" }
+    }
+
+    // 3. Script-specific probes for authentic non-Latin typography
+    let scriptProbes = ["אב", "أب", "永", "가", "あ", "ก", "अ", "Аа", "Αα", "😀", "⌘"]
+    for probe in scriptProbes {
+        if isTextFullySupported(font: font, text: probe) {
+            return probe
+        }
+    }
+
+    // 4. Try prefix of customText
     let prefix2 = String(customText.prefix(2))
     if !prefix2.isEmpty && isTextFullySupported(font: font, text: prefix2) { return prefix2 }
     let prefix1 = String(customText.prefix(1))
     if !prefix1.isEmpty && isTextFullySupported(font: font, text: prefix1) { return prefix1 }
-    return "Aa"
+
+    return customText.isEmpty ? "Aa" : customText
 }
 
 // MARK: - Rendering
 
 func renderThumbnail(font: CTFont, text: String, size: CGFloat, color: CGColor, outputPath: String) -> Bool {
     let effectiveText = selectThumbnailText(font: font, customText: text)
-    let attrString = NSAttributedString(string: effectiveText, attributes: [
-        NSAttributedString.Key(kCTFontAttributeName as String): font,
+    
+    var currentFont = font
+    var currentSize = CTFontGetSize(font)
+    var attrString = NSAttributedString(string: effectiveText, attributes: [
+        NSAttributedString.Key(kCTFontAttributeName as String): currentFont,
         NSAttributedString.Key(kCTForegroundColorAttributeName as String): color
     ])
-    let line = CTLineCreateWithAttributedString(attrString)
-    let imageBounds = CTLineGetImageBounds(line, nil)
+    var line = CTLineCreateWithAttributedString(attrString)
+    var imageBounds = CTLineGetImageBounds(line, nil)
+
+    // Ensure glyph fits comfortably with padding (max 82% of canvas)
+    let maxDim = size * 0.82
+    if imageBounds.width > maxDim || imageBounds.height > maxDim {
+        let scale = min(maxDim / max(imageBounds.width, 1), maxDim / max(imageBounds.height, 1))
+        currentSize = currentSize * scale
+        currentFont = CTFontCreateCopyWithAttributes(currentFont, currentSize, nil, nil)
+        attrString = NSAttributedString(string: effectiveText, attributes: [
+            NSAttributedString.Key(kCTFontAttributeName as String): currentFont,
+            NSAttributedString.Key(kCTForegroundColorAttributeName as String): color
+        ])
+        line = CTLineCreateWithAttributedString(attrString)
+        imageBounds = CTLineGetImageBounds(line, nil)
+    }
 
     guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
           let ctx = CGContext(
@@ -150,6 +183,7 @@ func renderThumbnail(font: CTFont, text: String, size: CGFloat, color: CGColor, 
     CGImageDestinationAddImage(dest, img, nil)
     return CGImageDestinationFinalize(dest)
 }
+
 
 func renderPreview(font: CTFont, text: String, color: CGColor, outputPath: String) -> Bool {
     let paddingX: CGFloat = 16

@@ -226,3 +226,27 @@ export function formatStatusBarMessage(rawLine: string): string | null {
 
   return null;
 }
+
+/**
+ * Resolves font thumbnail or preview URL.
+ * When in development mode (`import.meta.env.DEV`), replaces remote GitHub Pages URLs
+ * for font thumbnails and font previews with local dev server URLs.
+ */
+export function resolveAssetUrl(url?: string | null, forceDev?: boolean): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const isDev = forceDev !== undefined
+    ? forceDev
+    : Boolean(typeof import.meta !== 'undefined' && import.meta.env?.DEV);
+
+  if (isDev) {
+    if (url.includes('/font-previews/')) {
+      const filename = url.split('/font-previews/').pop();
+      return filename ? `/font-previews/${filename}` : url;
+    }
+    if (url.includes('/font-thumbnails/')) {
+      const filename = url.split('/font-thumbnails/').pop();
+      return filename ? `/font-thumbnails/${filename}` : url;
+    }
+  }
+  return url;
+}

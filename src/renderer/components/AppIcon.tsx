@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { cn, name2initials, name2color } from '@/hooks/utils';
+import { cn, name2initials, name2color, resolveAssetUrl } from '@/hooks/utils';
 import type { CaskItem } from '@/types';
 import { ShellIcon } from './ShellIcon';
 import { useAppStore } from '@/stores';
@@ -25,6 +25,80 @@ const sizeClasses: Record<string, string> = {
   hero: "size-32 rounded-[28px]",
   "128": "size-32 rounded-[28px]",
 };
+
+export function getFontSpecimenCharacter(
+  item?: CaskItem | { name?: string; token?: string; category?: string; iconUrl?: string | null } | null
+): string {
+  if (!item) return 'Aa';
+  const token = (item.token || '').toLowerCase();
+  const name = (item.name || '').toLowerCase();
+  const c2 = ((item as any).secondCategory || '').toLowerCase();
+  const c3 = ((item as any).thirdCategory || '').toLowerCase();
+  const desc = ((item as any).desc || '').toLowerCase();
+
+  // 1. Emoji / Color fonts
+  if (
+    c2.includes('emoji') ||
+    c3.includes('emoji') ||
+    token.includes('emoji') ||
+    name.includes('emoji') ||
+    desc.includes('emoji') ||
+    Boolean((item as any).isColorFont)
+  ) {
+    return '😀';
+  }
+
+  // 2. Hebrew
+  if (c3.includes('hebrew') || token.includes('hebrew') || name.includes('hebrew')) {
+    return 'אב';
+  }
+
+  // 3. Arabic
+  if (c3.includes('arabic') || token.includes('arabic') || name.includes('arabic')) {
+    return 'أب';
+  }
+
+  // 4. CJK (Chinese / Japanese / Korean)
+  if (c3.includes('cjk') || token.includes('cjk') || name.includes('cjk') || token.includes('chinese') || name.includes('chinese')) {
+    return '永';
+  }
+  if (c3.includes('japanese') || token.includes('japanese') || name.includes('japanese') || token.includes('kana')) {
+    return 'あ';
+  }
+  if (c3.includes('korean') || token.includes('korean') || name.includes('korean') || token.includes('hangul')) {
+    return '가';
+  }
+
+  // 5. Thai
+  if (c3.includes('thai') || token.includes('thai') || name.includes('thai')) {
+    return 'ก';
+  }
+
+  // 6. Devanagari / Indic
+  if (c3.includes('devanagari') || token.includes('devanagari') || name.includes('devanagari')) {
+    return 'अ';
+  }
+  if (c3.includes('bengali') || token.includes('bengali')) return 'অ';
+  if (c3.includes('tamil') || token.includes('tamil')) return 'அ';
+  if (c3.includes('telugu') || token.includes('telugu')) return 'అ';
+  if (c3.includes('gujarati') || token.includes('gujarati')) return 'અ';
+  if (c3.includes('kannada') || token.includes('kannada')) return 'ಅ';
+  if (c3.includes('malayalam') || token.includes('malayalam')) return 'അ';
+
+  // 7. Armenian / Georgian
+  if (c3.includes('armenian') || token.includes('armenian')) return 'Աա';
+  if (c3.includes('georgian') || token.includes('georgian')) return 'Ⴀა';
+
+  // 8. Greek / Cyrillic
+  if (c3.includes('greek') || token.includes('greek') || name.includes('greek')) return 'Αα';
+  if (c3.includes('cyrillic') || token.includes('cyrillic') || name.includes('cyrillic')) return 'Аа';
+
+  // 9. Symbols / Nerd Font
+  if (c2.includes('symbols') || token.includes('nerd-font')) return '⌘';
+
+  // Default: Latin
+  return 'Aa';
+}
 
 export function AppIcon({ item, size = "md", className }: AppIconProps) {
   const [loaded, setLoaded] = useState(false);
@@ -53,13 +127,12 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
     setHasError(false);
   }, [token, item?.iconUrl]);
 
-  // FIXME: hardcoded font thumbnails url
   const fontThumbnailUrl = isFont && token
     ? `https://yanbab.github.io/appfinder/font-thumbnails/${token}.png`
     : null;
 
-
-  const activeIconUrl = item?.iconUrl || fontThumbnailUrl;
+  const rawIconUrl = item?.iconUrl || (item as any)?.thumbnailUrl || fontThumbnailUrl;
+  const activeIconUrl = resolveAssetUrl(rawIconUrl);
   const hasIcon = Boolean(activeIconUrl && !hasError);
 
   const isEmojiOrColorFont = isFont && (
@@ -109,7 +182,7 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
           <div
             className="w-full h-full flex items-center justify-center font-serif text-neutral-800 dark:text-neutral-200 tracking-tight select-none text-[32cqw] bg-transparent"
           >
-            Aa
+            {getFontSpecimenCharacter(item)}
           </div>
         ) : isService ? (
           <div
@@ -134,6 +207,7 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
     </div>
   );
 }
+
 
 export default AppIcon;
 

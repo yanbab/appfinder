@@ -61,11 +61,12 @@ export function Discover(): React.JSX.Element {
           </div>
 
         {/* Dynamic Hub Skeleton */}
-        <div className="w-full rounded-[var(--radius-card)] bg-card shadow-2xs p-2 flex items-center justify-between animate-pulse">
+        <div className="w-full flex items-center justify-between gap-3 animate-pulse">
           <div className="h-7 w-36 rounded-[var(--radius-btn)] bg-muted/60" />
           <div className="h-4 w-28 rounded bg-muted/40 hidden sm:block" />
           <div className="h-7 w-32 rounded-[var(--radius-btn)] bg-muted/60" />
         </div>
+
 
         {/* Recent Apps Skeleton */}
         <div className="space-y-1.5">

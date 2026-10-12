@@ -1,7 +1,6 @@
 import React from 'react';
 import type { CaskItem } from '@/types';
 import { useShellStore } from '@/stores';
-import { useAppItemState } from '@/hooks/useAppItemState';
 import { Card } from '../../Card';
 import { AppButtons } from '../../AppButtons';
 import { AppIcon } from '../../AppIcon';
@@ -15,7 +14,6 @@ export interface FontTileProps {
 export function FontTile({ item, className }: FontTileProps) {
   const openAppInfo = useShellStore((s) => s.openAppInfo);
   const selectedApp = useShellStore((s) => s.selectedApp);
-  const { isInstalled } = useAppItemState(item);
 
   const isSelected = selectedApp?.token === item.token;
   const name = getAppName(item);
@@ -35,18 +33,15 @@ export function FontTile({ item, className }: FontTileProps) {
           openAppInfo(item);
         }
       }}
-      className={`app-card font-tile relative flex flex-col items-center justify-between aspect-square p-2 group select-none ${className || ''}`.trim()}
+      className={`app-card font-tile relative w-full flex flex-col items-center justify-between p-2 pb-2.5 group select-none ${className || ''}`.trim()}
     >
-      {/* Top action button (same level as top of icon) */}
+      {/* Top action button: top right */}
       <div className="absolute top-2 right-2 z-10">
         <AppButtons item={item} variant="icon" />
       </div>
 
-      {/* Visual preview at top (fixed 128x128px, same level as button) */}
-      <div
-        className="w-full flex items-center justify-center p-0 shrink-0 transition-opacity"
-        style={!isInstalled ? { opacity: 0.85 } : undefined}
-      >
+      {/* Specimen thumbnail with 5px margin left and right */}
+      <div className="w-full mx-[5px] flex items-center justify-center shrink-0">
         <AppIcon
           item={item}
           size="128"
@@ -54,9 +49,9 @@ export function FontTile({ item, className }: FontTileProps) {
         />
       </div>
 
-      {/* Font Name moved up directly under icon (secondary text) */}
-      <div className="w-full text-center -mt-2 pb-0.5 shrink-0 px-1">
-        <span className="text-[11px] font-normal text-muted-foreground truncate block leading-tight">
+      {/* Font title: 10px down from thumbnail, centered */}
+      <div className="w-full text-center mt-[10px] px-1 shrink-0">
+        <span className="text-[11px] font-medium text-foreground truncate block leading-tight">
           {name}
         </span>
       </div>
@@ -65,3 +60,5 @@ export function FontTile({ item, className }: FontTileProps) {
 }
 
 export default FontTile;
+
+

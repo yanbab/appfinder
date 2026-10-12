@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useAppStore, useTermStore, useShellStore } from '@/stores';
 import { ShellIcon } from './ShellIcon';
 import { Button } from './Button';
-import { Card } from './Card';
+
 
 function formatTimestamp(date: Date | string | null | undefined, __: (key: string) => string): string {
   if (!date) return __('Just now');
@@ -63,9 +63,7 @@ export function DiscoverHub(): React.JSX.Element {
   };
 
   return (
-    <Card
-      variant="hub"
-      padding="default"
+    <div
       className="w-full flex items-center justify-between gap-3 select-none"
       role="region"
       aria-label="Discover Hub"
@@ -119,8 +117,9 @@ export function DiscoverHub(): React.JSX.Element {
           {isBusy ? __('Checking...') : __('Check for Updates')}
         </Button>
       </div>
-    </Card>
+    </div>
   );
+
 }
 
 export default DiscoverHub;

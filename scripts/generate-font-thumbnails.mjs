@@ -67,9 +67,12 @@ function ensureRenderer() {
   }
   console.log('Compiling native Swift CoreText renderer...');
   fs.mkdirSync(path.dirname(NATIVE_RENDERER), { recursive: true });
-  execSync(`swiftc -O "${SWIFT_SOURCE}" -o "${NATIVE_RENDERER}"`, { stdio: 'inherit' });
+  const moduleCache = path.join(ROOT_DIR, 'cache', 'swift-modules');
+  fs.mkdirSync(moduleCache, { recursive: true });
+  execSync(`swiftc -module-cache-path "${moduleCache}" -O "${SWIFT_SOURCE}" -o "${NATIVE_RENDERER}"`, { stdio: 'inherit' });
   return fs.existsSync(NATIVE_RENDERER);
 }
+
 
 /**
  * Renders font using the native CoreText helper.
@@ -313,6 +316,72 @@ function getPreviewText(cask) {
 }
 
 /**
+ * Gets script-appropriate specimen character for thumbnail (e.g. אב for Hebrew, أب for Arabic, 永 for CJK, 😀 for emoji).
+ */
+function getScriptSpecimenCharacter(cask) {
+  const token = (cask.token || '').toLowerCase();
+  const name = (cask.name || '').toLowerCase();
+  const c2 = (cask.secondCategory || '').toLowerCase();
+  const c3 = (cask.thirdCategory || '').toLowerCase();
+  const desc = (cask.desc || '').toLowerCase();
+
+  // Emoji / Symbols
+  if (c2.includes('emoji') || c3.includes('emoji') || token.includes('emoji') || name.includes('emoji') || desc.includes('emoji')) {
+    return '😀';
+  }
+
+  // Hebrew
+  if (c3.includes('hebrew') || token.includes('hebrew') || name.includes('hebrew')) {
+    return 'אב';
+  }
+
+  // Arabic
+  if (c3.includes('arabic') || token.includes('arabic') || name.includes('arabic')) {
+    return 'أب';
+  }
+
+  // CJK / Chinese / Japanese / Korean
+  if (c3.includes('cjk') || token.includes('cjk') || name.includes('cjk') || token.includes('chinese') || name.includes('chinese')) {
+    return '永';
+  }
+  if (c3.includes('japanese') || token.includes('japanese') || name.includes('japanese') || token.includes('kana')) {
+    return 'あ';
+  }
+  if (c3.includes('korean') || token.includes('korean') || name.includes('korean') || token.includes('hangul')) {
+    return '가';
+  }
+
+  // Thai
+  if (c3.includes('thai') || token.includes('thai') || name.includes('thai')) {
+    return 'ก';
+  }
+
+  // Devanagari / Indic
+  if (c3.includes('devanagari') || token.includes('devanagari') || name.includes('devanagari')) {
+    return 'अ';
+  }
+  if (c3.includes('bengali') || token.includes('bengali')) return 'অ';
+  if (c3.includes('tamil') || token.includes('tamil')) return 'அ';
+  if (c3.includes('telugu') || token.includes('telugu')) return 'అ';
+  if (c3.includes('gujarati') || token.includes('gujarati')) return 'અ';
+  if (c3.includes('kannada') || token.includes('kannada')) return 'ಅ';
+  if (c3.includes('malayalam') || token.includes('malayalam')) return 'അ';
+
+  // Armenian / Georgian
+  if (c3.includes('armenian') || token.includes('armenian')) return 'Աա';
+  if (c3.includes('georgian') || token.includes('georgian')) return 'Ⴀა';
+
+  // Greek / Cyrillic
+  if (c3.includes('greek') || token.includes('greek') || name.includes('greek')) return 'Αα';
+  if (c3.includes('cyrillic') || token.includes('cyrillic') || name.includes('cyrillic')) return 'Аа';
+
+  // Symbols / Nerd Font
+  if (c2.includes('symbols') || token.includes('nerd-font')) return '⌘';
+
+  return 'Aa';
+}
+
+/**
  * Processes a single font cask: renders thumbnail & preview banner.
  */
 async function processCask(cask) {
@@ -330,15 +399,17 @@ async function processCask(cask) {
     }
 
     const previewText = getPreviewText(cask);
+    const specimenText = getScriptSpecimenCharacter(cask);
 
-    // 1. Render Thumbnail (256x256 "Aa" specimen)
+    // 1. Render Thumbnail (256x256 authentic specimen)
     renderWithNative({
       fontPath,
-      text: 'Aa',
+      text: specimenText,
       outPath: outThumbPng,
       mode: 'thumbnail',
       ptSize: fontSize
     });
+
     if (fs.existsSync(failThumbPath)) {
       try { fs.unlinkSync(failThumbPath); } catch (_) { }
     }

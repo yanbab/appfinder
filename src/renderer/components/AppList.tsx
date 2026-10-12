@@ -6,6 +6,7 @@ import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 import { AppCard } from './AppCard';
 import { FontRow } from './category-views/fonts/FontRow';
+import { FontFilter, matchFontFilter } from './category-views/fonts/FontFilter';
 import { getCategoryViews } from './category-views/registry';
 import { Select } from './Select';
 import type { CaskItem } from '@/types';
@@ -22,6 +23,7 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
 
   const loading = useAppStore((s) => s.loading);
   const displayedCount = useAppStore((s) => s.displayedCount);
+  const setDisplayedCount = useAppStore((s) => s.setDisplayedCount);
   const loadMore = useAppStore((s) => s.loadMore);
 
   const items = useAppStore((s) => s.items);
@@ -46,16 +48,8 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
 
   const tabFilteredItems = useMemo(() => {
     if (isFontTab && fontFilter !== 'all') {
-      if (fontFilter === 'installed') {
-        const instSet = new Set(installed);
-        return filteredItems.filter((i) => instSet.has(i.token));
-      }
-      const target = fontFilter.toLowerCase();
-      return filteredItems.filter((i) => {
-        const c2 = (i.secondCategory || '').toLowerCase();
-        const c3 = (i.thirdCategory || '').toLowerCase();
-        return c2.includes(target) || c3.includes(target);
-      });
+      const instSet = new Set(installed);
+      return filteredItems.filter((i) => matchFontFilter(i, fontFilter, instSet));
     }
 
     if (isServiceTab && serviceFilter !== 'all') {
@@ -114,45 +108,16 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
   };
 
   const fontHeader = (
-    <div className="flex items-center justify-between select-none">
-      <h3 className="text-xs font-semibold text-muted-foreground">
-        {__('Fonts')}
-      </h3>
-      <div className="flex items-center gap-2">
-        <Select
-          value={fontFilter}
-          onChange={(e) => {
-            setFontFilter(e.target.value);
-            if (containerRef.current) containerRef.current.scrollTop = 0;
-          }}
-          aria-label={__('Filter fonts')}
-        >
-          <option value="all" className="bg-popover text-popover-foreground">{__('All')}</option>
-          <option value="installed" className="bg-popover text-popover-foreground">{__('Installed')}</option>
-          <option disabled className="text-muted-foreground">──────────</option>
-          <option value="latin" className="bg-popover text-popover-foreground">Latin</option>
-          <option value="hebrew" className="bg-popover text-popover-foreground">Hebrew</option>
-          <option value="arabic" className="bg-popover text-popover-foreground">Arabic</option>
-          <option value="cyrillic" className="bg-popover text-popover-foreground">Cyrillic</option>
-          <option value="cjk" className="bg-popover text-popover-foreground">CJK</option>
-          <option value="greek" className="bg-popover text-popover-foreground">Greek</option>
-          <option value="devanagari" className="bg-popover text-popover-foreground">Devanagari</option>
-          <option value="thai" className="bg-popover text-popover-foreground">Thai</option>
-          <option value="bengali" className="bg-popover text-popover-foreground">Bengali</option>
-          <option value="tamil" className="bg-popover text-popover-foreground">Tamil</option>
-          <option value="armenian" className="bg-popover text-popover-foreground">Armenian</option>
-          <option value="georgian" className="bg-popover text-popover-foreground">Georgian</option>
-          <option disabled className="text-muted-foreground">──────────</option>
-          <option value="monospace" className="bg-popover text-popover-foreground">Monospace</option>
-          <option value="sans-serif" className="bg-popover text-popover-foreground">Sans-Serif</option>
-          <option value="serif" className="bg-popover text-popover-foreground">Serif</option>
-          <option value="display" className="bg-popover text-popover-foreground">Display</option>
-          <option value="script" className="bg-popover text-popover-foreground">Handwriting</option>
-          <option value="symbols" className="bg-popover text-popover-foreground">Symbols & Emoji</option>
-        </Select>
-      </div>
-    </div>
+    <FontFilter
+      value={fontFilter}
+      onChange={(newVal) => {
+        setFontFilter(newVal);
+        setDisplayedCount(50);
+        if (containerRef.current) containerRef.current.scrollTop = 0;
+      }}
+    />
   );
+
 
   const serviceHeader = (
     <div className="flex items-center justify-between select-none">
@@ -213,7 +178,10 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
                 size="sm"
                 onClick={() => {
                   if (isSearchActive) setSearch('');
-                  if (isFontTab) setFontFilter('all');
+                  if (isFontTab) {
+                    setFontFilter('all');
+                    setDisplayedCount(50);
+                  }
                   if (isServiceTab) setServiceFilter('all');
                 }}
               >
@@ -235,12 +203,14 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
       <div className={viewMode === 'grid' ? "w-full space-y-4" : "max-w-[var(--content-max-width)] mx-auto w-full space-y-4"}>
         {activeHeader}
         {viewMode === 'grid' ? (
-          <div className={`grid gap-2.5 ${isFontTab ? 'grid-cols-[repeat(auto-fill,minmax(148px,1fr))]' : 'grid-cols-[repeat(auto-fill,minmax(200px,1fr))]'}`}>
+          <div className={`grid gap-3 ${isFontTab ? 'grid-cols-[repeat(auto-fill,minmax(140px,1fr))]' : 'grid-cols-[repeat(auto-fill,minmax(200px,1fr))]'}`}>
             {displayedItems.map((item) => {
               const { Tile } = resolveViews(item);
               return <Tile key={item.token} item={item} />;
             })}
           </div>
+
+
         ) : (
           <List>
             {displayedItems.map((item) => {
