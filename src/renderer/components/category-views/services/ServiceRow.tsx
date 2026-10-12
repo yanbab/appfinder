@@ -5,23 +5,13 @@ import { useAppItemState } from '@/hooks/useAppItemState';
 import { Button } from '../../Button';
 import { ShellIcon } from '../../ShellIcon';
 import { Switch } from '../../Switch';
+import { AppIcon } from '../../AppIcon';
 import { getAppName } from '@/hooks/utils';
 
 export interface ServiceRowProps {
   item: CaskItem;
   className?: string;
 }
-
-const CATEGORY_ICONS: Record<string, string> = {
-  database: 'cylinder',
-  webServer: 'network',
-  cacheQueue: 'tray.2',
-  aiLlm: 'sparkles',
-  networkingDns: 'antenna.radiowaves.left.and.right',
-  monitoring: 'chart.xyaxis.line',
-  developerTools: 'hammer',
-  otherServices: 'server.rack',
-};
 
 const CATEGORY_LABELS: Record<string, string> = {
   database: 'Databases & Storage',
@@ -51,7 +41,6 @@ export function ServiceRow({ item, className }: ServiceRowProps) {
   const isStarted = statusInfo?.status === 'started';
 
   const categoryKey = item.secondCategory || 'otherServices';
-  const iconName = CATEGORY_ICONS[categoryKey] || 'server.rack';
   const categoryLabel = CATEGORY_LABELS[categoryKey] || 'Services';
 
   const handleToggle = async (nextState: boolean) => {
@@ -86,9 +75,7 @@ export function ServiceRow({ item, className }: ServiceRowProps) {
     >
       {/* Icon & Details */}
       <div className="flex items-center gap-3.5 min-w-0 flex-1 mr-3">
-        <div className="size-12 rounded-[var(--radius-card)] bg-muted/60 dark:bg-muted/40 border border-black/5 dark:border-white/10 shadow-2xs flex items-center justify-center shrink-0">
-          <ShellIcon name={iconName} className="size-6 text-foreground/80" />
-        </div>
+        <AppIcon item={item} size="row" className="size-12 rounded-[var(--radius-card)] shrink-0" />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">

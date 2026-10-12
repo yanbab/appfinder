@@ -250,3 +250,102 @@ export function resolveAssetUrl(url?: string | null, forceDev?: boolean): string
   }
   return url;
 }
+
+/**
+ * Extracts a favicon URL for a given homepage domain using Google's Favicon service.
+ * Handles protocol prefixes, subdomains, and returns null for invalid or local addresses.
+ */
+export function getFaviconUrl(homepage?: string | null, size: number = 128): string | null {
+  if (!homepage || typeof homepage !== 'string') return null;
+  try {
+    const raw = homepage.trim();
+    if (!raw) return null;
+    const withProto = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    const url = new URL(withProto);
+    let hostname = url.hostname.toLowerCase();
+    if (hostname.startsWith('www.')) {
+      hostname = hostname.slice(4);
+    }
+    if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') return null;
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=${size}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Returns a script-accurate specimen character for font fallbacks.
+ */
+export function getFontSpecimenCharacter(
+  item?: any
+): string {
+  if (!item) return 'Aa';
+  const token = (item.token || '').toLowerCase();
+  const name = (item.name || '').toLowerCase();
+  const c2 = (item.secondCategory || '').toLowerCase();
+  const c3 = (item.thirdCategory || '').toLowerCase();
+  const desc = (item.desc || '').toLowerCase();
+
+  // 1. Emoji / Color fonts
+  if (
+    c2.includes('emoji') ||
+    c3.includes('emoji') ||
+    token.includes('emoji') ||
+    name.includes('emoji') ||
+    desc.includes('emoji') ||
+    Boolean(item.isColorFont)
+  ) {
+    return '😀';
+  }
+
+  // 2. Hebrew
+  if (c3.includes('hebrew') || token.includes('hebrew') || name.includes('hebrew')) {
+    return 'אב';
+  }
+
+  // 3. Arabic
+  if (c3.includes('arabic') || token.includes('arabic') || name.includes('arabic')) {
+    return 'أب';
+  }
+
+  // 4. CJK (Chinese / Japanese / Korean)
+  if (c3.includes('cjk') || token.includes('cjk') || name.includes('cjk') || token.includes('chinese') || name.includes('chinese')) {
+    return '永';
+  }
+  if (c3.includes('japanese') || token.includes('japanese') || name.includes('japanese') || token.includes('kana')) {
+    return 'あ';
+  }
+  if (c3.includes('korean') || token.includes('korean') || name.includes('korean') || token.includes('hangul')) {
+    return '가';
+  }
+
+  // 5. Thai
+  if (c3.includes('thai') || token.includes('thai') || name.includes('thai')) {
+    return 'ก';
+  }
+
+  // 6. Devanagari / Indic
+  if (c3.includes('devanagari') || token.includes('devanagari') || name.includes('devanagari')) {
+    return 'अ';
+  }
+  if (c3.includes('bengali') || token.includes('bengali')) return 'অ';
+  if (c3.includes('tamil') || token.includes('tamil')) return 'அ';
+  if (c3.includes('telugu') || token.includes('telugu')) return 'అ';
+  if (c3.includes('gujarati') || token.includes('gujarati')) return 'અ';
+  if (c3.includes('kannada') || token.includes('kannada')) return 'ಅ';
+  if (c3.includes('malayalam') || token.includes('malayalam')) return 'അ';
+
+  // 7. Armenian / Georgian
+  if (c3.includes('armenian') || token.includes('armenian')) return 'Աա';
+  if (c3.includes('georgian') || token.includes('georgian')) return 'Ⴀა';
+
+  // 8. Greek / Cyrillic
+  if (c3.includes('greek') || token.includes('greek') || name.includes('greek')) return 'Αα';
+  if (c3.includes('cyrillic') || token.includes('cyrillic') || name.includes('cyrillic')) return 'Аа';
+
+  // 9. Symbols / Nerd Font
+  if (c2.includes('symbols') || token.includes('nerd-font')) return '⌘';
+
+  // Default: Latin
+  return 'Aa';
+}

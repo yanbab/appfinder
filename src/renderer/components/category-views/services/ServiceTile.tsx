@@ -6,23 +6,13 @@ import { Card } from '../../Card';
 import { Button } from '../../Button';
 import { ShellIcon } from '../../ShellIcon';
 import { Switch } from '../../Switch';
+import { AppIcon } from '../../AppIcon';
 import { getAppName } from '@/hooks/utils';
 
 export interface ServiceTileProps {
   item: CaskItem;
   className?: string;
 }
-
-const CATEGORY_ICONS: Record<string, string> = {
-  database: 'cylinder',
-  webServer: 'network',
-  cacheQueue: 'tray.2',
-  aiLlm: 'sparkles',
-  networkingDns: 'antenna.radiowaves.left.and.right',
-  monitoring: 'chart.xyaxis.line',
-  developerTools: 'hammer',
-  otherServices: 'server.rack',
-};
 
 export function ServiceTile({ item, className }: ServiceTileProps) {
   const openAppInfo = useShellStore((s) => s.openAppInfo);
@@ -39,9 +29,6 @@ export function ServiceTile({ item, className }: ServiceTileProps) {
   const name = getAppName(item);
   const statusInfo = serviceStatusMap[item.token];
   const isStarted = statusInfo?.status === 'started';
-
-  const categoryKey = item.secondCategory || 'otherServices';
-  const iconName = CATEGORY_ICONS[categoryKey] || 'server.rack';
 
   const handleToggle = async (nextState: boolean) => {
     if (isToggling || isTaskRunning) return;
@@ -77,9 +64,7 @@ export function ServiceTile({ item, className }: ServiceTileProps) {
       className={`app-card relative flex items-center justify-between gap-3 ${className || ''}`.trim()}
     >
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <div className="size-14 rounded-[var(--radius-card)] bg-muted/60 dark:bg-muted/40 border border-black/5 dark:border-white/10 shadow-2xs flex items-center justify-center shrink-0">
-          <ShellIcon name={iconName} className="size-7 text-foreground/80" />
-        </div>
+        <AppIcon item={item} size="tile" className="size-14 rounded-[var(--radius-card)] shrink-0" />
 
         <div className="min-w-0 flex-1 flex flex-col justify-center">
           <div className="flex items-center gap-1.5 min-w-0">

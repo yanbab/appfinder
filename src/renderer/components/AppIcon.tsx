@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { cn, name2initials, name2color, resolveAssetUrl } from '@/hooks/utils';
+import { cn, name2initials, name2color, resolveAssetUrl, getFaviconUrl, getFontSpecimenCharacter } from '@/hooks/utils';
 import type { CaskItem } from '@/types';
 import { ShellIcon } from './ShellIcon';
 import { useAppStore } from '@/stores';
 
 export interface AppIconProps {
-  item?: CaskItem | { name?: string; token?: string; category?: string; iconUrl?: string | null } | null;
+  item?: CaskItem | { name?: string; token?: string; category?: string; iconUrl?: string | null; homepage?: string; secondCategory?: string } | null;
   size?: 'xs' | 'sm' | 'md' | 'row' | 'tile' | '48' | 'lg' | 'grid' | '64' | 'xl' | '2xl' | 'hero' | '128' | string;
   className?: string;
 }
@@ -25,80 +25,6 @@ const sizeClasses: Record<string, string> = {
   hero: "size-32 rounded-[28px]",
   "128": "size-32 rounded-[28px]",
 };
-
-export function getFontSpecimenCharacter(
-  item?: CaskItem | { name?: string; token?: string; category?: string; iconUrl?: string | null } | null
-): string {
-  if (!item) return 'Aa';
-  const token = (item.token || '').toLowerCase();
-  const name = (item.name || '').toLowerCase();
-  const c2 = ((item as any).secondCategory || '').toLowerCase();
-  const c3 = ((item as any).thirdCategory || '').toLowerCase();
-  const desc = ((item as any).desc || '').toLowerCase();
-
-  // 1. Emoji / Color fonts
-  if (
-    c2.includes('emoji') ||
-    c3.includes('emoji') ||
-    token.includes('emoji') ||
-    name.includes('emoji') ||
-    desc.includes('emoji') ||
-    Boolean((item as any).isColorFont)
-  ) {
-    return '😀';
-  }
-
-  // 2. Hebrew
-  if (c3.includes('hebrew') || token.includes('hebrew') || name.includes('hebrew')) {
-    return 'אב';
-  }
-
-  // 3. Arabic
-  if (c3.includes('arabic') || token.includes('arabic') || name.includes('arabic')) {
-    return 'أب';
-  }
-
-  // 4. CJK (Chinese / Japanese / Korean)
-  if (c3.includes('cjk') || token.includes('cjk') || name.includes('cjk') || token.includes('chinese') || name.includes('chinese')) {
-    return '永';
-  }
-  if (c3.includes('japanese') || token.includes('japanese') || name.includes('japanese') || token.includes('kana')) {
-    return 'あ';
-  }
-  if (c3.includes('korean') || token.includes('korean') || name.includes('korean') || token.includes('hangul')) {
-    return '가';
-  }
-
-  // 5. Thai
-  if (c3.includes('thai') || token.includes('thai') || name.includes('thai')) {
-    return 'ก';
-  }
-
-  // 6. Devanagari / Indic
-  if (c3.includes('devanagari') || token.includes('devanagari') || name.includes('devanagari')) {
-    return 'अ';
-  }
-  if (c3.includes('bengali') || token.includes('bengali')) return 'অ';
-  if (c3.includes('tamil') || token.includes('tamil')) return 'அ';
-  if (c3.includes('telugu') || token.includes('telugu')) return 'అ';
-  if (c3.includes('gujarati') || token.includes('gujarati')) return 'અ';
-  if (c3.includes('kannada') || token.includes('kannada')) return 'ಅ';
-  if (c3.includes('malayalam') || token.includes('malayalam')) return 'അ';
-
-  // 7. Armenian / Georgian
-  if (c3.includes('armenian') || token.includes('armenian')) return 'Աա';
-  if (c3.includes('georgian') || token.includes('georgian')) return 'Ⴀა';
-
-  // 8. Greek / Cyrillic
-  if (c3.includes('greek') || token.includes('greek') || name.includes('greek')) return 'Αα';
-  if (c3.includes('cyrillic') || token.includes('cyrillic') || name.includes('cyrillic')) return 'Аа';
-
-  // 9. Symbols / Nerd Font
-  if (c2.includes('symbols') || token.includes('nerd-font')) return '⌘';
-
-  // Default: Latin
-  return 'Aa';
-}
 
 export function AppIcon({ item, size = "md", className }: AppIconProps) {
   const [loaded, setLoaded] = useState(false);
@@ -125,13 +51,14 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
   React.useEffect(() => {
     setLoaded(false);
     setHasError(false);
-  }, [token, item?.iconUrl]);
+  }, [token, item?.iconUrl, (item as any)?.homepage]);
 
+  const serviceFaviconUrl = isService ? getFaviconUrl((item as any)?.homepage, 128) : null;
   const fontThumbnailUrl = isFont && token
     ? `https://yanbab.github.io/appfinder/font-thumbnails/${token}.png`
     : null;
 
-  const rawIconUrl = item?.iconUrl || (item as any)?.thumbnailUrl || fontThumbnailUrl;
+  const rawIconUrl = item?.iconUrl || (item as any)?.thumbnailUrl || fontThumbnailUrl || serviceFaviconUrl;
   const activeIconUrl = resolveAssetUrl(rawIconUrl);
   const hasIcon = Boolean(activeIconUrl && !hasError);
 
@@ -149,10 +76,10 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
       style={isFont && !isInstalled ? { opacity: 0.85 } : undefined}
       className={cn(
         "relative shrink-0 select-none overflow-hidden flex items-center justify-center [container-type:inline-size]",
-        hasIcon
+        hasIcon && !isService
           ? "bg-transparent dark:bg-transparent ring-0 border-0 shadow-none"
           : isService
-          ? "bg-muted/60 dark:bg-muted/40 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs"
+          ? "bg-neutral-100 dark:bg-neutral-800/90 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs"
           : isFont
           ? "bg-transparent dark:bg-transparent shadow-none ring-0 border-0 rounded-none"
           : "bg-neutral-100 dark:bg-neutral-800/90 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs",
@@ -161,20 +88,58 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
       )}
     >
       {hasIcon && activeIconUrl && (
-        <img
-          src={activeIconUrl}
-          alt={name}
-          loading="lazy"
-          decoding="async"
-          fetchPriority="low"
-          className={cn(
-            "w-full h-full object-contain",
-            isFont ? (isEmojiOrColorFont ? "rounded-none" : "dark:invert rounded-none") : "rounded-[inherit]",
-            loaded ? "block" : "invisible"
-          )}
-          onLoad={() => setLoaded(true)}
-          onError={() => setHasError(true)}
-        />
+        isService ? (
+          <>
+            <img
+              src={activeIconUrl}
+              alt={name}
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              className={cn(
+                "w-[62cqw] h-[62cqw] object-contain rounded-[14cqw] select-none pointer-events-none drop-shadow-2xs transition-opacity duration-150",
+                loaded ? "opacity-100" : "opacity-0"
+              )}
+              onLoad={() => setLoaded(true)}
+              onError={() => setHasError(true)}
+            />
+            {loaded && size !== 'xs' && (
+              <div
+                className="absolute bottom-[4cqw] right-[4cqw] size-[34cqw] rounded-full bg-background/95 dark:bg-neutral-900/95 ring-1 ring-black/10 dark:ring-white/15 shadow-xs flex items-center justify-center pointer-events-none animate-in fade-in duration-150"
+                title={(item as any)?.secondCategory || 'service'}
+              >
+                <ShellIcon
+                  name={SERVICE_ICONS[(item as any)?.secondCategory || ''] || 'server.rack'}
+                  className="w-[58%] h-[58%] text-foreground/80"
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <img
+            src={activeIconUrl}
+            alt={name}
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+            className={cn(
+              "w-full h-full object-contain",
+              isFont ? (isEmojiOrColorFont ? "rounded-none" : "dark:invert rounded-none") : "rounded-[inherit]",
+              loaded ? "block" : "invisible"
+            )}
+            onLoad={() => setLoaded(true)}
+            onError={() => setHasError(true)}
+          />
+        )
+      )}
+
+      {isService && hasIcon && !loaded && !hasError && (
+        <div className="absolute inset-0 flex items-center justify-center text-foreground/35 rounded-[inherit] pointer-events-none">
+          <ShellIcon
+            name={SERVICE_ICONS[(item as any)?.secondCategory || ''] || 'server.rack'}
+            className="w-[50%] h-[50%]"
+          />
+        </div>
       )}
 
       {(!hasIcon || hasError) && (
