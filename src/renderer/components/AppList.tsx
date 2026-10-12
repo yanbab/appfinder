@@ -38,6 +38,11 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
   const [fontFilter, setFontFilter] = useState('all');
   const [serviceFilter, setServiceFilter] = useState('all');
 
+  React.useEffect(() => {
+    setFontFilter('all');
+    setServiceFilter('all');
+  }, [currentTab]);
+
   const filteredItems = useMemo(
     () => selectFilteredItems({ items, search, order, installed, outdatedMap, categories }, currentTab),
     [items, search, order, installed, outdatedMap, categories, currentTab]
@@ -136,7 +141,7 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
           <option value="all" className="bg-popover text-popover-foreground">{__('All')}</option>
           <option value="installed" className="bg-popover text-popover-foreground">{__('Installed')}</option>
           <option value="running" className="bg-popover text-popover-foreground">{__('Running')}</option>
-          <option disabled className="text-muted-foreground">──────────</option>
+          <hr />
           <option value="database" className="bg-popover text-popover-foreground">Databases & Storage</option>
           <option value="webServer" className="bg-popover text-popover-foreground">Web & Proxies</option>
           <option value="cacheQueue" className="bg-popover text-popover-foreground">Cache & Messaging</option>

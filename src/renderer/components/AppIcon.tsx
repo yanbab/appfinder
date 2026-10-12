@@ -35,7 +35,8 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
   const isFont = Boolean(item?.category === 'font' || (token && token.startsWith('font-')));
   const isService = Boolean(item?.category === 'services');
   const isInstalled = useAppStore((s) => Boolean(token && s.installed.includes(token)));
-  const currentSizeClass = isFont ? (sizeClasses['128'] || "size-32") : (sizeClasses[size] || sizeClasses.md);
+  const isRowSize = size === 'row' || size === 'sm' || size === 'xs' || size === 'md';
+  const currentSizeClass = sizeClasses[size] || sizeClasses.md;
 
   const SERVICE_ICONS: Record<string, string> = {
     database: 'cylinder',
@@ -76,14 +77,16 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
       style={isFont && !isInstalled ? { opacity: 0.85 } : undefined}
       className={cn(
         "relative shrink-0 select-none overflow-hidden flex items-center justify-center [container-type:inline-size]",
-        hasIcon && !isService
+        hasIcon && !isService && !isFont
           ? "bg-transparent dark:bg-transparent ring-0 border-0 shadow-none"
           : isService
           ? "bg-neutral-100 dark:bg-neutral-800/90 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs"
           : isFont
-          ? "bg-transparent dark:bg-transparent shadow-none ring-0 border-0 rounded-none"
+          ? (isRowSize
+              ? "bg-neutral-100 dark:bg-neutral-800/90 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs rounded-[var(--radius-card)]"
+              : "bg-transparent dark:bg-transparent shadow-none ring-0 border-0 rounded-none")
           : "bg-neutral-100 dark:bg-neutral-800/90 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs",
-        isFont ? "size-32 w-32 h-32" : currentSizeClass,
+        currentSizeClass,
         className
       )}
     >
@@ -124,7 +127,11 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
             fetchPriority="low"
             className={cn(
               "w-full h-full object-contain",
-              isFont ? (isEmojiOrColorFont ? "rounded-none" : "dark:invert rounded-none") : "rounded-[inherit]",
+              isFont
+                ? (isEmojiOrColorFont
+                    ? (isRowSize ? "p-1 rounded-[inherit]" : "rounded-none")
+                    : (isRowSize ? "p-1 dark:invert rounded-[inherit]" : "dark:invert rounded-none"))
+                : "rounded-[inherit]",
               loaded ? "block" : "invisible"
             )}
             onLoad={() => setLoaded(true)}

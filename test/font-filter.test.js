@@ -72,4 +72,39 @@ test('matchFontFilter handles all filter options accurately', () => {
   const installedSet = new Set(['font-fira-code']);
   assert.strictEqual(matchFontFilter(firaCode, 'installed', installedSet), true);
   assert.strictEqual(matchFontFilter(inter, 'installed', installedSet), false);
+
+  // 'latin' matches fonts supporting Latin, including multi-script Unicode fonts like Inter
+  assert.strictEqual(matchFontFilter(inter, 'latin'), true);
+  assert.strictEqual(matchFontFilter(firaCode, 'latin'), true);
+
+  // 'cjk'
+  const cjkFont = {
+    token: 'font-noto-sans-cjk-sc',
+    name: 'Noto Sans CJK SC',
+    secondCategory: 'sans-serif',
+    thirdCategory: 'latin, cjk',
+    desc: 'Simplified Chinese',
+  };
+  assert.strictEqual(matchFontFilter(cjkFont, 'cjk'), true);
+  assert.strictEqual(matchFontFilter(firaCode, 'cjk'), false);
+
+  // 'display' and 'script'
+  const lobster = {
+    token: 'font-lobster',
+    name: 'Lobster',
+    secondCategory: 'display',
+    thirdCategory: 'latin',
+    desc: 'Display font',
+  };
+  const pacifico = {
+    token: 'font-pacifico',
+    name: 'Pacifico',
+    secondCategory: 'script',
+    thirdCategory: 'latin',
+    desc: 'Handwriting script',
+  };
+  assert.strictEqual(matchFontFilter(lobster, 'display'), true);
+  assert.strictEqual(matchFontFilter(lobster, 'script'), false);
+  assert.strictEqual(matchFontFilter(pacifico, 'script'), true);
+  assert.strictEqual(matchFontFilter(pacifico, 'display'), false);
 });
