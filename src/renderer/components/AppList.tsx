@@ -75,6 +75,13 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  React.useLayoutEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+    setDisplayedCount(50);
+  }, [currentTab, viewMode, search, order, fontFilter, serviceFilter]);
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     if (!el) return;
@@ -110,11 +117,7 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
   const fontHeader = (
     <FontFilter
       value={fontFilter}
-      onChange={(newVal) => {
-        setFontFilter(newVal);
-        setDisplayedCount(50);
-        if (containerRef.current) containerRef.current.scrollTop = 0;
-      }}
+      onChange={(newVal) => setFontFilter(newVal)}
     />
   );
 
@@ -127,10 +130,7 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
       <div className="flex items-center gap-2">
         <Select
           value={serviceFilter}
-          onChange={(e) => {
-            setServiceFilter(e.target.value);
-            if (containerRef.current) containerRef.current.scrollTop = 0;
-          }}
+          onChange={(e) => setServiceFilter(e.target.value)}
           aria-label={__('Filter services')}
         >
           <option value="all" className="bg-popover text-popover-foreground">{__('All')}</option>
@@ -160,7 +160,7 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
     const isSearchActive = Boolean(search && search.trim().length > 0);
     const isFilterActive = (isFontTab && fontFilter !== 'all') || (isServiceTab && serviceFilter !== 'all');
     return (
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col">
+      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 flex flex-col">
         {activeHeader && (
           <div className={viewMode === 'grid' ? "w-full mb-4" : "max-w-[var(--content-max-width)] mx-auto w-full mb-4"}>
             {activeHeader}
@@ -178,10 +178,7 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
                 size="sm"
                 onClick={() => {
                   if (isSearchActive) setSearch('');
-                  if (isFontTab) {
-                    setFontFilter('all');
-                    setDisplayedCount(50);
-                  }
+                  if (isFontTab) setFontFilter('all');
                   if (isServiceTab) setServiceFilter('all');
                 }}
               >
