@@ -18345,7 +18345,8 @@
     "count": 27,
     "added": "2013-12-13T21:05:32Z",
     "secondCategory": "sans-serif",
-    "thirdCategory": "latin, tamil"
+    "thirdCategory": "latin, tamil",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-adinatha-tamil-brahmi.png"
   },
   {
     "token": "font-adlam-display",
@@ -24698,7 +24699,8 @@
     "count": 11,
     "added": "2024-05-15T17:13:46Z",
     "secondCategory": "sans-serif",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-conakry.png"
   },
   {
     "token": "font-concert-one",
@@ -27202,7 +27204,8 @@
     "count": 110,
     "added": "2024-05-15T22:32:52Z",
     "secondCategory": "sans-serif",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-fandol.png"
   },
   {
     "token": "font-fantasque-sans-mono",
@@ -30853,7 +30856,8 @@
     "count": 188,
     "added": "2024-12-03T10:54:23Z",
     "secondCategory": "sans-serif",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-ibm-plex-sans-sc.png"
   },
   {
     "token": "font-ibm-plex-sans-tc",
@@ -31636,7 +31640,8 @@
     "count": 83,
     "added": "2024-05-15T22:32:52Z",
     "secondCategory": "sans-serif",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-iosevka-comfy.png"
   },
   {
     "token": "font-iosevka-curly",
@@ -31663,7 +31668,8 @@
     "count": 117,
     "added": "2024-05-15T22:32:52Z",
     "secondCategory": "serif",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-iosevka-curly-slab.png"
   },
   {
     "token": "font-iosevka-etoile",
@@ -31690,7 +31696,8 @@
     "count": 7023,
     "added": "2024-05-16T03:11:18Z",
     "secondCategory": "monospace",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-iosevka-nerd-font.png"
   },
   {
     "token": "font-iosevka-slab",
@@ -31703,7 +31710,8 @@
     "count": 345,
     "added": "2024-05-15T22:32:52Z",
     "secondCategory": "serif",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-iosevka-slab.png"
   },
   {
     "token": "font-iosevka-ss01",
@@ -32164,7 +32172,8 @@
     "count": 27,
     "added": "2024-05-15T22:32:52Z",
     "secondCategory": "sans-serif",
-    "thirdCategory": "latin, thai"
+    "thirdCategory": "latin, thai",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-itim.png"
   },
   {
     "token": "font-jaapokki",
@@ -34163,7 +34172,8 @@
     "count": 824,
     "added": "2024-05-15T22:32:52Z",
     "secondCategory": "sans-serif",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-latin-modern.png"
   },
   {
     "token": "font-latin-modern-math",
@@ -38852,7 +38862,8 @@
     "count": 434,
     "added": "2024-09-21T09:19:50Z",
     "secondCategory": "sans-serif",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-new-computer-modern.png"
   },
   {
     "token": "font-new-rocker",
@@ -51276,7 +51287,8 @@
     "count": 25,
     "added": "2024-05-16T03:11:18Z",
     "secondCategory": "sans-serif",
-    "thirdCategory": "latin"
+    "thirdCategory": "latin",
+    "screenshotUrl": "https://yanbab.github.io/appfinder/font-previews/font-takaoex.png"
   },
   {
     "token": "font-tamzen",
