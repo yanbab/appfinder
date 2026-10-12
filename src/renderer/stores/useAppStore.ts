@@ -224,13 +224,19 @@ export function selectFilteredItems(state: FilterableAppState, currentTab: strin
 
   if (currentTab === 'discover') {
     list = items.filter(c => (c.count || 0) > 0);
-  } else if (currentTab === 'all-apps') {
-    list = items.filter(c => c.category !== 'font');
+  } else if (currentTab === 'all') {
+    list = [...items];
+  } else if (currentTab === 'all-apps' || currentTab === 'applications') {
+    list = items.filter(c => c.category !== 'font' && c.category !== 'services');
   } else if (currentTab === 'installed') {
     const installedSet = new Set(installed);
     list = items.filter(c => installedSet.has(c.token));
   } else if (currentTab === 'updates') {
     list = items.filter(c => outdatedMap[c.token] !== undefined);
+  } else if (currentTab === 'font') {
+    list = items.filter(c => c.category === 'font');
+  } else if (currentTab === 'services') {
+    list = items.filter(c => c.category === 'services');
   } else {
     const catObj = categories.find(c => c.name === currentTab || (c.displayName && c.displayName.toLowerCase() === currentTab.toLowerCase()));
     const matchTargets = new Set<string>([

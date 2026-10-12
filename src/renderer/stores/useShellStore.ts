@@ -154,9 +154,12 @@ export const useShellStore = create<ShellStoreState>((set, get) => ({
     const { currentTab, __ } = get();
     const categories = useAppStore.getState().categories;
     if (currentTab === 'discover') return __('Explore');
-    if (currentTab === 'all-apps') return __('All Apps');
+    if (currentTab === 'all') return __('All');
+    if (currentTab === 'all-apps' || currentTab === 'applications') return __('Applications');
     if (currentTab === 'installed') return __('Installed');
     if (currentTab === 'updates') return __('Updates');
+    if (currentTab === 'font') return __('Fonts');
+    if (currentTab === 'services') return __('Services');
     const cat = categories.find((c) => c.name === currentTab);
     return cat ? __(cat.displayName) : __('Explore');
   }

@@ -18,7 +18,7 @@ export function SearchInput({ className = '' }: SearchInputProps) {
     const val = e.target.value;
     setSearch(val);
     if (val && val.trim() && currentTab === 'discover') {
-      selectTab('all-apps');
+      selectTab('all');
     }
   };
 
@@ -37,10 +37,10 @@ export function SearchInput({ className = '' }: SearchInputProps) {
         <button
           type="button"
           onClick={() => setSearch('')}
-          className="absolute right-2 size-4 rounded-full bg-muted-foreground/65 hover:bg-muted-foreground/85 active:bg-muted-foreground text-background dark:text-[#18181a] flex items-center justify-center cursor-default transition-colors"
+          className="absolute right-2 size-4 flex items-center justify-center text-black/35 hover:text-black/60 active:text-black/80 dark:text-white/35 dark:hover:text-white/60 dark:active:text-white/80 transition-colors cursor-default outline-none"
           title={__('Clear search')}
         >
-          <ShellIcon name="xmark" className="size-2.5 stroke-[2.5]" />
+          <ShellIcon name="xmark.circle.fill" className="size-3.5" />
         </button>
       )}
     </div>

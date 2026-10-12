@@ -216,8 +216,8 @@ export function useKeyboardNav() {
       const isSidebar = activeEl && activeEl.closest('aside');
       if (isSidebar && !isInput) {
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-          e.preventDefault();
-          const tabs = ['discover', 'all-apps', 'installed', 'updates', ...(categories || []).map((c) => c.name)];
+          const catList = (categories || []).filter((c) => c.name !== 'font' && c.name !== 'services' && c.name !== 'other').map((c) => c.name);
+          const tabs = ['discover', 'all', 'installed', 'updates', 'all-apps', 'font', 'services', ...catList, 'other'];
           const currentIndex = tabs.indexOf(currentTab);
           const nextIndex =
             e.key === 'ArrowDown'

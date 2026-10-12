@@ -57,6 +57,13 @@ export const aliases: Record<string, string> = {
   delete: 'trash',
   uninstall: 'trash',
   trash: 'trash',
+  code: 'chevron.left.forwardslash.chevron.right',
+  developer: 'chevron.left.forwardslash.chevron.right',
+  development: 'chevron.left.forwardslash.chevron.right',
+  applications: 'macwindow',
+  app: 'macwindow',
+  apps: 'macwindow',
+  other: 'ellipsis.circle',
 };
 
 export function getSymbol(name?: string): string | null {

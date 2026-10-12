@@ -27,6 +27,7 @@
     "docs:html": "typedoc --out _doc/html",
     "fonts:generate": "node scripts/generate-font-thumbnails.mjs",
     "fonts:publish": "node scripts/publish-font-thumbnails.mjs",
+    "commands:generate": "node scripts/generate-commands.mjs",
     "release": "node scripts/release-github.js"
   },
   "keywords": [
