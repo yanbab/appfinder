@@ -6,6 +6,7 @@ import { ShellIcon } from './ShellIcon';
 import { AppButtons } from './AppButtons';
 import { Card } from './Card';
 import { Switch } from './Switch';
+import { useServiceControl } from '@/hooks/useServiceControl';
 import {
   getAppName,
   formatVersion,
@@ -14,6 +15,42 @@ import {
   formatReason,
 } from '@/hooks/utils';
 import type { CaskItem } from '@/types';
+
+function ServiceControlCard({ item }: { item: CaskItem }) {
+  const {
+    isPending,
+    switchChecked,
+    statusLabel,
+    statusDotClass,
+    statusTextClass,
+    statusInfo,
+    handleToggle,
+  } = useServiceControl(item);
+
+  return (
+    <Card padding="default" className="text-xs space-y-2.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className={`size-2 rounded-full shrink-0 ${statusDotClass}`} />
+          <span className={`font-semibold text-xs ${statusTextClass}`}>
+            {statusLabel}
+          </span>
+          {statusInfo?.pid && (
+            <span className="text-[10px] text-muted-foreground font-mono">
+              PID {statusInfo.pid}
+            </span>
+          )}
+        </div>
+        <Switch
+          checked={switchChecked}
+          disabled={isPending}
+          onChange={handleToggle}
+          onCheckedChange={handleToggle}
+        />
+      </div>
+    </Card>
+  );
+}
 
 export function InfoPanel() {
   const selectedApp = useShellStore((s) => s.selectedApp);
@@ -29,7 +66,6 @@ export function InfoPanel() {
   const outdatedMap = useAppStore((s) => s.outdatedMap);
   const categories = useAppStore((s) => s.categories);
   const serviceStatusMap = useAppStore((s) => s.serviceStatusMap);
-  const refreshServiceStatuses = useAppStore((s) => s.refreshServiceStatuses);
 
   const dialogRef = useRef<HTMLDialogElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -230,44 +266,7 @@ export function InfoPanel() {
 
           {/* Service Daemon Control Card */}
           {selectedApp.category === 'services' && isInstalled && (
-            <Card padding="default" className="text-xs space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`size-2 rounded-full ${serviceStatusMap[selectedApp.token]?.status === 'started'
-                        ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse'
-                        : 'bg-muted-foreground/40'
-                      }`}
-                  />
-                  <span className="font-semibold text-foreground text-xs">
-                    {serviceStatusMap[selectedApp.token]?.status === 'started' ? __('Service Running') : __('Service Stopped')}
-                  </span>
-                  {serviceStatusMap[selectedApp.token]?.pid && (
-                    <span className="text-[10px] text-muted-foreground font-mono">
-                      PID {serviceStatusMap[selectedApp.token]?.pid}
-                    </span>
-                  )}
-                </div>
-                <Switch
-                  checked={serviceStatusMap[selectedApp.token]?.status === 'started'}
-                  onCheckedChange={async () => {
-                    await window.ipc?.openApp(selectedApp.token, selectedApp.app || `service:${selectedApp.token}`);
-                    setTimeout(() => refreshServiceStatuses(), 500);
-                  }}
-                />
-              </div>
-
-              {selectedApp.serviceCommand && (
-                <div className="pt-1.5 border-t border-border/20">
-                  <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider block mb-1">
-                    {__('Daemon Command')}
-                  </span>
-                  <code className="text-[11px] font-mono text-muted-foreground bg-muted/50 p-1.5 rounded-md block break-all select-text">
-                    {selectedApp.serviceCommand}
-                  </code>
-                </div>
-              )}
-            </Card>
+            <ServiceControlCard item={selectedApp} />
           )}
 
           {/* Metadata Section in Card */}

@@ -13,27 +13,27 @@ export function StatusBar() {
   const alwaysShowStatusBar = useShellStore((s) => s.alwaysShowStatusBar);
   const __ = useShellStore((s) => s.__);
 
-  // If there's no active task and alwaysShowStatusBar is false, and drawer is hidden
-  const isVisible = Boolean(activeTaskId) || alwaysShowStatusBar || showTerminal;
+  // If there's no active task, no status message, and alwaysShowStatusBar is false, and drawer is hidden
+  const isVisible = Boolean(activeTaskId) || Boolean(drawerTitle) || alwaysShowStatusBar || showTerminal;
   if (!isVisible) return null;
+
+  const isServiceTask = Boolean(activeTaskId?.startsWith('service-'));
 
   return (
     <footer className="app-footer h-7 shrink-0 flex items-center justify-between border-t border-border bg-card text-xs font-sans text-muted-foreground select-none overflow-hidden transition-opacity duration-150 pl-2 pr-0">
       {/* Left: Status message or running task indicator with live download progress */}
       <div className="h-full flex items-center gap-2 min-w-0 mr-2 select-none">
         {activeTaskId && (
-          <>
-            <ShellIcon name="spinner" className="size-3.5 text-primary animate-spin shrink-0" />
-            {drawerTitle && (
-              <span className="overflow-hidden text-ellipsis whitespace-pre text-[11px] font-mono text-foreground/80">{drawerTitle}</span>
-            )}
-          </>
+          <ShellIcon name="spinner" className="size-3.5 text-primary animate-spin shrink-0" />
+        )}
+        {drawerTitle && (
+          <span className="overflow-hidden text-ellipsis whitespace-pre text-[11px] font-mono text-foreground/80">{drawerTitle}</span>
         )}
       </div>
 
       {/* Right: Actions */}
       <div className="flex items-center h-full shrink-0">
-        {activeTaskId && (
+        {activeTaskId && !isServiceTask && (
           <Button
             variant="ghost"
             className="h-full !rounded-none px-2.5 gap-1.5 text-xs text-destructive hover:text-destructive active:text-destructive dark:hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20"

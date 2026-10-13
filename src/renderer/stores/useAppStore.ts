@@ -1,5 +1,6 @@
 import { create } from './createStore';
 import type { CaskItem, CategoryItem } from '../../types/cask';
+import { useTermStore } from './useTermStore';
 
 export const CHUNK_SIZE = 50;
 export const FEATURED_TOKENS = new Set([
@@ -47,6 +48,7 @@ export interface AppStoreState {
   installedVersions: Record<string, string>;
   outdatedMap: Record<string, UpdateInfo>;
   serviceStatusMap: Record<string, { status: string; pid?: number; user?: string }>;
+  servicePendingMap: Record<string, 'starting' | 'stopping'>;
   lastCheckedTime: Date | null;
   isCheckingUpdates: boolean;
   loading: boolean;
@@ -64,7 +66,8 @@ export interface AppStoreState {
   syncCategoriesWithMessages: (messages: Record<string, string>) => void;
   refreshInstalled: () => Promise<void>;
   refreshUpdates: (force?: boolean) => Promise<void>;
-  refreshServiceStatuses: () => Promise<void>;
+  refreshServiceStatuses: (showLogs?: boolean) => Promise<Record<string, { status: string; pid?: number; user?: string }>>;
+  setServicePending: (token: string, action: 'starting' | 'stopping' | null) => void;
   optimisticInstall: (token: string) => void;
   optimisticUninstall: (token: string) => void;
   optimisticUpgrade: (token: string) => void;
@@ -79,6 +82,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   installedVersions: {},
   outdatedMap: {},
   serviceStatusMap: {},
+  servicePendingMap: {},
   lastCheckedTime: null,
   isCheckingUpdates: false,
   loading: true,
@@ -151,12 +155,66 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
     }
   },
 
-  refreshServiceStatuses: async () => {
-    if (!window.ipc?.getServicesStatus) return;
+  refreshServiceStatuses: async (showLogs: boolean = false) => {
+    if (!window.ipc?.getServicesStatus) return {};
+
+    let taskId: string | null = null;
+    if (showLogs) {
+      taskId = `service-list-${Date.now()}`;
+      useTermStore.getState().handleStatusLog('$ brew services list --json');
+      useTermStore.setState({
+        activeTaskId: taskId,
+        drawerTitle: 'brew services list --json',
+      });
+    }
+
     try {
-      const statuses = await window.ipc.getServicesStatus();
-      set({ serviceStatusMap: statuses || {} });
-    } catch (_) { }
+      const res = await window.ipc.getServicesStatus();
+      const statuses = res?.statuses || (res as any) || {};
+      const raw = res?.raw || '';
+
+      if (showLogs) {
+        if (raw) {
+          useTermStore.getState().handleStatusLog(raw.trim());
+        }
+        const serviceCount = Object.keys(statuses).length;
+        const msg = `==> brew services: ${serviceCount} service${serviceCount === 1 ? '' : 's'} found`;
+        useTermStore.setState((state) => ({
+          activeTaskId: state.activeTaskId === taskId ? null : state.activeTaskId,
+          drawerTitle: msg,
+        }));
+        setTimeout(() => {
+          if (useTermStore.getState().drawerTitle === msg) {
+            useTermStore.setState({ drawerTitle: '' });
+          }
+        }, 4000);
+      }
+
+      set({ serviceStatusMap: statuses });
+      return statuses;
+    } catch (err: any) {
+      if (showLogs) {
+        const errMsg = err?.message || String(err);
+        useTermStore.getState().handleStatusLog(`Error: ${errMsg}`);
+        useTermStore.setState((state) => ({
+          activeTaskId: state.activeTaskId === taskId ? null : state.activeTaskId,
+          drawerTitle: `Error: ${errMsg}`,
+        }));
+      }
+      return {};
+    }
+  },
+
+  setServicePending: (token: string, action: 'starting' | 'stopping' | null) => {
+    set((state) => {
+      const copy = { ...state.servicePendingMap };
+      if (!action) {
+        delete copy[token];
+      } else {
+        copy[token] = action;
+      }
+      return { servicePendingMap: copy };
+    });
   },
 
   optimisticInstall: (token: string) => {

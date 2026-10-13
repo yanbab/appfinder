@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { CaskItem } from '@/types';
-import { useShellStore, useAppStore } from '@/stores';
+import { useShellStore } from '@/stores';
 import { useAppItemState } from '@/hooks/useAppItemState';
+import { useServiceControl } from '@/hooks/useServiceControl';
 import { Card } from '../../Card';
-import { Button } from '../../Button';
-import { ShellIcon } from '../../ShellIcon';
 import { Switch } from '../../Switch';
 import { AppIcon } from '../../AppIcon';
+import { AppButtons } from '../../AppButtons';
 import { getAppName } from '@/hooks/utils';
 
 export interface ServiceTileProps {
@@ -18,33 +18,19 @@ export function ServiceTile({ item, className }: ServiceTileProps) {
   const openAppInfo = useShellStore((s) => s.openAppInfo);
   const selectedApp = useShellStore((s) => s.selectedApp);
   const __ = useShellStore((s) => s.__);
+  const { isInstalled } = useAppItemState(item);
 
-  const serviceStatusMap = useAppStore((s) => s.serviceStatusMap);
-  const refreshServiceStatuses = useAppStore((s) => s.refreshServiceStatuses);
-  const { isRunning: isTaskRunning, isInstalled, install } = useAppItemState(item);
-
-  const [isToggling, setIsToggling] = useState(false);
+  const {
+    isPending,
+    switchChecked,
+    statusLabel,
+    statusDotClass,
+    statusTextClass,
+    handleToggle,
+  } = useServiceControl(item);
 
   const isSelected = selectedApp?.token === item.token;
   const name = getAppName(item);
-  const statusInfo = serviceStatusMap[item.token];
-  const isStarted = statusInfo?.status === 'started';
-
-  const handleToggle = async (nextState: boolean) => {
-    if (isToggling || isTaskRunning) return;
-    setIsToggling(true);
-    try {
-      await window.ipc?.openApp(item.token, item.app || `service:${item.token}`);
-      // Refresh status after toggling daemon
-      setTimeout(() => {
-        refreshServiceStatuses();
-        setIsToggling(false);
-      }, 500);
-    } catch (err) {
-      console.error('Failed to toggle service:', err);
-      setIsToggling(false);
-    }
-  };
 
   return (
     <Card
@@ -61,82 +47,48 @@ export function ServiceTile({ item, className }: ServiceTileProps) {
           openAppInfo(item);
         }
       }}
-      className={`app-card relative flex items-center justify-between gap-3 ${className || ''}`.trim()}
+      className={`app-card relative flex items-center justify-between ${className || ''}`.trim()}
     >
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <AppIcon item={item} size="tile" className="size-14 rounded-[var(--radius-card)] shrink-0" />
+        <AppIcon item={item} size="64" className="size-16 rounded-[var(--radius-card)] shrink-0" />
 
         <div className="min-w-0 flex-1 flex flex-col justify-center">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <h3 className="font-semibold text-[13px] text-foreground truncate leading-snug">
-              {name}
-            </h3>
-            {item.version && (
-              <span className="text-[10px] text-muted-foreground/80 font-mono shrink-0">
-                v{item.version}
-              </span>
-            )}
-          </div>
+          <h3 className="font-semibold text-[13px] text-foreground truncate leading-snug">
+            {name}
+          </h3>
 
-          {item.desc && (
-            <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 leading-snug">
-              {item.desc}
-            </p>
+          {isInstalled ? (
+            <div className="inline-flex items-center gap-1.5 text-xs font-medium leading-snug mt-0.5 select-none">
+              <span className={`size-2 rounded-full shrink-0 ${statusDotClass}`} />
+              <span className={statusTextClass}>{statusLabel}</span>
+            </div>
+          ) : (
+            item.desc && (
+              <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 leading-snug">
+                {item.desc}
+              </p>
+            )
           )}
-
-          <div className="flex items-center gap-2 mt-1 select-none">
-            {isInstalled ? (
-              <div className="inline-flex items-center gap-1 text-[11px] font-medium leading-none">
-                <span
-                  className={`size-2 rounded-full shrink-0 ${isStarted
-                      ? 'bg-emerald-500 animate-pulse shadow-xs shadow-emerald-500/50'
-                      : 'bg-neutral-400 dark:bg-neutral-600'
-                    }`}
-                />
-                <span className={isStarted ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-muted-foreground'}>
-                  {isStarted ? (statusInfo?.pid ? `${__('Running')} (${statusInfo.pid})` : __('Running')) : __('Stopped')}
-                </span>
-              </div>
-            ) : (
-              <span className="text-[11px] text-muted-foreground/70">
-                {__('Not Installed')}
-              </span>
-            )}
-          </div>
         </div>
       </div>
 
-      {/* Action Switch / Button */}
-      <div
-        className="shrink-0 flex items-center"
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        {isTaskRunning || isToggling ? (
-          <Button
-            variant="ghost"
-            disabled
-            icon={<ShellIcon name="spinner" className="size-4 animate-spin text-muted-foreground" />}
-            title={__('Working...')}
-          />
-        ) : isInstalled ? (
+      {/* Action: Switch toggle when installed, otherwise standard AppButtons */}
+      {isInstalled ? (
+        <div
+          className="shrink-0 flex items-center"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
           <Switch
-            checked={isStarted}
+            checked={switchChecked}
+            disabled={isPending}
             onChange={handleToggle}
-            title={isStarted ? __('Stop service') : __('Start service')}
+            title={switchChecked ? __('Stop service') : __('Start service')}
           />
-        ) : (
-          <Button
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              install();
-            }}
-            icon={<ShellIcon name="arrow.down.to.line" className="size-4" />}
-            title={__('Install')}
-          />
-        )}
-      </div>
+        </div>
+      ) : (
+        <AppButtons item={item} variant="icon" />
+      )}
     </Card>
   );
 }

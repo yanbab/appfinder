@@ -155,3 +155,11 @@ test('brew.getApps includes services and getCategories includes services categor
   assert.equal(redis.app, 'service:redis');
   assert.ok(redis.serviceCommand, 'redis serviceCommand should be present');
 });
+
+test('brew.getServicesStatus returns statuses map and raw string', async () => {
+  const result = await brew.getServicesStatus();
+  assert.ok(typeof result === 'object' && result !== null, 'result should be an object');
+  assert.ok(typeof result.statuses === 'object' && result.statuses !== null, 'statuses should be an object');
+  assert.ok(typeof result.raw === 'string', 'raw should be a string');
+});
+

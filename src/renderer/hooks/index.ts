@@ -1,4 +1,5 @@
 export * from './useAppItemState';
+export * from './useServiceControl';
 export * from './useKeyboardNav';
 export * from './useNativeContextMenu';
 export * from './useTheme';

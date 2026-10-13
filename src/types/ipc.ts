@@ -50,6 +50,17 @@ export interface IpcEventMap {
 
 export type IpcEventName = keyof IpcEventMap;
 
+export interface ServiceStatusInfo {
+  status: string;
+  pid?: number;
+  user?: string;
+}
+
+export interface ServicesStatusResult {
+  statuses: Record<string, ServiceStatusInfo>;
+  raw: string;
+}
+
 export interface IpcBridge {
   // Queries (Request-Response)
   getCasks: () => Promise<CaskItem[]>;
@@ -57,7 +68,7 @@ export interface IpcBridge {
   getCaskInfo: (token: string) => Promise<any>;
   getInstalled: () => Promise<any>;
   getUpdates: (force?: boolean) => Promise<any>;
-  getServicesStatus: () => Promise<Record<string, { status: string; pid?: number; user?: string }>>;
+  getServicesStatus: () => Promise<ServicesStatusResult>;
 
   getMessages: () => Promise<Record<string, string>>;
   getAvailableLocales: () => Promise<LocaleInfo[]>;

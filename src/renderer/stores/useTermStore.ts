@@ -283,12 +283,24 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
       }
       useAppStore.getState().refreshInstalled();
       useAppStore.getState().refreshUpdates(true);
-      useAppStore.getState().refreshServiceStatuses();
+
+      const items = useAppStore.getState().items;
+      const cask = items.find((c) => c.token === activeTaskToken);
+      const isService = cask?.category === 'services' || useAppStore.getState().serviceStatusMap[activeTaskToken || ''] !== undefined;
+      const isServiceTask = isService && (activeTaskAction === 'install' || activeTaskAction === 'reinstall' || activeTaskAction === 'uninstall');
+
+      if (isServiceTask) {
+        useAppStore.getState().refreshServiceStatuses(true);
+      } else {
+        useAppStore.getState().refreshServiceStatuses(false);
+        if (!isUpdatingAll) {
+          set({ drawerTitle: '' });
+        }
+      }
       if (isUpdatingAll) {
         get().processNextQueuedUpdate();
         return;
       }
-      set({ drawerTitle: '' });
     } else {
       set({ isUpdatingAll: false, updateQueue: [] });
       if (!data.cancelled && data.code !== 130) {

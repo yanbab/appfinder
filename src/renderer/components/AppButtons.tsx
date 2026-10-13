@@ -20,6 +20,7 @@ export function AppButtons({
   caskStatus,
 }: AppButtonsProps) {
   const __ = useShellStore((s) => s.__);
+  const currentTab = useShellStore((s) => s.currentTab);
   const { isRunning, isInstalled, isOutdated, canOpen, install, upgrade, uninstall, open } = useAppItemState(item);
 
   const stopProp = (fn?: () => void) => (e: React.MouseEvent) => {
@@ -86,6 +87,21 @@ export function AppButtons({
 
   // 3. Icon Mode (Grid Cards)
   if (variant === 'icon') {
+    if (currentTab === 'installed') {
+      return (
+        <div className={`shrink-0 flex items-center ${className}`} onClick={stopContainer} onMouseDown={stopContainer} onPointerDown={stopContainer}>
+          <Button
+            variant="ghost"
+            onClick={stopProp(open)}
+            disabled={!canOpen}
+            className={!canOpen ? 'opacity-40 cursor-not-allowed' : ''}
+            icon={<ShellIcon name="play.fill" className="size-3.5" />}
+            title={__('Open')}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className={`shrink-0 flex items-center ${className}`} onClick={stopContainer} onMouseDown={stopContainer} onPointerDown={stopContainer}>
         {isOutdated ? (
@@ -131,6 +147,34 @@ export function AppButtons({
   }
 
   // 5. Row / Compact Mode (List View)
+  if (currentTab === 'installed') {
+    return (
+      <div className={`flex items-center gap-2 shrink-0 ${className}`} onClick={stopContainer} onMouseDown={stopContainer} onPointerDown={stopContainer}>
+        {isOutdated && (
+          <Button
+            variant="ghost"
+            icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-4" />}
+            onClick={stopProp(upgrade)}
+            className="text-primary hover:text-primary active:text-primary hover:bg-primary/10 active:bg-primary/20 [&_svg]:text-primary [&:hover_svg]:text-primary"
+            title={__('Update')}
+          />
+        )}
+        <Button
+          variant="ghost"
+          icon={<ShellIcon name="trash" className="size-4" />}
+          onClick={stopProp(uninstall)}
+          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 [&:hover_svg]:text-destructive"
+          title={__('Delete')}
+        />
+        {item.app ? (
+          <Button variant="secondary" onClick={stopProp(open)}>{__('Open')}</Button>
+        ) : (
+          <Button variant="secondary" disabled className="opacity-40 cursor-not-allowed">{__('Open')}</Button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={`flex items-center gap-2 shrink-0 ${className}`} onClick={stopContainer} onMouseDown={stopContainer} onPointerDown={stopContainer}>
       {isOutdated ? (

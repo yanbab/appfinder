@@ -226,5 +226,13 @@
   "Working...": "En cours...",
   "Yes": "Oui",
   "Yesterday": "Hier",
-  "Yesterday at %s": "Hier à %s"
+  "Yesterday at %s": "Hier à %s",
+  "Starting...": "Démarrage...",
+  "Stopping...": "Arrêt...",
+  "Failed to start service": "Échec du démarrage du service",
+  "Failed to stop service": "Échec de l'arrêt du service",
+  "Service %s could not be started.": "Le service %s n'a pas pu être démarré.",
+  "Service %s could not be stopped.": "Le service %s n'a pas pu être arrêté.",
+  "Starting %s...": "Démarrage de %s...",
+  "Stopping %s...": "Arrêt de %s..."
 }

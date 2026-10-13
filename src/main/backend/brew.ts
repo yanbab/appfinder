@@ -213,6 +213,30 @@ function getData(file: string, forceReload: boolean = false): any {
     try {
       const data = readJsonSafely(cachedFile);
       if (Array.isArray(data) && data.length > 0) {
+        if (file === 'apps.json') {
+          const needsEnrichment = data.some((item: any) => (item.category === 'font' || item.token?.startsWith('font-')) && (!item.desc || item.desc === 'Font'));
+          if (needsEnrichment && fs.existsSync(bundledFile)) {
+            try {
+              const bundledData = readJsonSafely(bundledFile);
+              if (Array.isArray(bundledData)) {
+                const descMap = new Map<string, string>();
+                for (const b of bundledData) {
+                  if (b.token && b.desc && b.desc !== 'Font') {
+                    descMap.set(b.token, b.desc);
+                  }
+                }
+                for (const item of data) {
+                  if ((item.category === 'font' || item.token?.startsWith('font-')) && (!item.desc || item.desc === 'Font')) {
+                    const enrichedDesc = descMap.get(item.token);
+                    if (enrichedDesc) {
+                      item.desc = enrichedDesc;
+                    }
+                  }
+                }
+              }
+            } catch (_) { }
+          }
+        }
         memoryCache.set(file, data);
         return data;
       }
@@ -368,10 +392,13 @@ export async function getInfo(tokenOrCask: any, sysInfo?: SystemInfo): Promise<a
   return cask || null;
 }
 
-export async function getServicesStatus(): Promise<Record<string, { status: string; pid?: number; user?: string }>> {
+export async function getServicesStatus(): Promise<{
+  statuses: Record<string, { status: string; pid?: number; user?: string }>;
+  raw: string;
+}> {
   try {
     const stdout = await runBrew(['services', 'list', '--json']);
-    if (!stdout) return {};
+    if (!stdout) return { statuses: {}, raw: '' };
     const parsed = JSON.parse(stdout);
     const result: Record<string, { status: string; pid?: number; user?: string }> = {};
     if (Array.isArray(parsed)) {
@@ -385,15 +412,15 @@ export async function getServicesStatus(): Promise<Record<string, { status: stri
         }
       }
     }
-    return result;
+    return { statuses: result, raw: stdout };
   } catch (err: any) {
-    return {};
+    return { statuses: {}, raw: '' };
   }
 }
 
 export async function isServiceRunning(serviceName: string): Promise<boolean> {
   try {
-    const statuses = await getServicesStatus();
+    const { statuses } = await getServicesStatus();
     return statuses[serviceName]?.status === 'started';
   } catch {
     return false;
@@ -484,7 +511,7 @@ export async function reveal(appName: string, token?: string): Promise<{ success
   }
 }
 
-export async function launch(appName: string, token?: string): Promise<{ success: boolean; error?: string }> {
+export async function launch(appName: string, token?: string): Promise<{ success: boolean; output?: string; error?: string }> {
   try {
     let target = (appName || '').trim();
     const tokenStr = (token || '').trim();
@@ -507,8 +534,18 @@ export async function launch(appName: string, token?: string): Promise<{ success
       const running = await isServiceRunning(serviceName);
       const action = explicitAction || (running ? 'stop' : 'start');
       console.log(`[LAUNCH COMMAND]: brew services ${action} ${serviceName}`);
-      await runBrew(['services', action, serviceName]);
-      return { success: true };
+      try {
+        const { stdout, stderr } = await execFileAsync(getBrewPath(), ['services', action, serviceName], {
+          env: getEnvWithBrew(),
+          maxBuffer: 10 * 1024 * 1024
+        });
+        const output = ((stdout || '') + (stderr ? '\n' + stderr : '')).trim();
+        return { success: true, output };
+      } catch (err: any) {
+        const errorOut = ((err.stdout || '') + (err.stderr ? '\n' + err.stderr : '')).trim() || err.message;
+        console.error(`Brew services ${action} ${serviceName} failed:`, errorOut);
+        return { success: false, error: errorOut };
+      }
     }
 
     // Expand ~

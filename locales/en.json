@@ -226,5 +226,13 @@
   "Working...": "Working...",
   "Yes": "Yes",
   "Yesterday": "Yesterday",
-  "Yesterday at %s": "Yesterday at %s"
+  "Yesterday at %s": "Yesterday at %s",
+  "Starting...": "Starting...",
+  "Stopping...": "Stopping...",
+  "Failed to start service": "Failed to start service",
+  "Failed to stop service": "Failed to stop service",
+  "Service %s could not be started.": "Service %s could not be started.",
+  "Service %s could not be stopped.": "Service %s could not be stopped.",
+  "Starting %s...": "Starting %s...",
+  "Stopping %s...": "Stopping %s..."
 }

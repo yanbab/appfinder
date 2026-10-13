@@ -7,7 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { CACHE_DIR } from '../path';
+import { CACHE_DIR, DATA_DIR } from '../path';
 import type { CaskItem, CategoryItem } from '../../types/cask';
 
 export const FETCH_DIR: string = path.join(CACHE_DIR, 'fetch');
@@ -78,7 +78,9 @@ export function processAppsData(
     let primaryCat = catInfo.primary || 'other';
     if (primaryCat === 'other' && token && token.startsWith('font-')) {
       primaryCat = 'font';
-      c.desc = 'Font';
+      if (!c.desc) {
+        c.desc = 'Font';
+      }
     }
 
     let count = 0;
@@ -205,7 +207,7 @@ export async function fetchCatalog({ onLog, signal }: FetchCatalogOptions = {}):
   const addedRaw = await downloadJson('https://github.com/alielsokary/CaskFlow/releases/latest/download/added_dates.json', path.join(FETCH_DIR, 'added_dates.json'), signal);
 
   let fontsRaw: Record<string, any> = {};
-  const localFontsFile = path.join(__dirname, '../../../data/fonts.json');
+  const localFontsFile = path.join(DATA_DIR, 'fonts.json');
   const packagedFontsFile = path.join(process.resourcesPath || '', 'data', 'fonts.json');
   if (fs.existsSync(localFontsFile)) {
     try { fontsRaw = JSON.parse(fs.readFileSync(localFontsFile, 'utf8')); } catch (_) {}

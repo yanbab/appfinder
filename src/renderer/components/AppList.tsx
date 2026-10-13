@@ -5,7 +5,7 @@ import { List } from './List';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 import { AppCard } from './AppCard';
-import { FontRow } from './category-views/fonts/FontRow';
+import { AppRow } from './AppRow';
 import { FontFilter, matchFontFilter } from './category-views/fonts/FontFilter';
 import { getCategoryViews } from './category-views/registry';
 import { Select } from './Select';
@@ -97,11 +97,8 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
     }
   };
 
-  const resolveViews = (item: CaskItem) => {
-    const isFontItem = item.category === 'font' || item.token.startsWith('font-');
-    const isServiceItem = item.category === 'services';
-
-    if (isServiceTab || isServiceItem) {
+  const resolveViews = (_item: CaskItem) => {
+    if (isServiceTab) {
       return getCategoryViews('services');
     }
 
@@ -109,14 +106,10 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
       return getCategoryViews('font');
     }
 
-    if (isFontItem) {
-      return {
-        Tile: AppCard,
-        Row: FontRow,
-      };
-    }
-
-    return getCategoryViews(item.category);
+    return {
+      Tile: AppCard,
+      Row: AppRow,
+    };
   };
 
   const fontHeader = (

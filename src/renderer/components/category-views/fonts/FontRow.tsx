@@ -11,6 +11,24 @@ export interface FontRowProps {
   className?: string;
 }
 
+function getFontDescription(item: CaskItem): string {
+  if (item.desc && item.desc !== 'Font') {
+    return item.desc;
+  }
+  if (item.secondCategory || item.stylesCount) {
+    const rawCat = item.secondCategory || 'Font';
+    const catFormatted = rawCat
+      .split(/[-_ ]+/)
+      .map((w, i) => (i === 0 ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w.toLowerCase()))
+      .join(' ');
+    if (item.stylesCount) {
+      return `${catFormatted} • ${item.stylesCount} style${item.stylesCount > 1 ? 's' : ''}`;
+    }
+    return catFormatted;
+  }
+  return item.desc || '';
+}
+
 export function FontRow({ item, className }: FontRowProps) {
   const openAppInfo = useShellStore((s) => s.openAppInfo);
   const selectedApp = useShellStore((s) => s.selectedApp);
@@ -33,9 +51,10 @@ export function FontRow({ item, className }: FontRowProps) {
   const isSelected = selectedApp?.token === item.token;
   const isOutdated = Boolean(outdatedMap[item.token]);
   const name = getAppName(item);
+  const fontDesc = getFontDescription(item);
   const desc = currentTab === 'updates' && isOutdated
     ? `${formatVersion(outdatedMap[item.token]?.installedVersion)} → ${formatVersion(outdatedMap[item.token]?.currentVersion)}`
-    : (item.desc || '');
+    : fontDesc;
 
   return (
     <div
@@ -53,21 +72,21 @@ export function FontRow({ item, className }: FontRowProps) {
         } ${className || ''}`.trim()}
     >
       {/* Icon & Font Preview + Description */}
-      <div className="flex items-center gap-3.5 min-w-0 flex-1 mr-4">
+      <div className="flex items-center gap-3.5 min-w-0 flex-1 mr-3">
         <AppIcon item={item} size="row" className="size-12 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <div className={`flex items-center min-w-0 overflow-hidden h-7 ${desc ? '-mt-1' : ''}`}>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center min-w-0 overflow-hidden h-7 mt-[5px]">
             <img
               src={previewUrl}
               alt={name}
               loading="lazy"
               decoding="async"
               onError={() => setHasError(true)}
-              className="h-7 max-h-7 w-auto max-w-none object-left select-none pointer-events-none dark:invert shrink-0"
+              className="h-7 max-h-7 w-auto max-w-none object-left select-none pointer-events-none dark:invert shrink-0 -ml-[7px]"
             />
           </div>
           {desc && (
-            <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
+            <p className="text-xs text-muted-foreground line-clamp-2 leading-snug mt-0.5">
               {desc}
             </p>
           )}

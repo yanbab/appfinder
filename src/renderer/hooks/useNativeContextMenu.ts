@@ -119,10 +119,34 @@ export function useNativeContextMenu() {
 
         if (action.startsWith('service-')) {
           const subAction = action.replace('service-', '');
-          await window.ipc?.openApp?.(token, `service:${subAction}:${token}`);
-          setTimeout(() => {
-            useAppStore.getState().refreshServiceStatuses();
-          }, 500);
+          const cmdStr = `brew services ${subAction} ${token}`;
+          const termStore = useTermStore.getState();
+          termStore.handleStatusLog(`$ ${cmdStr}`);
+
+          const targetPending = subAction === 'start' ? 'starting' : subAction === 'stop' ? 'stopping' : null;
+          if (targetPending) {
+            useAppStore.getState().setServicePending(token, targetPending);
+          }
+
+          const taskId = `service-${subAction}-${token}-${Date.now()}`;
+          const actionLabel = subAction === 'start' ? `Starting ${token}...` : subAction === 'stop' ? `Stopping ${token}...` : `Restarting ${token}...`;
+          useTermStore.setState({
+            activeTaskId: taskId,
+            drawerTitle: actionLabel,
+          });
+
+          try {
+            const res = await window.ipc?.openApp?.(token, `service:${subAction}:${token}`);
+            if (res?.output) termStore.handleStatusLog(res.output);
+            if (res?.error) termStore.handleStatusLog(res.error);
+
+            await new Promise((r) => setTimeout(r, 250));
+            await useAppStore.getState().refreshServiceStatuses(true);
+          } finally {
+            if (targetPending) {
+              useAppStore.getState().setServicePending(token, null);
+            }
+          }
           return;
         }
 
