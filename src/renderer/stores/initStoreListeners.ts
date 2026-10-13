@@ -23,6 +23,9 @@ export function initStoreListeners(): void {
 
   window.ipc.getConfig?.().then((cfg) => {
     if (cfg?.alwaysShowStatusBar) shellStore.setAlwaysShowStatusBar(true);
+    if (cfg?.debug !== undefined) shellStore.setDebug(Boolean(cfg.debug));
+    if (cfg?.theme) shellStore.setTheme(cfg.theme);
+    if (cfg?.showUpgradesInMenuBar !== undefined) shellStore.setShowUpgradesInMenuBar(Boolean(cfg.showUpgradesInMenuBar));
   });
 
   appStore.initCatalog();
@@ -31,6 +34,15 @@ export function initStoreListeners(): void {
   window.ipc.on('config:updated', (cfg) => {
     if (cfg?.alwaysShowStatusBar !== undefined) {
       shellStore.setAlwaysShowStatusBar(!!cfg.alwaysShowStatusBar);
+    }
+    if (cfg?.debug !== undefined) {
+      shellStore.setDebug(Boolean(cfg.debug));
+    }
+    if (cfg?.theme) {
+      shellStore.setTheme(cfg.theme);
+    }
+    if (cfg?.showUpgradesInMenuBar !== undefined) {
+      shellStore.setShowUpgradesInMenuBar(Boolean(cfg.showUpgradesInMenuBar));
     }
   });
 

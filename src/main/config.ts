@@ -10,8 +10,10 @@ const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 const defaults: AppConfig = {
   zap: false,
   alwaysShowStatusBar: false,
-  debug: true,
+  debug: false,
   language: 'system',
+  theme: 'system',
+  showUpgradesInMenuBar: false,
 };
 
 let config: AppConfig | null = null;

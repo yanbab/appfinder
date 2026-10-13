@@ -9,7 +9,7 @@ export function Sidebar(): React.JSX.Element {
   const currentTab = useShellStore((s) => s.currentTab);
   const selectTab = useShellStore((s) => s.selectTab);
   const showSidebar = useShellStore((s) => s.showSidebar);
-  const toggleSidebar = useShellStore((s) => s.toggleSidebar);
+  const debug = useShellStore((s) => s.debug);
   const __ = useShellStore((s) => s.__);
 
   const items = useAppStore((s) => s.items);
@@ -72,20 +72,16 @@ export function Sidebar(): React.JSX.Element {
       }`}
     >
       <div className="w-[200px] flex flex-col h-full shrink-0 overflow-hidden">
-        {/* Fixed Sidebar toggle button right beside traffic lights */}
-        <div className="h-[52px] shrink-0 flex items-center pl-[72px] pr-2.5 [-webkit-app-region:drag]">
-          <Button
-            icon={<ShellIcon name="sidebar.left" className="size-5" />}
-            onClick={toggleSidebar}
-            className="size-7 p-0 shrink-0 [-webkit-app-region:no-drag]"
-            title={__("Hide categories")}
-          />
+        {/* Header area: 0-126px is no-drag for traffic lights & stationary button, 126-200px is draggable */}
+        <div className="h-[52px] shrink-0 flex items-center [-webkit-app-region:no-drag]">
+          <div className="w-[126px] h-full shrink-0 [-webkit-app-region:no-drag]" />
+          <div className="flex-1 h-full [-webkit-app-region:drag]" />
         </div>
 
         {/* Search Input */}
         <div
           className={`px-2.5 pb-2.5 border-b transition-colors duration-150 ${
-            isScrolled ? 'border-sidebar-border' : 'border-sidebar-border/40'
+            isScrolled ? 'border-border' : 'border-transparent'
           }`}
         >
           <SearchInput />
@@ -146,39 +142,41 @@ export function Sidebar(): React.JSX.Element {
             </Button>
           </NavGroup>
 
-          {/* Applications / Fonts / Services */}
-          <NavGroup>
-            <Button
-              data-nav-id="all-apps"
-              variant="sidebar"
-              icon={<ShellIcon name="macwindow" className="size-[18px] shrink-0" />}
-              active={currentTab === 'all-apps' || currentTab === 'applications'}
-              badge={(currentTab === 'all-apps' || currentTab === 'applications') && search ? filteredCount : applicationsCount}
-              onClick={() => selectTab('all-apps')}
-            >
-              {__('Applications')}
-            </Button>
-            <Button
-              data-nav-id="font"
-              variant="sidebar"
-              icon={<ShellIcon name="textformat" className="size-[18px] shrink-0" />}
-              active={currentTab === 'font'}
-              badge={currentTab === 'font' && search ? filteredCount : fontsCount}
-              onClick={() => selectTab('font')}
-            >
-              {__('Fonts')}
-            </Button>
-            <Button
-              data-nav-id="services"
-              variant="sidebar"
-              icon={<ShellIcon name="server.rack" className="size-[18px] shrink-0" />}
-              active={currentTab === 'services'}
-              badge={currentTab === 'services' && search ? filteredCount : servicesCount}
-              onClick={() => selectTab('services')}
-            >
-              {__('Services')}
-            </Button>
-          </NavGroup>
+          {/* Applications / Fonts / Services (Only in Debug Mode) */}
+          {debug && (
+            <NavGroup>
+              <Button
+                data-nav-id="all-apps"
+                variant="sidebar"
+                icon={<ShellIcon name="macwindow" className="size-[18px] shrink-0" />}
+                active={currentTab === 'all-apps' || currentTab === 'applications'}
+                badge={(currentTab === 'all-apps' || currentTab === 'applications') && search ? filteredCount : applicationsCount}
+                onClick={() => selectTab('all-apps')}
+              >
+                {__('Applications')}
+              </Button>
+              <Button
+                data-nav-id="font"
+                variant="sidebar"
+                icon={<ShellIcon name="textformat" className="size-[18px] shrink-0" />}
+                active={currentTab === 'font'}
+                badge={currentTab === 'font' && search ? filteredCount : fontsCount}
+                onClick={() => selectTab('font')}
+              >
+                {__('Fonts')}
+              </Button>
+              <Button
+                data-nav-id="services"
+                variant="sidebar"
+                icon={<ShellIcon name="server.rack" className="size-[18px] shrink-0" />}
+                active={currentTab === 'services'}
+                badge={currentTab === 'services' && search ? filteredCount : servicesCount}
+                onClick={() => selectTab('services')}
+              >
+                {__('Services')}
+              </Button>
+            </NavGroup>
+          )}
 
           {/* Categories */}
           {sortedCategories.length > 0 && (

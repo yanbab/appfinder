@@ -7,6 +7,10 @@ import { Switch } from './Switch';
 
 export function SettingsWindow() {
   const [alwaysShowStatusBar, setAlwaysShowStatusBar] = useState(false);
+  const [debug, setDebug] = useState(false);
+  const [theme, setTheme] = useState('system');
+  const [systemTheme, setSystemTheme] = useState<'dark' | 'light'>('dark');
+  const [showUpgradesInMenuBar, setShowUpgradesInMenuBar] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [language, setLanguage] = useState('system');
   const [locales, setLocales] = useState<LocaleInfo[]>([]);
@@ -48,8 +52,15 @@ export function SettingsWindow() {
       const cfg = await window.ipc?.getConfig?.();
       if (cfg) {
         setAlwaysShowStatusBar(Boolean(cfg.alwaysShowStatusBar));
+        setDebug(Boolean(cfg.debug));
         setLanguage(cfg.language || 'system');
+        setTheme(cfg.theme || 'system');
+        setShowUpgradesInMenuBar(Boolean(cfg.showUpgradesInMenuBar));
       }
+      try {
+        const sysTheme = await window.ipc?.getSystemTheme?.();
+        if (sysTheme) setSystemTheme(sysTheme);
+      } catch (_) {}
       setIsReady(true);
     } catch (e) {
       console.error('Failed to load config:', e);
@@ -88,12 +99,18 @@ export function SettingsWindow() {
 
   useEffect(() => {
     if (window.ipc?.on) {
-      const unsub = window.ipc.on('i18n:changed', async () => {
+      const unsubTheme = window.ipc.on('system:theme-changed', (sysTheme) => {
+        if (sysTheme) setSystemTheme(sysTheme);
+      });
+      const unsubI18n = window.ipc.on('i18n:changed', async () => {
         const msgs = await window.ipc?.getMessages?.();
         if (msgs) setMessages(msgs);
         resizeToContent();
       });
-      return () => unsub?.();
+      return () => {
+        unsubTheme?.();
+        unsubI18n?.();
+      };
     }
   }, [resizeToContent]);
 
@@ -112,6 +129,24 @@ export function SettingsWindow() {
     }
   };
 
+  const handleToggleDebug = async (checked: boolean) => {
+    setDebug(checked);
+    try {
+      await window.ipc?.updateConfig?.({ debug: checked });
+    } catch (e) {
+      console.error('Failed to update config:', e);
+    }
+  };
+
+  const handleToggleShowUpgradesInMenuBar = async (checked: boolean) => {
+    setShowUpgradesInMenuBar(checked);
+    try {
+      await window.ipc?.updateConfig?.({ showUpgradesInMenuBar: checked });
+    } catch (e) {
+      console.error('Failed to update config:', e);
+    }
+  };
+
   const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLang = e.target.value;
     setLanguage(newLang);
@@ -122,6 +157,17 @@ export function SettingsWindow() {
       resizeToContent();
     } catch (err) {
       console.error('Failed to update language:', err);
+    }
+  };
+
+  const handleThemeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newTheme = e.target.value;
+    setTheme(newTheme);
+    try {
+      await window.ipc?.updateConfig?.({ theme: newTheme as any });
+      resizeToContent();
+    } catch (err) {
+      console.error('Failed to update theme:', err);
     }
   };
 
@@ -167,6 +213,31 @@ export function SettingsWindow() {
           </Select>
         </ListRow>
 
+        {/* Theme select row */}
+        <ListRow>
+          <div className="space-y-0.5">
+            <label htmlFor="settings-theme" className="font-medium text-foreground cursor-default">
+              {__('Theme')}
+            </label>
+          </div>
+          <Select
+            id="settings-theme"
+            value={theme}
+            onChange={handleThemeChange}
+          >
+            <option value="system" className="bg-popover text-popover-foreground">
+              {__('System (%s)', systemTheme === 'dark' ? __('dark') : __('light'))}
+            </option>
+            <hr />
+            <option value="light" className="bg-popover text-popover-foreground">
+              {__('Light')}
+            </option>
+            <option value="dark" className="bg-popover text-popover-foreground">
+              {__('Dark')}
+            </option>
+          </Select>
+        </ListRow>
+
         {/* Always Show Status Bar row */}
         <ListRow>
           <div className="space-y-0.5">
@@ -179,6 +250,36 @@ export function SettingsWindow() {
             checked={alwaysShowStatusBar}
             onChange={handleToggleStatusBar}
             title={alwaysShowStatusBar ? __('On') : __('Off')}
+          />
+        </ListRow>
+
+        {/* Show upgrades count in menubar row */}
+        <ListRow>
+          <div className="space-y-0.5">
+            <div className="font-medium text-foreground">{__('Show upgrades count in menubar')}</div>
+            <div className="text-[11px] text-muted-foreground leading-tight">
+              {__('Display available updates count in the menu bar')}
+            </div>
+          </div>
+          <Switch
+            checked={showUpgradesInMenuBar}
+            onChange={handleToggleShowUpgradesInMenuBar}
+            title={showUpgradesInMenuBar ? __('On') : __('Off')}
+          />
+        </ListRow>
+
+        {/* Debug Mode row */}
+        <ListRow>
+          <div className="space-y-0.5">
+            <div className="font-medium text-foreground">{__('Debug Mode')}</div>
+            <div className="text-[11px] text-muted-foreground leading-tight">
+              {__('Enable development tools and experimental sections (requires restart)')}
+            </div>
+          </div>
+          <Switch
+            checked={debug}
+            onChange={handleToggleDebug}
+            title={debug ? __('On') : __('Off')}
           />
         </ListRow>
       </List>

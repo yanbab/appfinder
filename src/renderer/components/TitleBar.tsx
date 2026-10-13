@@ -9,7 +9,6 @@ export function TitleBar() {
   const viewMode = useShellStore((s) => s.viewMode);
   const setViewMode = useShellStore((s) => s.setViewMode);
   const showSidebar = useShellStore((s) => s.showSidebar);
-  const toggleSidebar = useShellStore((s) => s.toggleSidebar);
   const getPageTitle = useShellStore((s) => s.getPageTitle);
   const __ = useShellStore((s) => s.__);
 
@@ -17,21 +16,15 @@ export function TitleBar() {
   const setOrder = useAppStore((s) => s.setOrder);
 
   return (
-    <header className="app-header h-[52px] shrink-0 flex items-center justify-between border-b border-border bg-card select-none [-webkit-app-region:drag] z-10 gap-3 px-3.5">
-      {/* Left section: Sidebar toggle (when hidden) & Title */}
-      <div className="flex items-center min-w-0 flex-1 h-full [-webkit-app-region:drag]">
-        {!showSidebar && (
-          <div className="flex items-center shrink-0">
-            <div className="w-[72px] shrink-0" />
-            <Button
-              icon={<ShellIcon name="sidebar.left" className="size-5" />}
-              onClick={toggleSidebar}
-              className="size-7 p-0 shrink-0 mr-2 [-webkit-app-region:no-drag]"
-              title={__("Show categories")}
-            />
-          </div>
-        )}
-        <h1 className="window-title text-sm font-semibold tracking-tight text-foreground truncate transition-opacity duration-150 [-webkit-app-region:drag] cursor-default select-none">
+    <header className="app-header h-[52px] shrink-0 flex items-center justify-between border-b border-border bg-card select-none z-10 gap-3 px-3.5 [-webkit-app-region:no-drag]">
+      {/* Left section: Title with smooth animated spacer when sidebar is hidden */}
+      <div className="flex items-center min-w-0 flex-1 h-full">
+        <div
+          className={`shrink-0 h-full overflow-hidden transition-[width] duration-250 ease-out [-webkit-app-region:no-drag] ${
+            showSidebar ? 'w-0' : 'w-[112px]'
+          }`}
+        />
+        <h1 className="window-title text-sm font-semibold tracking-tight text-foreground truncate transition-opacity duration-150 [-webkit-app-region:drag] cursor-default select-none flex-1 h-full flex items-center">
           {getPageTitle()}
         </h1>
       </div>

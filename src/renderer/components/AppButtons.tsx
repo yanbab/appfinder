@@ -89,7 +89,7 @@ export function AppButtons({
     return (
       <div className={`shrink-0 flex items-center ${className}`} onClick={stopContainer} onMouseDown={stopContainer} onPointerDown={stopContainer}>
         {isOutdated ? (
-          <Button variant="ghost" onClick={stopProp(upgrade)} icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-4" />} title={__('Upgrade')} />
+          <Button variant="ghost" onClick={stopProp(upgrade)} icon={<ShellIcon name="arrow.down.circle" className="size-4" />} title={__('Upgrade')} />
         ) : isInstalled ? (
           canOpen ? (
             <Button variant="ghost" onClick={stopProp(open)} icon={<ShellIcon name="play.fill" className="size-3.5" />} title={__('Open')} />

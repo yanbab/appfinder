@@ -1,9 +1,19 @@
-import { ipcMain, shell, dialog, systemPreferences, app, BrowserWindow, nativeImage } from 'electron';
+import { ipcMain, shell, dialog, systemPreferences, app, BrowserWindow, nativeImage, nativeTheme } from 'electron';
 import i18n from './i18n';
 import * as Backend from './backend/brew';
 import { getConfig, updateConfig } from './config';
 import { createSettingsWindow } from './window-settings';
 import { updateSidebarChecked, updateStatusbarChecked, updateTerminalChecked, updateMenuItem, setupApplicationMenu } from './menu-application';
+import { updateTray, syncTrayWithConfig, updateTrayMenu } from './tray';
+
+function getSystemTheme(): 'dark' | 'light' {
+  try {
+    if (process.platform === 'darwin' && typeof systemPreferences.getUserDefault === 'function') {
+      return systemPreferences.getUserDefault('AppleInterfaceStyle', 'string') === 'Dark' ? 'dark' : 'light';
+    }
+  } catch (_) { }
+  return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+}
 
 function broadcast(channel: string, ...args: any[]): void {
   BrowserWindow.getAllWindows().forEach(win => {
@@ -18,7 +28,15 @@ export function setupIpcMain(): void {
   ipcMain.handle('cask:get-data', async () => Backend.getApps());
   ipcMain.handle('cask:get-categories', async () => Backend.getCategories());
   ipcMain.handle('cask:get-installed', async () => Backend.getInstalled());
-  ipcMain.handle('cask:get-updates', async (_, force) => Backend.getUpdates(force));
+  ipcMain.handle('cask:get-updates', async (_, force) => {
+    const res = await Backend.getUpdates(force);
+    const count = (res?.casks?.length || 0) + (res?.formulae?.length || 0);
+    updateTray(count, new Date());
+    return res;
+  });
+  ipcMain.on('tray:update-count', (_, count: number) => {
+    updateTray(count, new Date());
+  });
   ipcMain.handle('cask:get-info', async (_, token) => Backend.getInfo(token));
   ipcMain.handle('cask:open', async (_, token, appName) => Backend.launch(appName || token, token));
   ipcMain.handle('cask:reveal', async (_, token, appName) => Backend.reveal(appName || token, token));
@@ -143,14 +161,21 @@ export function setupIpcMain(): void {
     }
   });
 
+  ipcMain.handle('system:get-system-theme', async () => getSystemTheme());
+
   if (typeof systemPreferences.subscribeNotification === 'function') {
     try {
       systemPreferences.subscribeNotification('AppleColorPreferencesChangedNotification', () => {
         const color = typeof systemPreferences.getAccentColor === 'function' ? systemPreferences.getAccentColor() : null;
         broadcast('system:accent-color-changed', color);
+        broadcast('system:theme-changed', getSystemTheme());
       });
     } catch (_) { }
   }
+
+  nativeTheme.on('updated', () => {
+    broadcast('system:theme-changed', getSystemTheme());
+  });
 
   ipcMain.on('settings:open', (event) => {
     const win = event?.sender ? BrowserWindow.fromWebContents(event.sender) : null;
@@ -204,6 +229,12 @@ export function setupIpcMain(): void {
     if (typeof newConfig.alwaysShowStatusBar === 'boolean') {
       updateStatusbarChecked(newConfig.alwaysShowStatusBar);
     }
+    if (typeof newConfig.showUpgradesInMenuBar === 'boolean') {
+      syncTrayWithConfig();
+    }
+    if (newConfig.theme && ['system', 'light', 'dark'].includes(newConfig.theme)) {
+      nativeTheme.themeSource = newConfig.theme as 'system' | 'light' | 'dark';
+    }
     if (newConfig.language && newConfig.language !== oldConfig.language) {
       let lang = newConfig.language;
       if (lang === 'system') {
@@ -214,6 +245,7 @@ export function setupIpcMain(): void {
       }
       i18n.setLocale(lang);
       setupApplicationMenu();
+      updateTrayMenu();
       broadcast('i18n:changed');
     }
     return updated;

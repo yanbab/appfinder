@@ -83,7 +83,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   isCheckingUpdates: false,
   loading: true,
   search: '',
-  order: 'popularity',
+  order: 'date',
   displayedCount: CHUNK_SIZE,
 
   // Actions
@@ -139,8 +139,10 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
     set({ isCheckingUpdates: true });
     try {
       const upds = await window.ipc.getUpdates(force);
+      const outdated = parseUpdatesMap(upds);
+      window.ipc.updateTrayCount?.(Object.keys(outdated).length);
       set({
-        outdatedMap: parseUpdatesMap(upds),
+        outdatedMap: outdated,
         lastCheckedTime: new Date(),
         isCheckingUpdates: false
       });
@@ -161,6 +163,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
     set((state) => {
       const nextOutdated = { ...state.outdatedMap };
       delete nextOutdated[token];
+      window.ipc?.updateTrayCount?.(Object.keys(nextOutdated).length);
       return {
         installed: state.installed.includes(token) ? state.installed : [...state.installed, token],
         outdatedMap: nextOutdated,
@@ -174,6 +177,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
       delete nextVersions[token];
       const nextOutdated = { ...state.outdatedMap };
       delete nextOutdated[token];
+      window.ipc?.updateTrayCount?.(Object.keys(nextOutdated).length);
       return {
         installed: state.installed.filter((t) => t !== token),
         installedVersions: nextVersions,
@@ -186,6 +190,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
     set((state) => {
       const nextOutdated = { ...state.outdatedMap };
       delete nextOutdated[token];
+      window.ipc?.updateTrayCount?.(Object.keys(nextOutdated).length);
       return {
         installed: state.installed.includes(token) ? state.installed : [...state.installed, token],
         outdatedMap: nextOutdated,

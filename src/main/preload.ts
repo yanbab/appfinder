@@ -80,6 +80,7 @@ const ipcApi: IpcBridge = {
   writePtyInput: (taskId: string, text: string) => ipcRenderer.send('cask:write-pty-input', { taskId, text }),
 
   getAccentColor: () => invoke('system:get-accent-color'),
+  getSystemTheme: () => invoke('system:get-system-theme'),
   setContentSize: (width: number, height: number) => ipcRenderer.send('window:set-content-size', width, height),
   showContextMenu: (data: any) => ipcRenderer.send('context-menu:show', data),
   sidebarChanged: (visible: boolean) => ipcRenderer.send('shell:sidebar-changed', visible),
@@ -88,6 +89,7 @@ const ipcApi: IpcBridge = {
     ipcRenderer.send('menu:update', id, status),
   updateMenuItem: (id: string, status: { checked?: boolean; enabled?: boolean }) =>
     ipcRenderer.send('menu:update', id, status),
+  updateTrayCount: (count: number) => ipcRenderer.send('tray:update-count', count),
 
   // Unified Event Bus
   on: (signal: any, callback: any) => on(signal, callback),

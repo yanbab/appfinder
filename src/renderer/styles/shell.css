@@ -38,6 +38,17 @@
   --accent-color-muted: color-mix(in srgb, var(--primary) 80%, black);
 }
 
+/* 2. Interactive Controls Drag Isolation */
+button,
+button *,
+input,
+select,
+textarea,
+.sidebar-toggle-fixed,
+.sidebar-toggle-fixed * {
+  -webkit-app-region: no-drag !important;
+}
+
 @utility text-xxs {
   font-size: 11px;
   line-height: 14px;

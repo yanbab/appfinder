@@ -34,6 +34,7 @@ function getLuminance(hex: string): number {
 }
 
 export function ThemeProvider({ children }: { children?: ReactNode }) {
+  const [theme, setThemeState] = useState<string>('system');
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     const match = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false;
@@ -46,27 +47,64 @@ export function ThemeProvider({ children }: { children?: ReactNode }) {
   const [isWindowBlurred, setIsWindowBlurred] = useState<boolean>(false);
   const [isResizing, setIsResizing] = useState<boolean>(false);
 
-  // System Dark / Light Theme listener
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleMediaChange = (e: MediaQueryListEvent) => {
-      setIsDark(e.matches);
-      if (e.matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    };
-
-    if (mediaQuery.matches) {
+  const applyThemeMode = useCallback((mode: string) => {
+    setThemeState(mode);
+    let dark = false;
+    if (mode === 'dark') {
+      dark = true;
+    } else if (mode === 'light') {
+      dark = false;
+    } else {
+      dark = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false;
+    }
+    setIsDark(dark);
+    if (dark) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+  }, []);
+
+  const setTheme = useCallback((newTheme: string) => {
+    applyThemeMode(newTheme);
+    window.ipc?.updateConfig?.({ theme: newTheme as any }).catch(console.error);
+  }, [applyThemeMode]);
+
+  // Load config theme & subscribe to config updates
+  useEffect(() => {
+    window.ipc?.getConfig?.().then((cfg) => {
+      if (cfg?.theme) {
+        applyThemeMode(cfg.theme);
+      }
+    }).catch(console.error);
+
+    if (window.ipc?.on) {
+      const unsub = window.ipc.on('config:updated', (newCfg) => {
+        if (newCfg?.theme) {
+          applyThemeMode(newCfg.theme);
+        }
+      });
+      return () => unsub?.();
+    }
+  }, [applyThemeMode]);
+
+  // System Dark / Light Theme listener
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      if (theme === 'system') {
+        setIsDark(e.matches);
+        if (e.matches) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+    };
 
     mediaQuery.addEventListener('change', handleMediaChange);
     return () => mediaQuery.removeEventListener('change', handleMediaChange);
-  }, []);
+  }, [theme]);
 
   // Window focus & blur class on body (macOS vibrancy & active state styling)
   useEffect(() => {
@@ -155,7 +193,7 @@ export function ThemeProvider({ children }: { children?: ReactNode }) {
   const isLightAccent = accentColor ? getLuminance(accentColor) > 0.40 : false;
 
   return (
-    <ThemeContext.Provider value={{ isDark, accentColor, isLightAccent, isWindowBlurred, isResizing }}>
+    <ThemeContext.Provider value={{ theme, isDark, accentColor, isLightAccent, isWindowBlurred, isResizing, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

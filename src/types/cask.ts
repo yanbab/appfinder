@@ -48,6 +48,8 @@ export interface AppConfig {
   alwaysShowStatusBar: boolean;
   debug: boolean;
   language: string;
+  theme?: 'system' | 'light' | 'dark';
+  showUpgradesInMenuBar?: boolean;
   [key: string]: any;
 }
 

@@ -28,6 +28,8 @@
     "fonts:generate": "node scripts/generate-font-thumbnails.mjs",
     "fonts:publish": "node scripts/publish-font-thumbnails.mjs",
     "commands:generate": "node scripts/generate-commands.mjs",
+    "services:generate": "node scripts/_discover-services.mjs --save",
+    "tray:generate": "node scripts/generate-tray-icons.mjs",
     "release": "node scripts/release-github.js"
   },
   "keywords": [

@@ -9,6 +9,9 @@ export interface ShellStoreState {
   showSidebar: boolean;
   showTerminal: boolean;
   alwaysShowStatusBar: boolean;
+  debug: boolean;
+  theme: string;
+  showUpgradesInMenuBar: boolean;
   selectedApp: any | null;
   appDetails: any | null;
   loadingAppDetails: boolean;
@@ -22,6 +25,9 @@ export interface ShellStoreState {
   setShowTerminal: (showTerminal: boolean) => void;
   toggleTerminal: () => void;
   setAlwaysShowStatusBar: (alwaysShowStatusBar: boolean) => void;
+  setDebug: (debug: boolean) => void;
+  setTheme: (theme: string) => void;
+  setShowUpgradesInMenuBar: (showUpgradesInMenuBar: boolean) => void;
   openAppInfo: (appOrToken: any) => Promise<void>;
   closeAppInfo: () => void;
   setSlideIndex: (slideIndex: number) => void;
@@ -42,10 +48,13 @@ export function syncTabMenu(tab: string): void {
 export const useShellStore = create<ShellStoreState>((set, get) => ({
   // State
   currentTab: 'discover',
-  viewMode: typeof localStorage !== 'undefined' ? localStorage.getItem('appfinder-view-mode') || 'list' : 'list',
+  viewMode: typeof localStorage !== 'undefined' ? localStorage.getItem('appfinder-view-mode') || 'grid' : 'grid',
   showSidebar: typeof window !== 'undefined' ? window.innerWidth > 560 : true,
   showTerminal: false,
   alwaysShowStatusBar: false,
+  debug: false,
+  theme: 'system',
+  showUpgradesInMenuBar: false,
   selectedApp: null,
   appDetails: null,
   loadingAppDetails: false,
@@ -87,6 +96,9 @@ export const useShellStore = create<ShellStoreState>((set, get) => ({
   setShowTerminal: (showTerminal: boolean) => set({ showTerminal }),
   toggleTerminal: () => set((state) => ({ showTerminal: !state.showTerminal })),
   setAlwaysShowStatusBar: (alwaysShowStatusBar: boolean) => set({ alwaysShowStatusBar }),
+  setDebug: (debug: boolean) => set({ debug }),
+  setTheme: (theme: string) => set({ theme }),
+  setShowUpgradesInMenuBar: (showUpgradesInMenuBar: boolean) => set({ showUpgradesInMenuBar }),
 
   // App Inspector Drawer Actions
   openAppInfo: async (appOrToken: any) => {

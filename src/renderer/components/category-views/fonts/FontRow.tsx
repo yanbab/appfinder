@@ -1,10 +1,10 @@
 import React from 'react';
 import type { CaskItem } from '@/types';
-import { useShellStore } from '@/stores';
+import { useShellStore, useAppStore } from '@/stores';
 import { AppRow } from '../../AppRow';
 import { AppIcon } from '../../AppIcon';
 import { AppButtons } from '../../AppButtons';
-import { getAppName, resolveAssetUrl } from '@/hooks/utils';
+import { getAppName, formatVersion, resolveAssetUrl } from '@/hooks/utils';
 
 export interface FontRowProps {
   item: CaskItem;
@@ -14,6 +14,8 @@ export interface FontRowProps {
 export function FontRow({ item, className }: FontRowProps) {
   const openAppInfo = useShellStore((s) => s.openAppInfo);
   const selectedApp = useShellStore((s) => s.selectedApp);
+  const currentTab = useShellStore((s) => s.currentTab);
+  const outdatedMap = useAppStore((s) => s.outdatedMap);
 
   const [hasError, setHasError] = React.useState(false);
 
@@ -29,7 +31,11 @@ export function FontRow({ item, className }: FontRowProps) {
   }
 
   const isSelected = selectedApp?.token === item.token;
+  const isOutdated = Boolean(outdatedMap[item.token]);
   const name = getAppName(item);
+  const desc = currentTab === 'updates' && isOutdated
+    ? `${formatVersion(outdatedMap[item.token]?.installedVersion)} → ${formatVersion(outdatedMap[item.token]?.currentVersion)}`
+    : (item.desc || '');
 
   return (
     <div
@@ -46,18 +52,25 @@ export function FontRow({ item, className }: FontRowProps) {
       className={`app-card app-row font-row group flex items-center justify-between pl-2 pr-4 py-2 bg-card text-card-foreground select-none cursor-default focus:outline-none focus-visible:bg-[var(--card-active-bg)] transition-colors ${isSelected ? 'bg-[var(--card-active-bg)]' : ''
         } ${className || ''}`.trim()}
     >
-      {/* Icon & Font Preview */}
-      <div className="flex items-center gap-3.5 min-w-0 flex-1 mr-4 overflow-hidden">
+      {/* Icon & Font Preview + Description */}
+      <div className="flex items-center gap-3.5 min-w-0 flex-1 mr-4">
         <AppIcon item={item} size="row" className="size-12 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
-        <div className="flex items-center min-w-0 flex-1 overflow-hidden h-8">
-          <img
-            src={previewUrl}
-            alt={name}
-            loading="lazy"
-            decoding="async"
-            onError={() => setHasError(true)}
-            className="h-8 min-h-8 max-h-8 w-auto max-w-none object-left select-none pointer-events-none dark:invert shrink-0"
-          />
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <div className={`flex items-center min-w-0 overflow-hidden h-7 ${desc ? '-mt-1' : ''}`}>
+            <img
+              src={previewUrl}
+              alt={name}
+              loading="lazy"
+              decoding="async"
+              onError={() => setHasError(true)}
+              className="h-7 max-h-7 w-auto max-w-none object-left select-none pointer-events-none dark:invert shrink-0"
+            />
+          </div>
+          {desc && (
+            <p className="text-xs text-muted-foreground truncate leading-snug mt-0.5">
+              {desc}
+            </p>
+          )}
         </div>
       </div>
 

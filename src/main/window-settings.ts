@@ -13,9 +13,9 @@ export function createSettingsWindow(parentWindow?: BrowserWindow): BrowserWindo
   settingsWindow = createWindow({
     title: __('Settings'),
     name: 'settings',
-    windowStatePersistence: true,
+    windowStatePersistence: false,
     width: 380,
-    height: 200,
+    height: 350,
     resizable: false,
     minimizable: false,
     maximizable: false,

@@ -43,6 +43,7 @@ export interface IpcEventMap {
   'config:updated': AppConfig;
   'i18n:changed': void;
   'system:accent-color-changed': string | null;
+  'system:theme-changed': 'dark' | 'light';
   'context-menu:action': { action: string; token?: string } | string;
   'menu:click': MenuClickEvent;
 }
@@ -71,6 +72,7 @@ export interface IpcBridge {
   showErrorDialog: (title: string, content: string) => Promise<any>;
   showMessage: (options: any) => Promise<any>;
   getAccentColor: () => Promise<string | null>;
+  getSystemTheme: () => Promise<'dark' | 'light'>;
 
   // Actions (Send to Main)
   runAction: (taskId: string, action: string, token: string, zap?: boolean, appName?: string) => void;
@@ -82,6 +84,7 @@ export interface IpcBridge {
   terminalChanged: (visible: boolean) => void;
   updateMenu: (id: string, status: { checked?: boolean; enabled?: boolean }) => void;
   updateMenuItem?: (id: string, status: { checked?: boolean; enabled?: boolean }) => void;
+  updateTrayCount?: (count: number) => void;
 
   // Unified Event Bus (Main -> Renderer)
   on<K extends keyof IpcEventMap>(channel: K, callback: (data: IpcEventMap[K]) => void): Unsubscribe;
