@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.12] - 2026-10-13
+
+### Changes
+- Preview fonts and manage brew services.
+
+---
+
 ## [0.9.11] - 2026-10-07
 
 ### Changes

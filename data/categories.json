@@ -2,7 +2,7 @@
   {
     "name": "developerTools",
     "displayName": "Developer Tools",
-    "symbolName": "chevron.left.forwardslash.chevron.right"
+    "symbolName": "hammer"
   },
   {
     "name": "browsers",
@@ -97,6 +97,6 @@
   {
     "name": "other",
     "displayName": "Other",
-    "symbolName": "ellipsis.circle"
+    "symbolName": "square.grid.2x2"
   }
 ]

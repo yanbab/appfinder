@@ -1,7 +1,7 @@
 {
   "name": "appfinder",
   "productName": "AppFinder",
-  "version": "0.9.11",
+  "version": "0.9.12",
   "description": "App store for the Homebrew package manager",
   "author": "yanbab",
   "license": "MIT",
@@ -30,7 +30,7 @@
     "commands:generate": "node scripts/generate-commands.mjs",
     "services:generate": "node scripts/_discover-services.mjs --save",
     "tray:generate": "node scripts/generate-tray-icons.mjs",
-    "release": "node scripts/release-github.js"
+    "release": "node --import tsx scripts/release-github.js"
   },
   "keywords": [
     "casks",
