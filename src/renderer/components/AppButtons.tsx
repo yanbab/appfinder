@@ -69,10 +69,14 @@ export function AppButtons({
 
   // 2. InfoPanel multi-button layout
   if (variant === 'panel') {
+    const isFont = item.category === 'font' || item.token?.startsWith('font-');
+    const isService = item.category === 'services';
+    const canLaunch = Boolean(item.app && !isFont && !isService);
+
     return (
       <div className={`flex items-center gap-2 pt-0.5 ${className}`}>
         {isOutdated && <Button className="flex-1" variant="default" onClick={upgrade}>{__('Upgrade')}</Button>}
-        {isInstalled && item.app && !isOutdated && <Button className="flex-1" variant="default" onClick={open}>{__('Open')}</Button>}
+        {isInstalled && canLaunch && !isOutdated && <Button className="flex-1" variant="default" onClick={open}>{__('Open')}</Button>}
         {isInstalled && <Button variant="destructive" className="flex-1" onClick={uninstall}>{__('Delete')}</Button>}
         {!isInstalled && caskStatus?.isDisabled ? (
           <Button className="w-full opacity-60 cursor-not-allowed" variant="secondary" disabled title={formatReason(caskStatus.disableReason || '', __) || __('Cask Disabled')}>
@@ -147,47 +151,45 @@ export function AppButtons({
   }
 
   // 5. Row / Compact Mode (List View)
-  if (currentTab === 'installed') {
-    return (
-      <div className={`flex items-center gap-2 shrink-0 ${className}`} onClick={stopContainer} onMouseDown={stopContainer} onPointerDown={stopContainer}>
-        {isOutdated && (
-          <Button
-            variant="ghost"
-            icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-4" />}
-            onClick={stopProp(upgrade)}
-            className="text-primary hover:text-primary active:text-primary hover:bg-primary/10 active:bg-primary/20 [&_svg]:text-primary [&:hover_svg]:text-primary"
-            title={__('Update')}
-          />
-        )}
-        <Button
-          variant="ghost"
-          icon={<ShellIcon name="trash" className="size-4" />}
-          onClick={stopProp(uninstall)}
-          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 [&:hover_svg]:text-destructive"
-          title={__('Delete')}
-        />
-        {item.app ? (
-          <Button variant="secondary" onClick={stopProp(open)}>{__('Open')}</Button>
-        ) : (
-          <Button variant="secondary" disabled className="opacity-40 cursor-not-allowed">{__('Open')}</Button>
-        )}
-      </div>
-    );
-  }
+  const isFont = item.category === 'font' || item.token?.startsWith('font-');
+  const isService = item.category === 'services';
+  const isLaunchable = Boolean(canOpen && !isFont && !isService);
 
   return (
-    <div className={`flex items-center gap-2 shrink-0 ${className}`} onClick={stopContainer} onMouseDown={stopContainer} onPointerDown={stopContainer}>
-      {isOutdated ? (
-        <Button variant="secondary" onClick={stopProp(upgrade)}>{__('Upgrade')}</Button>
-      ) : isInstalled ? (
+    <div className={`flex items-center gap-1 shrink-0 ${className}`} onClick={stopContainer} onMouseDown={stopContainer} onPointerDown={stopContainer}>
+      {isInstalled ? (
         <>
-          <Button icon={<ShellIcon name="trash" className="size-[18px]" />} onClick={stopProp(uninstall)} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 [&:hover_svg]:text-destructive" title={__('Uninstall')} />
-          {item.app ? (
-            <Button variant="secondary" onClick={stopProp(open)}>{__('Open')}</Button>
-          ) : (
-            <Button variant="secondary" disabled className="opacity-40 cursor-not-allowed">{__('Open')}</Button>
+          {isOutdated && (
+            <Button
+              variant="ghost"
+              icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-4" />}
+              onClick={stopProp(upgrade)}
+              className="text-primary hover:text-primary active:text-primary hover:bg-primary/10 active:bg-primary/20 [&_svg]:text-primary [&:hover_svg]:text-primary"
+              title={__('Update')}
+            />
           )}
+          <Button
+            variant="ghost"
+            icon={<ShellIcon name="trash" className="size-4" />}
+            onClick={stopProp(uninstall)}
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 [&:hover_svg]:text-destructive"
+            title={__('Delete')}
+          />
+          {isLaunchable ? (
+            <Button variant="secondary" onClick={stopProp(open)}>{__('Open')}</Button>
+          ) : !isFont && !isService && item.app ? (
+            <Button variant="secondary" disabled className="opacity-40 cursor-not-allowed">{__('Open')}</Button>
+          ) : null}
         </>
+      ) : caskStatus?.isDisabled ? (
+        <Button
+          variant="secondary"
+          disabled
+          className="opacity-60 cursor-not-allowed"
+          title={formatReason(caskStatus.disableReason || '', __) || __('Cask Disabled')}
+        >
+          {__('Disabled')}
+        </Button>
       ) : (
         <Button variant="secondary" onClick={stopProp(install)}>{__('Install')}</Button>
       )}

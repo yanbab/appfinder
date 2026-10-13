@@ -71,7 +71,7 @@ function generateCask({ version, armSha, intelSha }) {
     '',
     '  app "AppFinder.app"',
     '',
-    '  postflight_steps do',
+    '  postflight do',
     '    system_command "xattr",',
     '                   args: ["-cr", "#{appdir}/AppFinder.app"]',
     '  end',
@@ -114,7 +114,7 @@ function validateCaskRuby(rubyCode) {
     'auto_updates true',
     'depends_on macos: :ventura',
     'app "AppFinder.app"',
-    'postflight_steps do',
+    'postflight do',
     'system_command "xattr"',
     'zap trash: [',
     'end'

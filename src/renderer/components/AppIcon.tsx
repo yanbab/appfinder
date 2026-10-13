@@ -49,12 +49,35 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
     otherServices: 'server.rack',
   };
 
+  const isGitHub = Boolean(
+    (item as any)?.homepage && (
+      (item as any).homepage.includes('github.com') ||
+      (item as any).homepage.includes('github.io')
+    )
+  );
+
   React.useEffect(() => {
     setLoaded(false);
     setHasError(false);
-  }, [token, item?.iconUrl, (item as any)?.homepage]);
 
-  const serviceFaviconUrl = isService ? getFaviconUrl((item as any)?.homepage, 128) : null;
+    if (isService && (item as any)?.homepage && !isGitHub) {
+      try {
+        const rawUrl = (item as any).homepage.trim();
+        const withProto = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+        const url = new URL(withProto);
+        const domain = url.hostname.replace(/^www\./, '');
+        if (domain && window.ipc?.checkServiceFavicon) {
+          window.ipc.checkServiceFavicon(domain).then((isValid) => {
+            if (!isValid) {
+              setHasError(true);
+            }
+          }).catch(() => {});
+        }
+      } catch (_) {}
+    }
+  }, [token, item?.iconUrl, (item as any)?.homepage, isService, isGitHub]);
+
+  const serviceFaviconUrl = (isService && !isGitHub) ? getFaviconUrl((item as any)?.homepage, 128) : null;
   const fontThumbnailUrl = isFont && token
     ? `https://yanbab.github.io/appfinder/font-thumbnails/${token}.png`
     : null;
@@ -80,7 +103,7 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
         hasIcon && !isService && !isFont
           ? "bg-transparent dark:bg-transparent ring-0 border-0 shadow-none"
           : isService
-          ? "bg-neutral-100 dark:bg-neutral-800/90 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs"
+          ? "bg-slate-200/70 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 ring-1 ring-inset ring-slate-400/20 dark:ring-slate-500/25 shadow-2xs rounded-[var(--radius-card)]"
           : isFont
           ? (isRowSize
               ? "bg-neutral-100 dark:bg-neutral-800/90 ring-1 ring-inset ring-black/5 dark:ring-white/10 shadow-2xs rounded-[var(--radius-card)]"

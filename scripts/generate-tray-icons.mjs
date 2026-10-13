@@ -7,10 +7,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 
-const svgPath = path.join(ROOT_DIR, 'src/renderer/assets/sf-symbols/arrow.trianglehead.2.clockwise.rotate.90.svg');
-let svg = fs.readFileSync(svgPath, 'utf8');
-// Clean up for template image (solid black paths)
-svg = svg.replace('stroke="currentColor"', 'stroke="#000000"');
+export const TRAY_TEMPLATE_SVG = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Row 1 -->
+  <rect x="4" y="4" width="6.8" height="6.8" rx="1.6" fill="#000000" fill-opacity="0.25"/>
+  <rect x="12.6" y="4" width="6.8" height="6.8" rx="1.6" fill="#000000"/>
+  <rect x="21.2" y="4" width="6.8" height="6.8" rx="1.6" fill="#000000" fill-opacity="0.25"/>
+
+  <!-- Row 2 -->
+  <rect x="4" y="12.6" width="6.8" height="6.8" rx="1.6" fill="#000000"/>
+  <rect x="12.6" y="12.6" width="6.8" height="6.8" rx="1.6" fill="#000000"/>
+  <rect x="21.2" y="12.6" width="6.8" height="6.8" rx="1.6" fill="#000000"/>
+
+  <!-- Row 3 -->
+  <rect x="4" y="21.2" width="6.8" height="6.8" rx="1.6" fill="#000000" fill-opacity="0.25"/>
+  <rect x="12.6" y="21.2" width="6.8" height="6.8" rx="1.6" fill="#000000"/>
+  <rect x="21.2" y="21.2" width="6.8" height="6.8" rx="1.6" fill="#000000" fill-opacity="0.25"/>
+</svg>`;
 
 const outDir = path.join(ROOT_DIR, 'data/tray');
 if (!fs.existsSync(outDir)) {
@@ -18,18 +30,23 @@ if (!fs.existsSync(outDir)) {
 }
 
 async function main() {
+  // Save source SVG
+  fs.writeFileSync(path.join(outDir, 'trayTemplate.svg'), TRAY_TEMPLATE_SVG, 'utf8');
+
+  const svgBuffer = Buffer.from(TRAY_TEMPLATE_SVG);
+
   // macOS menubar icon: 16x16 @1x, 32x32 @2x
-  await sharp(Buffer.from(svg))
+  await sharp(svgBuffer)
     .resize(16, 16)
     .png()
     .toFile(path.join(outDir, 'trayTemplate.png'));
 
-  await sharp(Buffer.from(svg))
+  await sharp(svgBuffer)
     .resize(32, 32)
     .png()
     .toFile(path.join(outDir, 'trayTemplate@2x.png'));
 
-  console.log('Tray template icons successfully generated at data/tray/');
+  console.log('AppFinder 3x3 tray template icons successfully generated at data/tray/');
 }
 
 main().catch((err) => {

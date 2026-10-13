@@ -44,6 +44,7 @@ const ipcApi: IpcBridge = {
   getCaskInfo: (token: string) => invoke('cask:get-info', token),
   getInstalled: () => invoke('cask:get-installed'),
   getServicesStatus: () => invoke('services:get-status'),
+  checkServiceFavicon: (domain: string) => invoke('services:check-favicon', domain),
 
   getUpdates: (force: boolean = false) => invoke('cask:get-updates', force),
   getMessages: () => invoke('i18n:get-messages'),

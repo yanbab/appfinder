@@ -12,6 +12,19 @@
 //   npm run release 0.9.5         # Specific version
 //   npm run release patch "Notes" # With custom release notes
 
+// Ensure tsx loader is active for TypeScript imports (.ts)
+if (!process.execArgv.some(arg => arg.includes('tsx'))) {
+  try {
+    require.resolve('../src/main/backend/fetcher');
+  } catch (_) {
+    const { spawnSync } = require('child_process');
+    const result = spawnSync(process.execPath, ['--import', 'tsx', __filename, ...process.argv.slice(2)], {
+      stdio: 'inherit'
+    });
+    process.exit(result.status ?? 0);
+  }
+}
+
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -105,8 +118,18 @@ async function main() {
 
   // 4. Fetch latest cask catalog and update data
   console.log(`🔄 Fetching latest casks and generating catalog data...`);
-  const { fetchCatalog } = require('../src/main/backend/fetcher');
+  const { fetchCatalog, CACHED_APPS_FILE, CACHED_CATEGORIES_FILE } = require('../src/main/backend/fetcher');
   await fetchCatalog({ onLog: (msg) => console.log(msg) });
+
+  // Sync fresh catalog files into bundled data directory for release
+  const dataAppsPath = path.join(rootDir, 'data', 'apps.json');
+  const dataCatPath = path.join(rootDir, 'data', 'categories.json');
+  if (fs.existsSync(CACHED_APPS_FILE)) {
+    fs.copyFileSync(CACHED_APPS_FILE, dataAppsPath);
+  }
+  if (fs.existsSync(CACHED_CATEGORIES_FILE)) {
+    fs.copyFileSync(CACHED_CATEGORIES_FILE, dataCatPath);
+  }
 
   // 5. Update CHANGELOG.md
   if (fs.existsSync(changelogPath)) {

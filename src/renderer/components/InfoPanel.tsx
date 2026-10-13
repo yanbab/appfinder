@@ -5,8 +5,11 @@ import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 import { AppButtons } from './AppButtons';
 import { Card } from './Card';
-import { Switch } from './Switch';
-import { useServiceControl } from '@/hooks/useServiceControl';
+import { InfoCopyButton } from './InfoCopyButton';
+import { FontDetailsCard } from './info/FontDetailsCard';
+import { ServiceDetailsCard } from './info/ServiceDetailsCard';
+import { AppPackageCard } from './info/AppPackageCard';
+import { CaveatsCard } from './info/CaveatsCard';
 import {
   getAppName,
   formatVersion,
@@ -15,42 +18,6 @@ import {
   formatReason,
 } from '@/hooks/utils';
 import type { CaskItem } from '@/types';
-
-function ServiceControlCard({ item }: { item: CaskItem }) {
-  const {
-    isPending,
-    switchChecked,
-    statusLabel,
-    statusDotClass,
-    statusTextClass,
-    statusInfo,
-    handleToggle,
-  } = useServiceControl(item);
-
-  return (
-    <Card padding="default" className="text-xs space-y-2.5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={`size-2 rounded-full shrink-0 ${statusDotClass}`} />
-          <span className={`font-semibold text-xs ${statusTextClass}`}>
-            {statusLabel}
-          </span>
-          {statusInfo?.pid && (
-            <span className="text-[10px] text-muted-foreground font-mono">
-              PID {statusInfo.pid}
-            </span>
-          )}
-        </div>
-        <Switch
-          checked={switchChecked}
-          disabled={isPending}
-          onChange={handleToggle}
-          onCheckedChange={handleToggle}
-        />
-      </div>
-    </Card>
-  );
-}
 
 export function InfoPanel() {
   const selectedApp = useShellStore((s) => s.selectedApp);
@@ -264,11 +231,6 @@ export function InfoPanel() {
           {/* Primary Actions */}
           <AppButtons item={selectedApp} variant="panel" caskStatus={caskStatus} />
 
-          {/* Service Daemon Control Card */}
-          {selectedApp.category === 'services' && isInstalled && (
-            <ServiceControlCard item={selectedApp} />
-          )}
-
           {/* Metadata Section in Card */}
           <Card padding="default" className="text-xs space-y-1.5">
             {/* 1. Website / Homepage */}
@@ -310,7 +272,10 @@ export function InfoPanel() {
             {/* 3. Token */}
             <div className="flex items-center justify-between py-0.5">
               <span className="text-muted-foreground">{__('Token')}</span>
-              <span className="text-foreground select-text truncate max-w-[150px]">{selectedApp.token}</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-foreground select-text truncate max-w-[130px] font-mono text-[11px]">{selectedApp.token}</span>
+                <InfoCopyButton text={selectedApp.token} />
+              </div>
             </div>
 
             {/* 4. Added */}
@@ -405,6 +370,15 @@ export function InfoPanel() {
             )}
           </Card>
 
+          {/* Contextual Secondary Card: Services / Fonts / Applications */}
+          {selectedApp.category === 'services' ? (
+            <ServiceDetailsCard item={selectedApp} isInstalled={isInstalled} />
+          ) : (selectedApp.category === 'font' || selectedApp.token?.startsWith('font-')) ? (
+            <FontDetailsCard item={selectedApp} isInstalled={isInstalled} />
+          ) : (
+            <AppPackageCard item={selectedApp} appDetails={appDetails} isInstalled={isInstalled} />
+          )}
+
           {/* Caveats / Warnings */}
           {caskStatus.isDisabled && (
             <Card variant="error" padding="md" className="space-y-1">
@@ -459,15 +433,7 @@ export function InfoPanel() {
           )}
 
           {appDetails?.caveats && (
-            <Card variant="warning" padding="default" className="space-y-1">
-              <div className="flex items-center gap-1.5 font-semibold text-xs">
-                <ShellIcon name="exclamationmark.triangle" className="size-3.5 shrink-0" />
-                <span>{__('Caveat')}</span>
-              </div>
-              <p className="text-xs font-mono leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] overflow-hidden text-foreground">
-                {appDetails.caveats}
-              </p>
-            </Card>
+            <CaveatsCard caveats={appDetails.caveats} />
           )}
         </div>
       </dialog>

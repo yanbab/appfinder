@@ -42,7 +42,7 @@ export function useServiceControl(item?: CaskItem | null) {
     : 'text-muted-foreground';
 
   const handleToggle = async () => {
-    if (!token || isPending) return;
+    if (!token || isPending || useAppStore.getState().servicePendingMap[token]) return;
     const targetAction: 'starting' | 'stopping' = isStarted ? 'stopping' : 'starting';
     const subAction: 'start' | 'stop' = isStarted ? 'stop' : 'start';
     const explicitCmd = `service:${subAction}:${token}`;
@@ -105,6 +105,53 @@ export function useServiceControl(item?: CaskItem | null) {
     }
   };
 
+  const handleRestart = async () => {
+    if (!token || isPending || useAppStore.getState().servicePendingMap[token]) return;
+    setServicePending(token, 'starting');
+    const cmdStr = `brew services restart ${token}`;
+
+    const termStore = useTermStore.getState();
+    termStore.handleStatusLog(`$ ${cmdStr}`);
+
+    const taskId = `service-restart-${token}-${Date.now()}`;
+    useTermStore.setState({
+      activeTaskId: taskId,
+      drawerTitle: __('Restarting %s...', name),
+    });
+
+    try {
+      const res = await window.ipc?.openApp(token, `service:restart:${token}`);
+
+      if (res?.output) {
+        termStore.handleStatusLog(res.output);
+      }
+      if (res?.error) {
+        termStore.handleStatusLog(res.error);
+      }
+
+      if (res && res.success === false) {
+        throw new Error(res.error || __('Failed to restart service'));
+      }
+
+      await new Promise((r) => setTimeout(r, 250));
+      await useAppStore.getState().refreshServiceStatuses(true);
+    } catch (err: any) {
+      console.error(`[SERVICE RESTART ERROR]:`, err);
+      const errorMessage = err?.message || String(err);
+      termStore.handleStatusLog(`Error: ${errorMessage}`);
+      useTermStore.setState({
+        activeTaskId: null,
+        drawerTitle: `Error: ${errorMessage}`,
+      });
+
+      if (window.ipc?.showErrorDialog) {
+        window.ipc.showErrorDialog(__('Failed to restart service'), errorMessage);
+      }
+    } finally {
+      setServicePending(token, null);
+    }
+  };
+
   return {
     isStarted,
     isPending,
@@ -115,6 +162,7 @@ export function useServiceControl(item?: CaskItem | null) {
     statusTextClass,
     statusInfo,
     handleToggle,
+    handleRestart,
   };
 }
 

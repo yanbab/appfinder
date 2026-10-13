@@ -28,4 +28,6 @@ export * from './List';
 export * from './ListRow';
 export * from './Select';
 export * from './Switch';
+export * from './InfoSectionCard';
+export * from './InfoCopyButton';
 export * from './category-views/registry';

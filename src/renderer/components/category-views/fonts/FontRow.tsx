@@ -82,7 +82,7 @@ export function FontRow({ item, className }: FontRowProps) {
               loading="lazy"
               decoding="async"
               onError={() => setHasError(true)}
-              className="h-7 max-h-7 w-auto max-w-none object-left select-none pointer-events-none dark:invert shrink-0 -ml-[7px]"
+              className="h-7 max-h-7 w-auto max-w-none object-left select-none pointer-events-none dark:invert shrink-0 -ml-[2px]"
             />
           </div>
           {desc && (

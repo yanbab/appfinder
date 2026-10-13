@@ -82,7 +82,8 @@
       "dist/vite-renderer/**/*",
       "locales/**/*",
       "data/**/*",
-      "package.json"
+      "package.json",
+      "Credits.html"
     ]
   }
 }

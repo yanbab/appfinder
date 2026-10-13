@@ -69,6 +69,7 @@ export interface IpcBridge {
   getInstalled: () => Promise<any>;
   getUpdates: (force?: boolean) => Promise<any>;
   getServicesStatus: () => Promise<ServicesStatusResult>;
+  checkServiceFavicon?: (domain: string) => Promise<boolean>;
 
   getMessages: () => Promise<Record<string, string>>;
   getAvailableLocales: () => Promise<LocaleInfo[]>;

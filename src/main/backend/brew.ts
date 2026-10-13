@@ -149,6 +149,33 @@ export function getCaskStatus(cask: any): {
   };
 }
 
+export function getCaskBinaries(cask: any): string[] {
+  const binaries: string[] = [];
+  if (Array.isArray(cask?.artifacts)) {
+    for (const art of cask.artifacts) {
+      if (art && art.binary) {
+        const binList = Array.isArray(art.binary) ? art.binary : [art.binary];
+        for (const b of binList) {
+          if (typeof b === 'string') {
+            binaries.push(b);
+          } else if (b && typeof b === 'object' && b.target) {
+            binaries.push(String(b.target));
+          } else if (Array.isArray(b) && b[0]) {
+            binaries.push(String(b[0]));
+          }
+        }
+      }
+    }
+  }
+  return Array.from(new Set(binaries));
+}
+
+export function getCaskBundleId(cask: any): string | null {
+  if (cask?.bundle_id) return String(cask.bundle_id);
+  if (cask?.bundle_identifier) return String(cask.bundle_identifier);
+  return null;
+}
+
 export function normalizeCaskInfo(cask: any, sysInfo?: SystemInfo): any {
   if (!cask) return null;
   const info = sysInfo || getSystemInfo();
@@ -158,7 +185,10 @@ export function normalizeCaskInfo(cask: any, sysInfo?: SystemInfo): any {
     reqMet: isRequirementMet(cask, info),
     archCompat: getCaskArchCompatibility(cask, info),
     dependencies: getCaskDependencies(cask),
-    status: getCaskStatus(cask)
+    status: getCaskStatus(cask),
+    binaries: getCaskBinaries(cask),
+    bundleId: getCaskBundleId(cask),
+    autoUpdates: Boolean(cask?.auto_updates),
   };
 }
 
@@ -427,55 +457,6 @@ export async function isServiceRunning(serviceName: string): Promise<boolean> {
   }
 }
 
-async function openFontInFontBook(fontNameOrPath: string, token?: string): Promise<void> {
-  // Derive clean font family name for Font Book search
-  let searchName = '';
-  if (fontNameOrPath && !fontNameOrPath.startsWith('/') && !fontNameOrPath.includes('.')) {
-    searchName = fontNameOrPath.replace(/\s*\([^)]*\)/g, '').trim();
-  } else if (fontNameOrPath && (fontNameOrPath.startsWith('/') || fontNameOrPath.includes('.'))) {
-    const base = path.basename(fontNameOrPath).replace(/\.[^.]+$/, '');
-    searchName = base
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/[-_]/g, ' ')
-      .replace(/\b(Regular|Bold|Italic|Light|Medium|Semibold|Black|Propo|Mono|NerdFont)\b/gi, '')
-      .trim();
-  }
-
-  if (!searchName && token) {
-    searchName = token.replace(/^font-/, '').replace(/[-_]/g, ' ').trim();
-  }
-
-  if (searchName) {
-    const escaped = searchName.replace(/["\\]/g, '\\$&');
-    const appleScript = [
-      'tell application "Font Book"',
-      '  activate',
-      'end tell',
-      'tell application "System Events"',
-      '  tell process "Font Book"',
-      '    set frontmost to true',
-      '    delay 0.15',
-      '    keystroke "f" using {command down}',
-      '    delay 0.05',
-      `    keystroke "${escaped}"`,
-      '    key code 36',
-      '  end tell',
-      'end tell'
-    ].join('\n');
-
-    try {
-      console.log(`[LAUNCH COMMAND]: osascript -e 'tell application "Font Book" to search "${searchName}"'`);
-      await execFileAsync('/usr/bin/osascript', ['-e', appleScript]);
-      return;
-    } catch (err: any) {
-      console.warn(`[LAUNCH FONT BOOK]: AppleScript UI search failed (${err.message}), falling back to open -a 'Font Book'`);
-    }
-  }
-
-  console.log("[LAUNCH COMMAND]: /usr/bin/open -a 'Font Book'");
-  await execFileAsync('/usr/bin/open', ['-a', 'Font Book']);
-}
-
 export async function reveal(appName: string, token?: string): Promise<{ success: boolean; error?: string }> {
   try {
     let target = (appName || '').trim();
@@ -487,6 +468,23 @@ export async function reveal(appName: string, token?: string): Promise<{ success
       await execFileAsync('/usr/bin/open', ['-R', target]);
       return { success: true };
     }
+
+    // Font files check
+    if (tokenStr.startsWith('font-') || target.includes('Fonts')) {
+      const userFontsDir = path.join(os.homedir(), 'Library/Fonts');
+      if (fs.existsSync(userFontsDir)) {
+        const cleanName = tokenStr.replace(/^font-/, '').toLowerCase();
+        try {
+          const files = fs.readdirSync(userFontsDir);
+          const match = files.find(f => f.toLowerCase().includes(cleanName));
+          if (match) {
+            await execFileAsync('/usr/bin/open', ['-R', path.join(userFontsDir, match)]);
+            return { success: true };
+          }
+        } catch (_) {}
+      }
+    }
+
     const caskInfo = await getInfo(tokenStr || target);
     const installedPath = caskInfo?.installedPath || caskInfo?.fontInfo?.installedPath;
     if (installedPath && fs.existsSync(installedPath)) {
@@ -516,7 +514,29 @@ export async function launch(appName: string, token?: string): Promise<{ success
     let target = (appName || '').trim();
     const tokenStr = (token || '').trim();
 
-    // 1. Service start/stop/restart
+    // 1. Service: view logs in Console.app
+    if (target.startsWith('service:log:') || tokenStr.startsWith('service:log:')) {
+      const serviceName = (target.startsWith('service:log:') ? target : tokenStr).replace(/^service:log:/, '');
+      const brewPrefix = getBrewPath().replace(/\/bin\/brew$/, '');
+      const candidates = [
+        path.join(brewPrefix, 'var/log', `${serviceName}.log`),
+        path.join(brewPrefix, 'var/log', `${serviceName}.err.log`),
+        path.join(brewPrefix, 'var/log', serviceName),
+        path.join(os.homedir(), 'Library/Logs', `${serviceName}.log`),
+        path.join(os.homedir(), 'Library/Logs/Homebrew', `${serviceName}.log`),
+      ];
+      const logPath = candidates.find(p => fs.existsSync(p));
+      if (logPath) {
+        console.log(`[LAUNCH COMMAND]: /usr/bin/open -a Console "${logPath}"`);
+        await execFileAsync('/usr/bin/open', ['-a', 'Console', logPath]);
+      } else {
+        console.log('[LAUNCH COMMAND]: /usr/bin/open -a Console');
+        await execFileAsync('/usr/bin/open', ['-a', 'Console']);
+      }
+      return { success: true };
+    }
+
+    // 2. Service start/stop/restart
     if (target.startsWith('service:') || tokenStr.startsWith('service:')) {
       let raw = (target.startsWith('service:') ? target : tokenStr).replace(/^service:/, '');
       let explicitAction: string | null = null;
@@ -551,18 +571,6 @@ export async function launch(appName: string, token?: string): Promise<{ success
     // Expand ~
     if (target.startsWith('~')) {
       target = path.join(os.homedir(), target.slice(1));
-    }
-
-    // 2. Fonts: open Font Book with font selected
-    const isFont = Boolean(
-      tokenStr.startsWith('font-') ||
-      /\.(ttf|otf|ttc|otc|dfont)$/i.test(target) ||
-      target.includes('/Library/Fonts/')
-    );
-
-    if (isFont) {
-      await openFontInFontBook(appName || target, tokenStr);
-      return { success: true };
     }
 
     // 3. Absolute path / file target

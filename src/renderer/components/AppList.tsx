@@ -189,23 +189,91 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
     );
   }
 
+  const isInstalledTab = currentTab === 'installed';
+
+  const installedGroups = useMemo(() => {
+    if (!isInstalledTab) return null;
+
+    const apps: CaskItem[] = [];
+    const fonts: CaskItem[] = [];
+    const services: CaskItem[] = [];
+
+    for (const item of tabFilteredItems) {
+      if (item.category === 'services') {
+        services.push(item);
+      } else if (item.category === 'font' || item.token?.startsWith('font-')) {
+        fonts.push(item);
+      } else {
+        apps.push(item);
+      }
+    }
+
+    return [
+      {
+        type: 'applications',
+        title: `${apps.length} ${apps.length > 1 ? __('Applications') : __('Application')}`,
+        count: apps.length,
+        items: apps,
+        views: getCategoryViews('applications'),
+      },
+      {
+        type: 'fonts',
+        title: `${fonts.length} ${fonts.length > 1 ? __('Fonts') : __('Font')}`,
+        count: fonts.length,
+        items: fonts,
+        views: getCategoryViews('font'),
+      },
+      {
+        type: 'services',
+        title: `${services.length} ${services.length > 1 ? __('Services') : __('Service')}`,
+        count: services.length,
+        items: services,
+        views: getCategoryViews('services'),
+      },
+    ].filter((g) => g.count > 0);
+  }, [isInstalledTab, tabFilteredItems, __]);
+
   return (
     <div
       ref={containerRef}
       onScroll={handleScroll}
       className="flex-1 overflow-y-auto p-4"
     >
-      <div className={viewMode === 'grid' ? "w-full space-y-4" : "max-w-[var(--content-max-width)] mx-auto w-full space-y-4"}>
+      <div className={viewMode === 'grid' ? "w-full space-y-5" : "max-w-[var(--content-max-width)] mx-auto w-full space-y-5"}>
         {activeHeader}
-        {viewMode === 'grid' ? (
+        {isInstalledTab && installedGroups ? (
+          installedGroups.map((group) => {
+            const { Tile, Row } = group.views;
+            return (
+              <div key={group.type} className="space-y-2">
+                <div className="flex items-center justify-between px-1 pt-1">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {group.title}
+                  </h3>
+                </div>
+                {viewMode === 'grid' ? (
+                  <div className={`grid gap-3 ${group.type === 'fonts' ? 'grid-cols-[repeat(auto-fill,minmax(140px,1fr))]' : 'grid-cols-[repeat(auto-fill,minmax(200px,1fr))]'}`}>
+                    {group.items.map((item) => (
+                      <Tile key={item.token} item={item} />
+                    ))}
+                  </div>
+                ) : (
+                  <List>
+                    {group.items.map((item) => (
+                      <Row key={item.token} item={item} />
+                    ))}
+                  </List>
+                )}
+              </div>
+            );
+          })
+        ) : viewMode === 'grid' ? (
           <div className={`grid gap-3 ${isFontTab ? 'grid-cols-[repeat(auto-fill,minmax(140px,1fr))]' : 'grid-cols-[repeat(auto-fill,minmax(200px,1fr))]'}`}>
             {displayedItems.map((item) => {
               const { Tile } = resolveViews(item);
               return <Tile key={item.token} item={item} />;
             })}
           </div>
-
-
         ) : (
           <List>
             {displayedItems.map((item) => {

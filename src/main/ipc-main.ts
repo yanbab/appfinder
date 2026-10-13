@@ -23,6 +23,9 @@ function broadcast(channel: string, ...args: any[]): void {
   });
 }
 
+let genericFaviconHash: string | null = null;
+const faviconCheckCache = new Map<string, boolean>();
+
 export function setupIpcMain(): void {
   // Cask Queries & Actions
   ipcMain.handle('cask:get-data', async () => Backend.getApps());
@@ -41,6 +44,38 @@ export function setupIpcMain(): void {
   ipcMain.handle('cask:open', async (_, token, appName) => Backend.launch(appName || token, token));
   ipcMain.handle('cask:reveal', async (_, token, appName) => Backend.reveal(appName || token, token));
   ipcMain.handle('services:get-status', async () => Backend.getServicesStatus());
+  ipcMain.handle('services:check-favicon', async (_, domain: string) => {
+    if (!domain || typeof domain !== 'string') return false;
+    const d = domain.trim().toLowerCase();
+    if (d.includes('github.com') || d.includes('github.io')) return false;
+    if (faviconCheckCache.has(d)) return faviconCheckCache.get(d)!;
+
+    try {
+      const crypto = await import('crypto');
+      if (!genericFaviconHash) {
+        try {
+          const genRes = await fetch('https://www.google.com/s2/favicons?domain=musicpd.org&sz=128');
+          if (genRes.ok) {
+            const genBuf = Buffer.from(await genRes.arrayBuffer());
+            genericFaviconHash = crypto.createHash('sha256').update(genBuf).digest('hex');
+          }
+        } catch (_) {}
+      }
+      const res = await fetch(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(d)}&sz=128`);
+      if (!res.ok) {
+        faviconCheckCache.set(d, false);
+        return false;
+      }
+      const buf = Buffer.from(await res.arrayBuffer());
+      const hash = crypto.createHash('sha256').update(buf).digest('hex');
+      const isCustom = Boolean(genericFaviconHash ? hash !== genericFaviconHash : true);
+      faviconCheckCache.set(d, isCustom);
+      return isCustom;
+    } catch {
+      faviconCheckCache.set(d, false);
+      return false;
+    }
+  });
 
   ipcMain.on('cask:run-action', (event, data) => {
     console.log('[IPC-MAIN RUN ACTION]:', data.taskId);

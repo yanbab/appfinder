@@ -7,7 +7,6 @@ import { Switch } from './Switch';
 
 export function SettingsWindow() {
   const [alwaysShowStatusBar, setAlwaysShowStatusBar] = useState(false);
-  const [debug, setDebug] = useState(false);
   const [theme, setTheme] = useState('system');
   const [systemTheme, setSystemTheme] = useState<'dark' | 'light'>('dark');
   const [showUpgradesInMenuBar, setShowUpgradesInMenuBar] = useState(false);
@@ -52,7 +51,6 @@ export function SettingsWindow() {
       const cfg = await window.ipc?.getConfig?.();
       if (cfg) {
         setAlwaysShowStatusBar(Boolean(cfg.alwaysShowStatusBar));
-        setDebug(Boolean(cfg.debug));
         setLanguage(cfg.language || 'system');
         setTheme(cfg.theme || 'system');
         setShowUpgradesInMenuBar(Boolean(cfg.showUpgradesInMenuBar));
@@ -129,14 +127,6 @@ export function SettingsWindow() {
     }
   };
 
-  const handleToggleDebug = async (checked: boolean) => {
-    setDebug(checked);
-    try {
-      await window.ipc?.updateConfig?.({ debug: checked });
-    } catch (e) {
-      console.error('Failed to update config:', e);
-    }
-  };
 
   const handleToggleShowUpgradesInMenuBar = async (checked: boolean) => {
     setShowUpgradesInMenuBar(checked);
@@ -226,7 +216,7 @@ export function SettingsWindow() {
             onChange={handleThemeChange}
           >
             <option value="system" className="bg-popover text-popover-foreground">
-              {__('System (%s)', systemTheme === 'dark' ? __('dark') : __('light'))}
+              {__('System (%s)', systemTheme === 'dark' ? __('Dark') : __('Light'))}
             </option>
             <hr />
             <option value="light" className="bg-popover text-popover-foreground">
@@ -240,12 +230,7 @@ export function SettingsWindow() {
 
         {/* Always Show Status Bar row */}
         <ListRow>
-          <div className="space-y-0.5">
-            <div className="font-medium text-foreground">{__('Always Show Status Bar')}</div>
-            <div className="text-[11px] text-muted-foreground leading-tight">
-              {__('Keep the footer bar visible even when idle')}
-            </div>
-          </div>
+          <div className="font-medium text-foreground">{__('Always Show Status Bar')}</div>
           <Switch
             checked={alwaysShowStatusBar}
             onChange={handleToggleStatusBar}
@@ -253,33 +238,13 @@ export function SettingsWindow() {
           />
         </ListRow>
 
-        {/* Show upgrades count in menubar row */}
+        {/* Show updates count in menubar row */}
         <ListRow>
-          <div className="space-y-0.5">
-            <div className="font-medium text-foreground">{__('Show upgrades count in menubar')}</div>
-            <div className="text-[11px] text-muted-foreground leading-tight">
-              {__('Display available updates count in the menu bar')}
-            </div>
-          </div>
+          <div className="font-medium text-foreground">{__('Show updates count in menubar')}</div>
           <Switch
             checked={showUpgradesInMenuBar}
             onChange={handleToggleShowUpgradesInMenuBar}
             title={showUpgradesInMenuBar ? __('On') : __('Off')}
-          />
-        </ListRow>
-
-        {/* Debug Mode row */}
-        <ListRow>
-          <div className="space-y-0.5">
-            <div className="font-medium text-foreground">{__('Debug Mode')}</div>
-            <div className="text-[11px] text-muted-foreground leading-tight">
-              {__('Enable development tools and experimental sections (requires restart)')}
-            </div>
-          </div>
-          <Switch
-            checked={debug}
-            onChange={handleToggleDebug}
-            title={debug ? __('On') : __('Off')}
           />
         </ListRow>
       </List>
