@@ -112,7 +112,10 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
         loading: false
       });
       get().refreshInstalled();
-      get().refreshUpdates(false);
+      const cfg = await window.ipc?.getConfig?.();
+      if (cfg?.checkUpdatesOnStart !== false) {
+        get().refreshUpdates(false);
+      }
       get().refreshServiceStatuses();
     } catch (e) {
       console.error('[useAppStore] initCatalog failed:', e);

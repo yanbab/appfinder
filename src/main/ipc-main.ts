@@ -264,7 +264,7 @@ export function setupIpcMain(): void {
     if (typeof newConfig.alwaysShowStatusBar === 'boolean') {
       updateStatusbarChecked(newConfig.alwaysShowStatusBar);
     }
-    if (typeof newConfig.showUpgradesInMenuBar === 'boolean') {
+    if (typeof newConfig.showUpgradesInMenuBar === 'boolean' || typeof newConfig.showBadgeCountInDock === 'boolean') {
       syncTrayWithConfig();
     }
     if (newConfig.theme && ['system', 'light', 'dark'].includes(newConfig.theme)) {

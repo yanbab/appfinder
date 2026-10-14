@@ -148,47 +148,6 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
     </div>
   );
 
-  const activeHeader = header !== undefined ? header : (isFontTab ? fontHeader : isServiceTab ? serviceHeader : null);
-
-  if (loading) {
-    return <EmptyState loading />;
-  }
-
-  if (filteredCount === 0) {
-    const isSearchActive = Boolean(search && search.trim().length > 0);
-    const isFilterActive = (isFontTab && fontFilter !== 'all') || (isServiceTab && serviceFilter !== 'all');
-    return (
-      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 flex flex-col">
-        {activeHeader && (
-          <div className={viewMode === 'grid' ? "w-full mb-4" : "max-w-[var(--content-max-width)] mx-auto w-full mb-4"}>
-            {activeHeader}
-          </div>
-        )}
-        <div className="flex-1 flex items-center justify-center">
-          <EmptyState
-            icon="magnifyingglass"
-            title={__('No casks found')}
-            subtitle={__('Try adjusting your search or category filter.')}
-          >
-            {(isSearchActive || isFilterActive) && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  if (isSearchActive) setSearch('');
-                  if (isFontTab) setFontFilter('all');
-                  if (isServiceTab) setServiceFilter('all');
-                }}
-              >
-                {isSearchActive ? __('Clear search') : __('Show All')}
-              </Button>
-            )}
-          </EmptyState>
-        </div>
-      </div>
-    );
-  }
-
   const isInstalledTab = currentTab === 'installed';
 
   const installedGroups = useMemo(() => {
@@ -232,6 +191,47 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
       },
     ].filter((g) => g.count > 0);
   }, [isInstalledTab, tabFilteredItems, __]);
+
+  const activeHeader = header !== undefined ? header : (isFontTab ? fontHeader : isServiceTab ? serviceHeader : null);
+
+  if (loading) {
+    return <EmptyState loading />;
+  }
+
+  if (filteredCount === 0) {
+    const isSearchActive = Boolean(search && search.trim().length > 0);
+    const isFilterActive = (isFontTab && fontFilter !== 'all') || (isServiceTab && serviceFilter !== 'all');
+    return (
+      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 flex flex-col">
+        {activeHeader && (
+          <div className={viewMode === 'grid' ? "w-full mb-4" : "max-w-[var(--content-max-width)] mx-auto w-full mb-4"}>
+            {activeHeader}
+          </div>
+        )}
+        <div className="flex-1 flex items-center justify-center">
+          <EmptyState
+            icon="magnifyingglass"
+            title={__('No casks found')}
+            subtitle={__('Try adjusting your search or category filter.')}
+          >
+            {(isSearchActive || isFilterActive) && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  if (isSearchActive) setSearch('');
+                  if (isFontTab) setFontFilter('all');
+                  if (isServiceTab) setServiceFilter('all');
+                }}
+              >
+                {isSearchActive ? __('Clear search') : __('Show All')}
+              </Button>
+            )}
+          </EmptyState>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

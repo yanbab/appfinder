@@ -13,7 +13,10 @@ const defaults: AppConfig = {
   debug: false,
   language: 'system',
   theme: 'system',
+  accentColor: 'system',
   showUpgradesInMenuBar: false,
+  showBadgeCountInDock: true,
+  checkUpdatesOnStart: true,
 };
 
 let config: AppConfig | null = null;

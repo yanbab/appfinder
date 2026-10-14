@@ -70,6 +70,16 @@ export function updateTray(count?: number, time?: Date): void {
     lastChecked = time;
   }
 
+  // Sync dock badge count on macOS
+  if (process.platform === 'darwin' && app.dock) {
+    const config = getConfig();
+    if (config.showBadgeCountInDock !== false && currentCount > 0) {
+      app.dock.setBadge(String(currentCount));
+    } else {
+      app.dock.setBadge('');
+    }
+  }
+
   if (!tray) return;
 
   const label = currentCount > 0 ? String(currentCount) : '';
@@ -120,6 +130,16 @@ export function destroyTray(): void {
 
 export function syncTrayWithConfig(): void {
   const config = getConfig();
+
+  // Sync dock badge count
+  if (process.platform === 'darwin' && app.dock) {
+    if (config.showBadgeCountInDock !== false && currentCount > 0) {
+      app.dock.setBadge(String(currentCount));
+    } else {
+      app.dock.setBadge('');
+    }
+  }
+
   if (config.showUpgradesInMenuBar) {
     if (!tray) {
       createTray();

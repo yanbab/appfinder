@@ -33,8 +33,20 @@ function getLuminance(hex: string): number {
   return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
 }
 
+export const ACCENT_COLOR_MAP: Record<string, string> = {
+  blue: '#007aff',
+  purple: '#af52de',
+  pink: '#ff2d55',
+  red: '#ff3b30',
+  orange: '#ff9500',
+  yellow: '#ffcc00',
+  green: '#34c759',
+  graphite: '#8e8e93',
+};
+
 export function ThemeProvider({ children }: { children?: ReactNode }) {
   const [theme, setThemeState] = useState<string>('system');
+  const [configuredAccent, setConfiguredAccent] = useState<string>('system');
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     const match = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false;
@@ -70,23 +82,56 @@ export function ThemeProvider({ children }: { children?: ReactNode }) {
     window.ipc?.updateConfig?.({ theme: newTheme as any }).catch(console.error);
   }, [applyThemeMode]);
 
-  // Load config theme & subscribe to config updates
+  // Apply macOS native accent color directly to primary & ring variables
+  const applyAccentColor = useCallback((color: string) => {
+    if (!color) return;
+    const clean = typeof color === 'string' ? color.trim().replace(/^#/, '') : '';
+    const hex = color.startsWith?.('rgb') ? color : `#${clean.length === 8 ? clean.slice(0, 6) : clean}`;
+    if (!hex || hex === '#') return;
+
+    const lum = getLuminance(hex);
+    const mutePercent = lum > 0.60 ? 65 : (lum > 0.40 ? 75 : 85);
+
+    const root = document.documentElement;
+    root.style.setProperty('--accent-color-raw', hex);
+    root.style.setProperty('--accent-color', hex);
+    root.style.setProperty('--primary', hex);
+    root.style.setProperty('--ring', hex);
+    root.style.setProperty('--sidebar-ring', hex);
+    root.style.setProperty('--accent-color-muted', `color-mix(in srgb, ${hex} ${mutePercent}%, black)`);
+    root.style.setProperty('--sidebar-primary', 'var(--accent-color-muted)');
+    root.style.setProperty('--primary-foreground', '#ffffff');
+    root.style.setProperty('--sidebar-primary-foreground', '#ffffff');
+
+    setAccentColor(hex);
+  }, []);
+
+  // Load config theme & accent color, subscribe to config updates
   useEffect(() => {
-    window.ipc?.getConfig?.().then((cfg) => {
+    const handleConfig = (cfg: any) => {
       if (cfg?.theme) {
         applyThemeMode(cfg.theme);
       }
-    }).catch(console.error);
+      if (cfg?.accentColor) {
+        setConfiguredAccent(cfg.accentColor);
+        if (cfg.accentColor !== 'system') {
+          const color = ACCENT_COLOR_MAP[cfg.accentColor] || cfg.accentColor;
+          applyAccentColor(color);
+        } else {
+          window.ipc?.getAccentColor?.().then((color) => {
+            if (color) applyAccentColor(color);
+          }).catch(console.error);
+        }
+      }
+    };
+
+    window.ipc?.getConfig?.().then(handleConfig).catch(console.error);
 
     if (window.ipc?.on) {
-      const unsub = window.ipc.on('config:updated', (newCfg) => {
-        if (newCfg?.theme) {
-          applyThemeMode(newCfg.theme);
-        }
-      });
+      const unsub = window.ipc.on('config:updated', handleConfig);
       return () => unsub?.();
     }
-  }, [applyThemeMode]);
+  }, [applyThemeMode, applyAccentColor]);
 
   // System Dark / Light Theme listener
   useEffect(() => {
@@ -151,32 +196,8 @@ export function ThemeProvider({ children }: { children?: ReactNode }) {
     };
   }, []);
 
-  // Apply macOS native accent color directly to primary & ring variables
-  const applyAccentColor = useCallback((color: string) => {
-    if (!color) return;
-    const clean = typeof color === 'string' ? color.trim().replace(/^#/, '') : '';
-    const hex = color.startsWith?.('rgb') ? color : `#${clean.length === 8 ? clean.slice(0, 6) : clean}`;
-    if (!hex || hex === '#') return;
-
-    const lum = getLuminance(hex);
-    const mutePercent = lum > 0.60 ? 65 : (lum > 0.40 ? 75 : 85);
-
-    const root = document.documentElement;
-    root.style.setProperty('--accent-color-raw', hex);
-    root.style.setProperty('--accent-color', hex);
-    root.style.setProperty('--primary', hex);
-    root.style.setProperty('--ring', hex);
-    root.style.setProperty('--sidebar-ring', hex);
-    root.style.setProperty('--accent-color-muted', `color-mix(in srgb, ${hex} ${mutePercent}%, black)`);
-    root.style.setProperty('--sidebar-primary', 'var(--accent-color-muted)');
-    root.style.setProperty('--primary-foreground', '#ffffff');
-    root.style.setProperty('--sidebar-primary-foreground', '#ffffff');
-
-    setAccentColor(hex);
-  }, []);
-
   useEffect(() => {
-    if (window.ipc?.getAccentColor) {
+    if (window.ipc?.getAccentColor && configuredAccent === 'system') {
       window.ipc.getAccentColor().then((color) => {
         if (color) applyAccentColor(color);
       }).catch(console.error);
@@ -184,11 +205,11 @@ export function ThemeProvider({ children }: { children?: ReactNode }) {
 
     if (window.ipc?.on) {
       const unsub = window.ipc.on('system:accent-color-changed', (color) => {
-        if (color) applyAccentColor(color);
+        if (color && configuredAccent === 'system') applyAccentColor(color);
       });
       return () => unsub?.();
     }
-  }, [applyAccentColor]);
+  }, [configuredAccent, applyAccentColor]);
 
   const isLightAccent = accentColor ? getLuminance(accentColor) > 0.40 : false;
 

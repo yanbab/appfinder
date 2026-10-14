@@ -1,19 +1,32 @@
-// Context Menu 
-
-import { Menu, ipcMain, BrowserWindow, shell, clipboard, MenuItemConstructorOptions } from 'electron';
-import { getConfig } from './config';
-import { __ } from './i18n';
+import { app } from 'electron';
+import fs from 'fs';
+import path from 'path';
 
 export function setupAboutWindow(): void {
+  let creditsText = 'Made with 🍺 by YanBab';
+  try {
+    const candidatePaths = [
+      path.join(app.getAppPath(), 'Credits.html'),
+      path.join(__dirname, '../../Credits.html'),
+      path.join(__dirname, '../Credits.html'),
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        creditsText = fs.readFileSync(p, 'utf8');
+        break;
+      }
+    }
+  } catch (_) {}
 
   app.setAboutPanelOptions({
-    applicationName: 'AppFinder',
-    applicationVersion: '0.9.12',
+    applicationName: app.getName() || 'AppFinder',
+    applicationVersion: app.getVersion() || '0.9.12',
     copyright: 'Copyright © 2026 Yan Bab',
-    version: '0.9.12',
-    credits: 'Made with 🍺 by YanBab',
-  })
-
+    version: app.getVersion() || '0.9.12',
+    credits: creditsText,
+  });
 }
 
-
+export function showAboutWindow(): void {
+  app.showAboutPanel();
+}

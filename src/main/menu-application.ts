@@ -73,11 +73,11 @@ export function updateMenuItem(id: string, status: { checked?: boolean; enabled?
   }
 }
 
-export function setupApplicationMenu(): void {
+export function getMenuTemplate(): (MenuItemConstructorOptions | MenuItem)[] {
   const config = getConfig();
   isStatusbarVisible = !!config.alwaysShowStatusBar;
 
-  const template: (MenuItemConstructorOptions | MenuItem)[] = [
+  return [
     {
       label: app.name,
       submenu: [
@@ -239,18 +239,22 @@ export function setupApplicationMenu(): void {
     {
       role: 'help',
       label: __('Help'),
-      submenu: [{
-        label: __('%s website', app.name),
-        click: async () => shell.openExternal(websiteUrl)
-      }, {
-        label: __('Report an issue'),
-        click: async () => shell.openExternal(issuesUrl)
-      }]
+      submenu: [
+        {
+          label: __('%s website', app.name),
+          click: async () => shell.openExternal(websiteUrl)
+        },
+        {
+          label: __('Report an issue'),
+          click: async () => shell.openExternal(issuesUrl)
+        }
+      ]
     }
   ];
+}
 
+export function setupApplicationMenu(): void {
+  const template = getMenuTemplate();
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 }
-
-

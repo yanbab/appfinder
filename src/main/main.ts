@@ -8,6 +8,7 @@ import { setupApplicationMenu } from './menu-application';
 import { setupContextMenu } from './menu-context';
 import { createShellWindow } from './window-shell';
 import { checkCommand, checkCommandDialog } from './check';
+import { setupAboutWindow } from './window-about';
 
 import { syncTrayWithConfig } from './tray';
 
@@ -28,6 +29,7 @@ if (setupSingleInstance()) {
     setupI18n();
     setupApplicationMenu();
     setupContextMenu();
+    setupAboutWindow();
     createShellWindow();
     syncTrayWithConfig();
 

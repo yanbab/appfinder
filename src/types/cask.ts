@@ -49,7 +49,10 @@ export interface AppConfig {
   debug: boolean;
   language: string;
   theme?: 'system' | 'light' | 'dark';
+  accentColor?: string;
   showUpgradesInMenuBar?: boolean;
+  showBadgeCountInDock?: boolean;
+  checkUpdatesOnStart?: boolean;
   [key: string]: any;
 }
 
