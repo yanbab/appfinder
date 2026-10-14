@@ -71,12 +71,18 @@ export function AppButtons({
   if (variant === 'panel') {
     const isFont = item.category === 'font' || item.token?.startsWith('font-');
     const isService = item.category === 'services';
-    const canLaunch = Boolean(item.app && !isFont && !isService);
+    const isApp = !isFont && !isService;
 
     return (
       <div className={`flex items-center gap-2 pt-0.5 ${className}`}>
         {isOutdated && <Button className="flex-1" variant="default" onClick={upgrade}>{__('Upgrade')}</Button>}
-        {isInstalled && canLaunch && !isOutdated && <Button className="flex-1" variant="default" onClick={open}>{__('Open')}</Button>}
+        {isInstalled && isApp && !isOutdated && (
+          canOpen ? (
+            <Button className="flex-1" variant="default" onClick={open}>{__('Open')}</Button>
+          ) : (
+            <Button className="flex-1 opacity-40 cursor-not-allowed" variant="secondary" disabled>{__('Open')}</Button>
+          )
+        )}
         {isInstalled && <Button variant="destructive" className="flex-1" onClick={uninstall}>{__('Delete')}</Button>}
         {!isInstalled && caskStatus?.isDisabled ? (
           <Button className="w-full opacity-60 cursor-not-allowed" variant="secondary" disabled title={formatReason(caskStatus.disableReason || '', __) || __('Cask Disabled')}>
@@ -153,7 +159,6 @@ export function AppButtons({
   // 5. Row / Compact Mode (List View)
   const isFont = item.category === 'font' || item.token?.startsWith('font-');
   const isService = item.category === 'services';
-  const isLaunchable = Boolean(canOpen && !isFont && !isService);
 
   return (
     <div className={`flex items-center gap-1 shrink-0 ${className}`} onClick={stopContainer} onMouseDown={stopContainer} onPointerDown={stopContainer}>
@@ -175,11 +180,16 @@ export function AppButtons({
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20 [&:hover_svg]:text-destructive"
             title={__('Delete')}
           />
-          {isLaunchable ? (
-            <Button variant="secondary" onClick={stopProp(open)}>{__('Open')}</Button>
-          ) : !isFont && !isService && item.app ? (
-            <Button variant="secondary" disabled className="opacity-40 cursor-not-allowed">{__('Open')}</Button>
-          ) : null}
+          {!isFont && !isService && (
+            <Button
+              variant="secondary"
+              disabled={!canOpen}
+              className={!canOpen ? 'opacity-40 cursor-not-allowed' : ''}
+              onClick={canOpen ? stopProp(open) : undefined}
+            >
+              {__('Open')}
+            </Button>
+          )}
         </>
       ) : caskStatus?.isDisabled ? (
         <Button

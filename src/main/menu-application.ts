@@ -3,6 +3,7 @@ import { __ } from './i18n';
 import { getConfig, updateConfig } from './config';
 import { createSettingsWindow } from './window-settings';
 import { getShellWindow } from './window-shell';
+import { openProcessMonitor } from './window-process-monitor';
 
 const websiteUrl = 'https://yanbab.github.io/appfinder';
 const issuesUrl = 'https://github.com/yanbab/appfinder/issues';
@@ -240,6 +241,12 @@ export function getMenuTemplate(): (MenuItemConstructorOptions | MenuItem)[] {
       role: 'help',
       label: __('Help'),
       submenu: [
+        {
+          label: __('Process Monitor'),
+          accelerator: 'Option+Cmd+P',
+          click: () => openProcessMonitor()
+        },
+        { type: 'separator' },
         {
           label: __('%s website', app.name),
           click: async () => shell.openExternal(websiteUrl)

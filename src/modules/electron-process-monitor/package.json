@@ -1,0 +1,43 @@
+{
+  "name": "electron-process-monitor",
+  "version": "1.0.0",
+  "description": "Zero-dependency, standalone process and resource monitor window for Electron applications.",
+  "author": "Yan Bab",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "electron",
+    "process-monitor",
+    "task-manager",
+    "performance",
+    "metrics",
+    "cpu",
+    "memory"
+  ],
+  "peerDependencies": {
+    "electron": ">=20.0.0"
+  },
+  "devDependencies": {
+    "electron": "^34.0.0",
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.0"
+  }
+}

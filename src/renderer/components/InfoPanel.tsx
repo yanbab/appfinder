@@ -234,22 +234,19 @@ export function InfoPanel() {
           {/* Metadata Section in Card */}
           <Card padding="default" className="text-xs space-y-1.5">
             {/* 1. Website / Homepage */}
-            <div className="flex items-center justify-between py-0.5">
-              <span className="text-muted-foreground">{__('Homepage')}</span>
-              {selectedApp.homepage ? (
+            {selectedApp.homepage && (
+              <div className="py-0.5 flex justify-start">
                 <button
                   type="button"
                   data-external-url={selectedApp.homepage}
                   onClick={() => window.ipc?.openExternal?.(selectedApp.homepage!)}
-                  className="text-primary hover:underline flex items-center gap-1 max-w-[150px] truncate cursor-default"
+                  className="text-primary hover:underline font-semibold flex items-center gap-1.5 max-w-full truncate cursor-default"
                 >
-                  <ShellIcon name="arrow.up.right.square" className="size-3 shrink-0" />
+                  <ShellIcon name="compass" className="size-3.5 shrink-0" />
                   <span className="truncate">{selectedApp.homepage.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}</span>
                 </button>
-              ) : (
-                <span className="text-muted-foreground/60">—</span>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* 2. Categories */}
             {appCategories.length > 0 && (
@@ -278,10 +275,10 @@ export function InfoPanel() {
               </div>
             </div>
 
-            {/* 4. Added */}
+            {/* 4. Release Date */}
             {selectedApp.added && (
               <div className="flex items-center justify-between py-0.5">
-                <span className="text-muted-foreground">{__('Added')}</span>
+                <span className="text-muted-foreground">{__('Release Date')}</span>
                 <span className="text-foreground">{formatDate(selectedApp.added, __)}</span>
               </div>
             )}

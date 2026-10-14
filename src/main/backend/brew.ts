@@ -350,20 +350,22 @@ export async function getInstalled(onLog?: (msg: string) => void): Promise<{ tok
   }
 }
 
-export async function getUpdates(force: boolean = false): Promise<{ casks: any[]; formulae?: any[] }> {
+export async function getUpdates(force: boolean = false): Promise<{ casks: any[]; formulae?: any[]; lastChecked?: string | null }> {
   if (!force) {
     const mem = memoryCache.get('updates');
-    if (mem && (Date.now() - mem.timestamp < UPDATES_CACHE_DURATION)) {
+    if (mem?.data) {
       return mem.data;
     }
     try {
       if (fs.existsSync(UPDATES_CACHE_FILE)) {
         const stat = fs.statSync(UPDATES_CACHE_FILE);
-        if (Date.now() - stat.mtimeMs < UPDATES_CACHE_DURATION) {
-          const data = JSON.parse(fs.readFileSync(UPDATES_CACHE_FILE, 'utf8'));
-          memoryCache.set('updates', { data, timestamp: stat.mtimeMs });
-          return data;
-        }
+        const data = JSON.parse(fs.readFileSync(UPDATES_CACHE_FILE, 'utf8'));
+        const result = {
+          ...data,
+          lastChecked: stat.mtime ? stat.mtime.toISOString() : null,
+        };
+        memoryCache.set('updates', { data: result, timestamp: stat.mtimeMs });
+        return result;
       }
     } catch (_) { }
   }
@@ -381,7 +383,7 @@ export async function getUpdates(force: boolean = false): Promise<{ casks: any[]
     console.error('Error fetching outdated packages:', e);
   }
 
-  const fresh = { casks, formulae };
+  const fresh = { casks, formulae, lastChecked: new Date().toISOString() };
   memoryCache.set('updates', { data: fresh, timestamp: Date.now() });
   try {
     if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
@@ -465,23 +467,76 @@ export async function reveal(appName: string, token?: string): Promise<{ success
       target = path.join(os.homedir(), target.slice(1));
     }
     if (target.startsWith('/') && fs.existsSync(target)) {
-      await execFileAsync('/usr/bin/open', ['-R', target]);
-      return { success: true };
+      try {
+        const isDir = fs.statSync(target).isDirectory();
+        if (isDir) {
+          await execFileAsync('/usr/bin/open', [target]);
+        } else {
+          await execFileAsync('/usr/bin/open', ['-R', target]);
+        }
+        return { success: true };
+      } catch (_) {
+        await execFileAsync('/usr/bin/open', ['-R', target]);
+        return { success: true };
+      }
     }
 
     // Font files check
-    if (tokenStr.startsWith('font-') || target.includes('Fonts')) {
-      const userFontsDir = path.join(os.homedir(), 'Library/Fonts');
-      if (fs.existsSync(userFontsDir)) {
-        const cleanName = tokenStr.replace(/^font-/, '').toLowerCase();
+    const isFont = tokenStr.startsWith('font-') || target.startsWith('font-') || target.includes('Fonts');
+    if (isFont) {
+      const candidateDirs = [
+        path.join(os.homedir(), 'Library/Fonts'),
+        '/Library/Fonts',
+      ];
+      const fontToken = (tokenStr.startsWith('font-') ? tokenStr : (target.startsWith('font-') ? target : tokenStr || target));
+      const cleanName = fontToken.replace(/^font-/, '').toLowerCase();
+      const normName = cleanName.replace(/[-_\s]/g, '');
+      const words = cleanName.split('-').filter((w) => w.length > 1);
+
+      for (const dir of candidateDirs) {
+        if (!fs.existsSync(dir)) continue;
         try {
-          const files = fs.readdirSync(userFontsDir);
-          const match = files.find(f => f.toLowerCase().includes(cleanName));
+          const files = fs.readdirSync(dir);
+          const match = files.find((f) => {
+            const fNorm = f.toLowerCase().replace(/[-_\s]/g, '');
+            if (fNorm.includes(normName) || normName.includes(fNorm)) return true;
+            if (words.length > 0 && words.every((w) => f.toLowerCase().includes(w))) return true;
+            return false;
+          });
           if (match) {
-            await execFileAsync('/usr/bin/open', ['-R', path.join(userFontsDir, match)]);
+            await execFileAsync('/usr/bin/open', ['-R', path.join(dir, match)]);
             return { success: true };
           }
         } catch (_) {}
+      }
+
+      // Check cask info artifacts for specific font filename
+      try {
+        const caskInfo = await getInfo(fontToken);
+        if (Array.isArray(caskInfo?.artifacts)) {
+          for (const art of caskInfo.artifacts) {
+            const fontFiles = art?.font ? (Array.isArray(art.font) ? art.font : [art.font]) : [];
+            for (const f of fontFiles) {
+              const baseName = typeof f === 'string' ? path.basename(f) : '';
+              if (baseName) {
+                for (const dir of candidateDirs) {
+                  const fullPath = path.join(dir, baseName);
+                  if (fs.existsSync(fullPath)) {
+                    await execFileAsync('/usr/bin/open', ['-R', fullPath]);
+                    return { success: true };
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (_) {}
+
+      // Fallback for fonts: open user fonts directory in Finder
+      const userFontsDir = path.join(os.homedir(), 'Library/Fonts');
+      if (fs.existsSync(userFontsDir)) {
+        await execFileAsync('/usr/bin/open', [userFontsDir]);
+        return { success: true };
       }
     }
 

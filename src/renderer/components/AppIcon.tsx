@@ -115,32 +115,19 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
     >
       {hasIcon && activeIconUrl && (
         isService ? (
-          <>
-            <img
-              src={activeIconUrl}
-              alt={name}
-              loading="lazy"
-              decoding="async"
-              fetchPriority="low"
-              className={cn(
-                "w-[62cqw] h-[62cqw] object-contain rounded-[14cqw] select-none pointer-events-none drop-shadow-2xs transition-opacity duration-150",
-                loaded ? "opacity-100" : "opacity-0"
-              )}
-              onLoad={() => setLoaded(true)}
-              onError={() => setHasError(true)}
-            />
-            {loaded && size !== 'xs' && (
-              <div
-                className="absolute bottom-[4cqw] right-[4cqw] size-[34cqw] rounded-full bg-background/95 dark:bg-neutral-900/95 ring-1 ring-black/10 dark:ring-white/15 shadow-xs flex items-center justify-center pointer-events-none animate-in fade-in duration-150"
-                title={(item as any)?.secondCategory || 'service'}
-              >
-                <ShellIcon
-                  name={SERVICE_ICONS[(item as any)?.secondCategory || ''] || 'server.rack'}
-                  className="w-[58%] h-[58%] text-foreground/80"
-                />
-              </div>
+          <img
+            src={activeIconUrl}
+            alt={name}
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+            className={cn(
+              "w-[62cqw] h-[62cqw] object-contain rounded-[14cqw] select-none pointer-events-none drop-shadow-2xs transition-opacity duration-150",
+              loaded ? "opacity-100" : "opacity-0"
             )}
-          </>
+            onLoad={() => setLoaded(true)}
+            onError={() => setHasError(true)}
+          />
         ) : (
           <img
             src={activeIconUrl}

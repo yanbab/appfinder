@@ -62,6 +62,7 @@ export const aliases: Record<string, string> = {
   applications: 'macwindow',
   app: 'macwindow',
   apps: 'macwindow',
+  safari: 'compass',
   other: 'ellipsis.circle',
 };
 

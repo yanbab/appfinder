@@ -112,10 +112,16 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
         loading: false
       });
       get().refreshInstalled();
+
+      // Always show cached updates.json immediately
+      await get().refreshUpdates(false);
+
+      // If setting is on, trigger refresh (same action as clicking refresh in updates tab)
       const cfg = await window.ipc?.getConfig?.();
       if (cfg?.checkUpdatesOnStart !== false) {
-        get().refreshUpdates(false);
+        useTermStore.getState().startAction('refresh', 'refresh');
       }
+
       get().refreshServiceStatuses();
     } catch (e) {
       console.error('[useAppStore] initCatalog failed:', e);
@@ -147,13 +153,19 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
     try {
       const upds = await window.ipc.getUpdates(force);
       const outdated = parseUpdatesMap(upds);
-      window.ipc.updateTrayCount?.(Object.keys(outdated).length);
+      const items = get().items;
+      const appUpdatesCount = items.length > 0
+        ? items.filter((c) => outdated[c.token] !== undefined).length
+        : Object.keys(outdated).length;
+      window.ipc.updateTrayCount?.(appUpdatesCount);
+      const lastCheckedTime = (upds as any)?.lastChecked ? new Date((upds as any).lastChecked) : new Date();
       set({
         outdatedMap: outdated,
-        lastCheckedTime: new Date(),
+        lastCheckedTime,
         isCheckingUpdates: false
       });
-    } catch (_) {
+    } catch (err) {
+      console.error('[useAppStore] refreshUpdates error:', err);
       set({ isCheckingUpdates: false });
     }
   },
@@ -251,7 +263,10 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
     set((state) => {
       const nextOutdated = { ...state.outdatedMap };
       delete nextOutdated[token];
-      window.ipc?.updateTrayCount?.(Object.keys(nextOutdated).length);
+      const appUpdatesCount = state.items.length > 0
+        ? state.items.filter((c) => nextOutdated[c.token] !== undefined).length
+        : Object.keys(nextOutdated).length;
+      window.ipc?.updateTrayCount?.(appUpdatesCount);
       return {
         installed: state.installed.includes(token) ? state.installed : [...state.installed, token],
         outdatedMap: nextOutdated,

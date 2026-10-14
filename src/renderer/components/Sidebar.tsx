@@ -43,8 +43,22 @@ export function Sidebar(): React.JSX.Element {
     }
     return count;
   }, [items]);
-  const installedCount = installed.length;
-  const updatesCount = useMemo(() => Object.keys(outdatedMap).length, [outdatedMap]);
+  const installedCount = useMemo(() => {
+    const installedSet = new Set(installed);
+    let count = 0;
+    for (const c of items) {
+      if (installedSet.has(c.token)) count++;
+    }
+    return count;
+  }, [items, installed]);
+
+  const updatesCount = useMemo(() => {
+    let count = 0;
+    for (const c of items) {
+      if (outdatedMap[c.token] !== undefined) count++;
+    }
+    return count;
+  }, [items, outdatedMap]);
 
   const filteredCount = useMemo(() => {
     if (!search || !search.trim()) return 0;
