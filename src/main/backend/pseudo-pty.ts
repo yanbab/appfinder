@@ -1,5 +1,5 @@
+import { type ChildProcess, spawn as nodeSpawn } from 'child_process';
 import { EventEmitter } from 'events';
-import { spawn as nodeSpawn, type ChildProcess } from 'child_process';
 import fs from 'fs';
 
 export function getDefaultShell(): string {
@@ -30,33 +30,60 @@ export class PseudoTerminal extends EventEmitter {
   private _killed: boolean = false;
   private _exited: boolean = false;
 
-  constructor(file: string, args: string[] = [], options: PseudoTerminalOptions = {}) {
+  constructor(
+    file: string,
+    args: string[] = [],
+    options: PseudoTerminalOptions = {},
+  ) {
     super();
 
     this.cols = options.cols || 80;
     this.rows = options.rows || 24;
     this.process = file;
 
-    const cwd = options.cwd || (typeof process.cwd === 'function' ? process.cwd() : (fs.existsSync(process.env.HOME || '') ? process.env.HOME! : '/tmp'));
+    const cwd =
+      options.cwd ||
+      (typeof process.cwd === 'function'
+        ? process.cwd()
+        : fs.existsSync(process.env.HOME || '')
+          ? process.env.HOME!
+          : '/tmp');
     const env = {
       ...(options.env || process.env),
-      TERM: options.name || (options.env?.TERM || 'xterm-256color'),
+      TERM: options.name || options.env?.TERM || 'xterm-256color',
       COLUMNS: String(this.cols),
       LINES: String(this.rows),
     };
 
-    const isDarwin = process.platform === 'darwin' && fs.existsSync('/usr/bin/script');
+    const isDarwin =
+      process.platform === 'darwin' && fs.existsSync('/usr/bin/script');
 
     let child: ChildProcess;
 
     if (isDarwin) {
-      child = nodeSpawn('/usr/bin/script', [
-        '-q', '-t', '0', '/dev/null',
-        '/bin/sh', '-c', `stty rows ${this.rows} cols ${this.cols} 2>/dev/null; exec "$@"`, '--',
-        file, ...args,
-      ], { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
+      child = nodeSpawn(
+        '/usr/bin/script',
+        [
+          '-q',
+          '-t',
+          '0',
+          '/dev/null',
+          '/bin/sh',
+          '-c',
+          `stty rows ${this.rows} cols ${this.cols} 2>/dev/null; exec "$@"`,
+          '--',
+          file,
+          ...args,
+        ],
+        { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], detached: true },
+      );
     } else {
-      child = nodeSpawn(file, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
+      child = nodeSpawn(file, args, {
+        cwd,
+        env,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        detached: true,
+      });
     }
 
     this.child = child;
@@ -107,7 +134,7 @@ export class PseudoTerminal extends EventEmitter {
       if (this.child?.stdin && !this.child.stdin.destroyed) {
         this.child.stdin.write(data);
       }
-    } catch (_) { }
+    } catch (_) {}
   }
 
   resize(cols: number, rows: number): void {
@@ -125,13 +152,15 @@ export class PseudoTerminal extends EventEmitter {
     } catch (_) {
       try {
         this.child?.kill(signal as any);
-      } catch (__) { }
+      } catch (__) {}
     }
   }
 }
 
-export function spawn(file: string, args: string[] = [], options: PseudoTerminalOptions = {}): PseudoTerminal {
+export function spawn(
+  file: string,
+  args: string[] = [],
+  options: PseudoTerminalOptions = {},
+): PseudoTerminal {
   return new PseudoTerminal(file, args, options);
 }
-
-

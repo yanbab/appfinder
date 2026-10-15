@@ -1,11 +1,11 @@
 // i18n
 
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
 import util from 'util';
-import { LOCALES_DIR } from './path';
-import { getConfig } from './config';
 import type { LocaleInfo } from '../types/cask';
+import { getConfig } from './config';
+import { LOCALES_DIR } from './path';
 
 const localesDir = LOCALES_DIR;
 
@@ -26,7 +26,9 @@ function getElectronApp(): any {
 export function loadMessages(locale: string): Record<string, string> {
   if (!catalogs[locale]) {
     try {
-      catalogs[locale] = JSON.parse(fs.readFileSync(path.join(localesDir, `${locale}.json`), 'utf8'));
+      catalogs[locale] = JSON.parse(
+        fs.readFileSync(path.join(localesDir, `${locale}.json`), 'utf8'),
+      );
     } catch {
       catalogs[locale] = {};
     }
@@ -37,9 +39,10 @@ export function loadMessages(locale: string): Record<string, string> {
 export function getLocales(): LocaleInfo[] {
   if (!availableLocales) {
     try {
-      availableLocales = fs.readdirSync(localesDir)
-        .filter(f => f.endsWith('.json'))
-        .map(f => {
+      availableLocales = fs
+        .readdirSync(localesDir)
+        .filter((f) => f.endsWith('.json'))
+        .map((f) => {
           const code = f.replace('.json', '');
           const msg = loadMessages(code);
           return { code, name: msg._languageName || code };
@@ -52,7 +55,7 @@ export function getLocales(): LocaleInfo[] {
 }
 
 export function setLocale(lang: string): void {
-  const codes = getLocales().map(l => l.code);
+  const codes = getLocales().map((l) => l.code);
   currentLocale = codes.includes(lang) ? lang : 'en';
   currentCatalog = loadMessages(currentLocale);
 }
@@ -68,11 +71,15 @@ export function setupI18n(): void {
   setLocale(lang);
 }
 
-export function getMessages(locale: string = currentLocale): Record<string, string> {
+export function getMessages(
+  locale: string = currentLocale,
+): Record<string, string> {
   return loadMessages(locale);
 }
 
-export function getCatalog(locale: string = currentLocale): Record<string, string> {
+export function getCatalog(
+  locale: string = currentLocale,
+): Record<string, string> {
   return getMessages(locale);
 }
 

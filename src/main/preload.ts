@@ -1,8 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { IpcBridge, Unsubscribe } from '../types/ipc';
 import type { AppConfig } from '../types/cask';
+import type { IpcBridge, Unsubscribe } from '../types/ipc';
 
-const on = (signal: string, callback: (...args: any[]) => void): Unsubscribe => {
+const on = (
+  signal: string,
+  callback: (...args: any[]) => void,
+): Unsubscribe => {
   const listener = (_event: any, ...args: any[]) => callback(...args);
   ipcRenderer.on(signal, listener);
   return () => ipcRenderer.removeListener(signal, listener);
@@ -20,12 +23,17 @@ const invoke = async (channel: string, ...args: any[]): Promise<any> => {
   try {
     const res = await ipcRenderer.invoke(channel, ...args);
     if (cachedConfig && cachedConfig.debug) {
-      console.log(`[${getTimestamp()}] [IPC] ${channel} (${(performance.now() - start).toFixed(0)}ms)`);
+      console.log(
+        `[${getTimestamp()}] [IPC] ${channel} (${(performance.now() - start).toFixed(0)}ms)`,
+      );
     }
     return res;
   } catch (err) {
     if (!cachedConfig || cachedConfig.debug) {
-      console.error(`[${getTimestamp()}] [IPC] ${channel} failed after ${(performance.now() - start).toFixed(2)}ms:`, err);
+      console.error(
+        `[${getTimestamp()}] [IPC] ${channel} failed after ${(performance.now() - start).toFixed(2)}ms:`,
+        err,
+      );
     }
     throw err;
   }
@@ -51,14 +59,16 @@ const ipcApi: IpcBridge = {
   getConfig: async () => {
     if (cachedConfig) return cachedConfig;
     if (!pendingConfigPromise) {
-      pendingConfigPromise = invoke('config:get').then((cfg: AppConfig) => {
-        cachedConfig = cfg;
-        pendingConfigPromise = null;
-        return cfg;
-      }).catch((err: any) => {
-        pendingConfigPromise = null;
-        throw err;
-      });
+      pendingConfigPromise = invoke('config:get')
+        .then((cfg: AppConfig) => {
+          cachedConfig = cfg;
+          pendingConfigPromise = null;
+          return cfg;
+        })
+        .catch((err: any) => {
+          pendingConfigPromise = null;
+          throw err;
+        });
     }
     return pendingConfigPromise;
   },
@@ -67,21 +77,40 @@ const ipcApi: IpcBridge = {
     cachedConfig = await invoke('config:update', newConfig);
     return cachedConfig!;
   },
-  openApp: (token: string, appName?: string) => invoke('cask:open', token, appName),
+  openApp: (token: string, appName?: string) =>
+    invoke('cask:open', token, appName),
   openExternal: (url: string) => invoke('external:open', url),
-  showErrorDialog: (title: string, content: string) => invoke('dialog:error', title, content),
+  showErrorDialog: (title: string, content: string) =>
+    invoke('dialog:error', title, content),
   showMessage: (options: any) => invoke('dialog:message', options),
 
-  runAction: (taskId: string, action: string, token: string, zap?: boolean, appName?: string) =>
-    ipcRenderer.send('cask:run-action', { taskId, action, token, zap, appName }),
-  cancelAction: (taskId: string) => ipcRenderer.send('cask:cancel-action', taskId),
-  writePtyInput: (taskId: string, text: string) => ipcRenderer.send('cask:write-pty-input', { taskId, text }),
+  runAction: (
+    taskId: string,
+    action: string,
+    token: string,
+    zap?: boolean,
+    appName?: string,
+  ) =>
+    ipcRenderer.send('cask:run-action', {
+      taskId,
+      action,
+      token,
+      zap,
+      appName,
+    }),
+  cancelAction: (taskId: string) =>
+    ipcRenderer.send('cask:cancel-action', taskId),
+  writePtyInput: (taskId: string, text: string) =>
+    ipcRenderer.send('cask:write-pty-input', { taskId, text }),
 
   getAccentColor: () => invoke('system:get-accent-color'),
-  setContentSize: (width: number, height: number) => ipcRenderer.send('window:set-content-size', width, height),
+  setContentSize: (width: number, height: number) =>
+    ipcRenderer.send('window:set-content-size', width, height),
   showContextMenu: (data: any) => ipcRenderer.send('context-menu:show', data),
-  sidebarChanged: (visible: boolean) => ipcRenderer.send('shell:sidebar-changed', visible),
-  updateMenu: (id: string, status: { checked?: boolean; enabled?: boolean }) => ipcRenderer.send('menu:update', id, status),
+  sidebarChanged: (visible: boolean) =>
+    ipcRenderer.send('shell:sidebar-changed', visible),
+  updateMenu: (id: string, status: { checked?: boolean; enabled?: boolean }) =>
+    ipcRenderer.send('menu:update', id, status),
 
   // Unified Event Bus
   on: (signal: any, callback: any) => on(signal, callback),

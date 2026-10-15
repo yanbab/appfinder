@@ -1,9 +1,9 @@
-import React, { useRef, useMemo } from 'react';
-import { useAppStore, useShellStore, selectFilteredItems } from '@/stores';
+import React, { useMemo, useRef } from 'react';
+import { selectFilteredItems, useAppStore, useShellStore } from '@/stores';
 import { AppCard } from './AppCard';
 import { AppRow } from './AppRow';
-import { EmptyState } from './EmptyState';
 import { Card } from './Card';
+import { EmptyState } from './EmptyState';
 
 export interface AppListProps {
   header?: React.ReactNode;
@@ -27,11 +27,18 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
   const categories = useAppStore((s) => s.categories);
 
   const filteredItems = useMemo(
-    () => selectFilteredItems({ items, search, order, installed, outdatedMap, categories }, currentTab),
-    [items, search, order, installed, outdatedMap, categories, currentTab]
+    () =>
+      selectFilteredItems(
+        { items, search, order, installed, outdatedMap, categories },
+        currentTab,
+      ),
+    [items, search, order, installed, outdatedMap, categories, currentTab],
   );
   const filteredCount = filteredItems.length;
-  const displayedItems = useMemo(() => filteredItems.slice(0, displayedCount), [filteredItems, displayedCount]);
+  const displayedItems = useMemo(
+    () => filteredItems.slice(0, displayedCount),
+    [filteredItems, displayedCount],
+  );
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -71,7 +78,13 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
       onScroll={handleScroll}
       className="flex-1 overflow-y-auto p-4"
     >
-      <div className={viewMode === 'grid' ? "w-full space-y-4" : "max-w-[var(--content-max-width)] mx-auto w-full space-y-4"}>
+      <div
+        className={
+          viewMode === 'grid'
+            ? 'w-full space-y-4'
+            : 'max-w-[var(--content-max-width)] mx-auto w-full space-y-4'
+        }
+      >
         {header}
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2.5">
@@ -80,7 +93,10 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
             ))}
           </div>
         ) : (
-          <Card padding="none" className="overflow-hidden divide-y divide-border/20 w-full">
+          <Card
+            padding="none"
+            className="overflow-hidden divide-y divide-border/20 w-full"
+          >
             {displayedItems.map((item) => (
               <AppRow key={item.token} item={item} />
             ))}

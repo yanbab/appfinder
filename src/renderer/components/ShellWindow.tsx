@@ -1,17 +1,16 @@
 import React from 'react';
-import { useShellStore, useAppStore } from '@/stores';
-import { Sidebar } from './Sidebar';
-import { TitleBar } from './TitleBar';
-import { StatusBar } from './StatusBar';
-import { InfoPanel } from './InfoPanel';
-import { PasswordModal } from './PasswordModal';
-import { Console } from './Console';
-import { Discover } from './Discover';
+import { useKeyboardNav } from '@/hooks/useKeyboardNav';
+import { useNativeContextMenu } from '@/hooks/useNativeContextMenu';
+import { useAppStore, useShellStore } from '@/stores';
 import { AppList } from './AppList';
 import { AppListUpdates } from './AppListUpdates';
-
-import { useNativeContextMenu } from '@/hooks/useNativeContextMenu';
-import { useKeyboardNav } from '@/hooks/useKeyboardNav';
+import { Console } from './Console';
+import { Discover } from './Discover';
+import { InfoPanel } from './InfoPanel';
+import { PasswordModal } from './PasswordModal';
+import { Sidebar } from './Sidebar';
+import { StatusBar } from './StatusBar';
+import { TitleBar } from './TitleBar';
 
 export function ShellWindow(): React.JSX.Element {
   const currentTab = useShellStore((s) => s.currentTab);

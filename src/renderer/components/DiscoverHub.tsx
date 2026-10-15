@@ -1,10 +1,13 @@
 import React, { useMemo } from 'react';
-import { useAppStore, useTermStore, useShellStore } from '@/stores';
-import { ShellIcon } from './ShellIcon';
+import { useAppStore, useShellStore, useTermStore } from '@/stores';
 import { Button } from './Button';
 import { Card } from './Card';
+import { ShellIcon } from './ShellIcon';
 
-function formatTimestamp(date: Date | string | null | undefined, __: (key: string) => string): string {
+function formatTimestamp(
+  date: Date | string | null | undefined,
+  __: (key: string) => string,
+): string {
   if (!date) return __('Just now');
   const d = date instanceof Date ? date : new Date(date);
   if (isNaN(d.getTime())) return __('Just now');
@@ -12,7 +15,10 @@ function formatTimestamp(date: Date | string | null | undefined, __: (key: strin
   const now = new Date();
   const isToday = d.toDateString() === now.toDateString();
 
-  const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const timeStr = d.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   if (isToday) {
     return timeStr;
@@ -46,7 +52,10 @@ export function DiscoverHub(): React.JSX.Element {
   const selectTab = useShellStore((s) => s.selectTab);
   const __ = useShellStore((s) => s.__);
 
-  const updatesCount = useMemo(() => Object.keys(outdatedMap).length, [outdatedMap]);
+  const updatesCount = useMemo(
+    () => Object.keys(outdatedMap).length,
+    [outdatedMap],
+  );
   const isRefreshRunning = Boolean(runningTasks['refresh']);
   const isBusy = isRefreshRunning || isCheckingUpdates;
 
@@ -84,14 +93,14 @@ export function DiscoverHub(): React.JSX.Element {
             <span className="truncate">
               {updatesCount === 1
                 ? __('1 update available')
-                : (__('%d updates available') || '%d updates available').replace('%d', String(updatesCount))}
+                : (
+                    __('%d updates available') || '%d updates available'
+                  ).replace('%d', String(updatesCount))}
             </span>
           </button>
         ) : (
           /* State 2: Up to Date with Subtle Muted Gradient */
-          <div
-            className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-[var(--radius-btn)] text-xs font-medium select-none bg-gradient-to-r from-muted/80 to-muted/50 text-muted-foreground/90"
-          >
+          <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-[var(--radius-btn)] text-xs font-medium select-none bg-gradient-to-r from-muted/80 to-muted/50 text-muted-foreground/90">
             <span className="size-2 rounded-full bg-muted-foreground/50 shrink-0" />
             <span className="truncate">{__('All apps up to date')}</span>
           </div>
@@ -111,7 +120,14 @@ export function DiscoverHub(): React.JSX.Element {
           size="default"
           disabled={isBusy}
           onClick={handleCheckUpdates}
-          icon={isBusy ? <ShellIcon name="spinner" className="size-3.5 animate-spin mr-1.5 text-muted-foreground" /> : undefined}
+          icon={
+            isBusy ? (
+              <ShellIcon
+                name="spinner"
+                className="size-3.5 animate-spin mr-1.5 text-muted-foreground"
+              />
+            ) : undefined
+          }
         >
           {isBusy ? __('Checking...') : __('Check for Updates')}
         </Button>

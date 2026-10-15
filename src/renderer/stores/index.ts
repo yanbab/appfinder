@@ -1,17 +1,21 @@
-export { create, createStore } from './createStore';
 export type { StateCreator, StoreApi, UseStore } from './createStore';
-export {
-  useAppStore,
-  selectFilteredItems,
-  selectFeaturedItems,
-  selectTopInstalledItems,
-  selectRecentItems,
-  CHUNK_SIZE,
-  FEATURED_TOKENS
-} from './useAppStore';
-export type { AppStoreState, UpdateInfo, FilterableAppState } from './useAppStore';
-export { useTermStore } from './useTermStore';
-export type { TermStoreState, TerminalSubscriber } from './useTermStore';
-export { useShellStore } from './useShellStore';
-export type { ShellStoreState } from './useShellStore';
+export { create, createStore } from './createStore';
 export { initStoreListeners } from './initStoreListeners';
+export type {
+  AppStoreState,
+  FilterableAppState,
+  UpdateInfo,
+} from './useAppStore';
+export {
+  CHUNK_SIZE,
+  FEATURED_TOKENS,
+  selectFeaturedItems,
+  selectFilteredItems,
+  selectRecentItems,
+  selectTopInstalledItems,
+  useAppStore,
+} from './useAppStore';
+export type { ShellStoreState } from './useShellStore';
+export { useShellStore } from './useShellStore';
+export type { TerminalSubscriber, TermStoreState } from './useTermStore';
+export { useTermStore } from './useTermStore';

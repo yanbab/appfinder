@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
-import { useShellStore, useAppStore, selectFilteredItems } from '@/stores';
+import { selectFilteredItems, useAppStore, useShellStore } from '@/stores';
 import { Button } from './Button';
-import { ShellIcon } from './ShellIcon';
 import { NavGroup } from './NavGroup';
 import { SearchInput } from './SearchInput';
+import { ShellIcon } from './ShellIcon';
 
 export function Sidebar(): React.JSX.Element {
   const currentTab = useShellStore((s) => s.currentTab);
@@ -18,11 +18,20 @@ export function Sidebar(): React.JSX.Element {
   const search = useAppStore((s) => s.search);
   const order = useAppStore((s) => s.order);
 
-  const allAppsCount = useMemo(() => items.filter((c) => c.category !== 'font').length, [items]);
-  const updatesCount = useMemo(() => Object.keys(outdatedMap).length, [outdatedMap]);
+  const allAppsCount = useMemo(
+    () => items.filter((c) => c.category !== 'font').length,
+    [items],
+  );
+  const updatesCount = useMemo(
+    () => Object.keys(outdatedMap).length,
+    [outdatedMap],
+  );
   const filteredCount = useMemo(() => {
     if (!search || !search.trim()) return 0;
-    return selectFilteredItems({ items, search, order, installed, outdatedMap, categories }, currentTab).length;
+    return selectFilteredItems(
+      { items, search, order, installed, outdatedMap, categories },
+      currentTab,
+    ).length;
   }, [items, search, order, installed, outdatedMap, categories, currentTab]);
 
   const navItems = [
@@ -35,27 +44,38 @@ export function Sidebar(): React.JSX.Element {
     {
       id: 'all-apps',
       label: __('All Apps'),
-      icon: <ShellIcon name="books.vertical" className="size-[18px] shrink-0" />,
+      icon: (
+        <ShellIcon name="books.vertical" className="size-[18px] shrink-0" />
+      ),
       badge: currentTab === 'all-apps' && search ? filteredCount : allAppsCount,
     },
     {
       id: 'installed',
       label: __('Installed'),
-      icon: <ShellIcon name="arrow.down.to.line" className="size-[18px] shrink-0" />,
-      badge: currentTab === 'installed' && search ? filteredCount : installed.length,
+      icon: (
+        <ShellIcon name="arrow.down.to.line" className="size-[18px] shrink-0" />
+      ),
+      badge:
+        currentTab === 'installed' && search ? filteredCount : installed.length,
     },
     {
       id: 'updates',
       label: __('Updates'),
-      icon: <ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-[18px] shrink-0" />,
+      icon: (
+        <ShellIcon
+          name="arrow.trianglehead.2.clockwise.rotate.90"
+          className="size-[18px] shrink-0"
+        />
+      ),
       badge: currentTab === 'updates' && search ? filteredCount : updatesCount,
     },
   ];
 
   return (
     <aside
-      className={`h-full shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border select-none transition-[margin-left] duration-250 ease-out overflow-hidden z-20 w-[200px] min-w-[200px] ${showSidebar ? 'ml-0' : '-ml-[200px]'
-        }`}
+      className={`h-full shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border select-none transition-[margin-left] duration-250 ease-out overflow-hidden z-20 w-[200px] min-w-[200px] ${
+        showSidebar ? 'ml-0' : '-ml-[200px]'
+      }`}
     >
       <div className="w-[200px] flex flex-col h-full shrink-0 overflow-hidden">
         <div className="h-[52px] shrink-0 [-webkit-app-region:drag]" />
@@ -87,9 +107,18 @@ export function Sidebar(): React.JSX.Element {
                 <Button
                   key={cat.name}
                   variant="sidebar"
-                  icon={<ShellIcon name={cat.symbolName} className="size-[18px] shrink-0 [&>svg]:size-[18px]" />}
+                  icon={
+                    <ShellIcon
+                      name={cat.symbolName}
+                      className="size-[18px] shrink-0 [&>svg]:size-[18px]"
+                    />
+                  }
                   active={currentTab === cat.name}
-                  badge={currentTab === cat.name && search && filteredCount > 0 ? filteredCount : null}
+                  badge={
+                    currentTab === cat.name && search && filteredCount > 0
+                      ? filteredCount
+                      : null
+                  }
                   onClick={() => selectTab(cat.name)}
                 >
                   {__(cat.displayName)}

@@ -3,8 +3,16 @@ const assert = require('node:assert/strict');
 
 test('updateMenuItem modifies enabled and checked properties of targeted menu items', () => {
   const menuItems = new Map();
-  menuItems.set('view-as-icons', { id: 'view-as-icons', enabled: false, checked: false });
-  menuItems.set('view-as-list', { id: 'view-as-list', enabled: false, checked: false });
+  menuItems.set('view-as-icons', {
+    id: 'view-as-icons',
+    enabled: false,
+    checked: false,
+  });
+  menuItems.set('view-as-list', {
+    id: 'view-as-list',
+    enabled: false,
+    checked: false,
+  });
   menuItems.set('view-order-by', { id: 'view-order-by', enabled: false });
 
   // Mock Menu
@@ -44,7 +52,7 @@ test('syncTabMenu disables View As and Order By when tab is discover and enables
   const mockIpc = {
     updateMenu: (id, status) => {
       calls.push({ id, status });
-    }
+    },
   };
 
   // Replicate syncTabMenu behavior
@@ -58,22 +66,43 @@ test('syncTabMenu disables View As and Order By when tab is discover and enables
   // When tab is 'discover':
   syncTabMenu('discover');
   assert.equal(calls.length, 3);
-  assert.deepEqual(calls[0], { id: 'view-as-icons', status: { enabled: false } });
-  assert.deepEqual(calls[1], { id: 'view-as-list', status: { enabled: false } });
-  assert.deepEqual(calls[2], { id: 'view-order-by', status: { enabled: false } });
+  assert.deepEqual(calls[0], {
+    id: 'view-as-icons',
+    status: { enabled: false },
+  });
+  assert.deepEqual(calls[1], {
+    id: 'view-as-list',
+    status: { enabled: false },
+  });
+  assert.deepEqual(calls[2], {
+    id: 'view-order-by',
+    status: { enabled: false },
+  });
 
   // Reset and test with 'all-apps':
   calls.length = 0;
   syncTabMenu('all-apps');
   assert.equal(calls.length, 3);
-  assert.deepEqual(calls[0], { id: 'view-as-icons', status: { enabled: true } });
+  assert.deepEqual(calls[0], {
+    id: 'view-as-icons',
+    status: { enabled: true },
+  });
   assert.deepEqual(calls[1], { id: 'view-as-list', status: { enabled: true } });
-  assert.deepEqual(calls[2], { id: 'view-order-by', status: { enabled: true } });
+  assert.deepEqual(calls[2], {
+    id: 'view-order-by',
+    status: { enabled: true },
+  });
 
   // Reset and test with 'installed':
   calls.length = 0;
   syncTabMenu('installed');
-  assert.deepEqual(calls[0], { id: 'view-as-icons', status: { enabled: true } });
+  assert.deepEqual(calls[0], {
+    id: 'view-as-icons',
+    status: { enabled: true },
+  });
   assert.deepEqual(calls[1], { id: 'view-as-list', status: { enabled: true } });
-  assert.deepEqual(calls[2], { id: 'view-order-by', status: { enabled: true } });
+  assert.deepEqual(calls[2], {
+    id: 'view-order-by',
+    status: { enabled: true },
+  });
 });

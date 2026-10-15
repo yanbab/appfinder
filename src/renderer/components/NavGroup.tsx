@@ -1,9 +1,10 @@
-import React, { useState, type ReactNode, type HTMLAttributes } from 'react';
-import { ShellIcon } from './ShellIcon';
-import { useShellStore } from '@/stores';
+import React, { type HTMLAttributes, type ReactNode, useState } from 'react';
 import { cn } from '@/hooks/utils';
+import { useShellStore } from '@/stores';
+import { ShellIcon } from './ShellIcon';
 
-export interface NavGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
+export interface NavGroupProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   title?: ReactNode;
   children?: ReactNode;
   defaultOpen?: boolean;
@@ -20,12 +21,14 @@ export function NavGroup({
   const [isOpen, setIsOpen] = useState<boolean>(defaultOpen);
   const __ = useShellStore((s) => s.__);
 
-  const hasTitle = Boolean(title && (typeof title === 'string' ? title.trim() : true));
+  const hasTitle = Boolean(
+    title && (typeof title === 'string' ? title.trim() : true),
+  );
 
   // If no title, it's not collapsable - render flat list
   if (!hasTitle) {
     return (
-      <div className={cn("space-y-0", className)} {...props}>
+      <div className={cn('space-y-0', className)} {...props}>
         {children}
       </div>
     );
@@ -34,7 +37,7 @@ export function NavGroup({
   const resolvedTitle = typeof title === 'string' ? __(title) : title;
 
   return (
-    <div className={cn("space-y-0.5", className)} {...props}>
+    <div className={cn('space-y-0.5', className)} {...props}>
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -44,16 +47,12 @@ export function NavGroup({
         <ShellIcon
           name="chevron.right"
           className={cn(
-            "size-3 text-muted-foreground/70 shrink-0 transition-transform duration-150 ease-out",
-            isOpen ? "rotate-90" : "rotate-0"
+            'size-3 text-muted-foreground/70 shrink-0 transition-transform duration-150 ease-out',
+            isOpen ? 'rotate-90' : 'rotate-0',
           )}
         />
       </button>
-      {isOpen && (
-        <div className="space-y-0">
-          {children}
-        </div>
-      )}
+      {isOpen && <div className="space-y-0">{children}</div>}
     </div>
   );
 }

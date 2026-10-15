@@ -2,8 +2,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import { CONFIG_DIR } from './path';
 import type { AppConfig } from '../types/cask';
+import { CONFIG_DIR } from './path';
 
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 
@@ -41,5 +41,3 @@ export function updateConfig(newConfig: Partial<AppConfig>): AppConfig {
   }
   return config;
 }
-
-

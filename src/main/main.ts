@@ -3,13 +3,13 @@
 //
 
 import { app } from 'electron';
+import { checkCommand, checkCommandDialog } from './check';
 import { setupConfig } from './config';
 import { setupI18n } from './i18n';
 import { setupIpcMain } from './ipc-main';
 import { setupApplicationMenu } from './menu-application';
 import { setupContextMenu } from './menu-context';
 import { createShellWindow, getShellWindow } from './window-shell';
-import { checkCommand, checkCommandDialog } from './check';
 
 const gotTheLock = app.requestSingleInstanceLock();
 

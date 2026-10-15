@@ -5,7 +5,10 @@ export function stripAnsi(str: string): string {
   if (!str) return '';
   return str
     .replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '')
-    .replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+    .replace(
+      /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
+      '',
+    );
 }
 
 export interface TerminalBufferWriteResult {
@@ -126,8 +129,8 @@ export class TerminalBuffer {
   }
 
   toString(): string {
-    return this.currentLine ? [...this.lines, this.currentLine].join('\n') : this.lines.join('\n');
+    return this.currentLine
+      ? [...this.lines, this.currentLine].join('\n')
+      : this.lines.join('\n');
   }
 }
-
-

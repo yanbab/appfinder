@@ -2,20 +2,19 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 const brew = require('../src/main/backend/brew');
 
-test('brew.getApps and brew.getCategories always return catalog datasets', () => {
-  const apps = brew.getApps(true);
+test('brew.getApps and brew.getCategories always return catalog datasets', async () => {
+  const apps = await brew.getApps(true);
   assert.ok(Array.isArray(apps));
   assert.ok(apps.length > 0, 'Apps should not be empty');
 
-  const categories = brew.getCategories(true);
+  const categories = await brew.getCategories(true);
   assert.ok(Array.isArray(categories));
   assert.ok(categories.length > 0, 'Categories should not be empty');
 });
 
-test('brew gracefully handles corrupted cache files and falls back to bundled data', () => {
+test('brew gracefully handles corrupted cache files and falls back to bundled data', async () => {
   const cacheDir = path.join(process.env.HOME || '', '.cache', 'appfinder');
   const corruptFile = path.join(cacheDir, 'apps.json');
   let existed = false;
@@ -33,7 +32,7 @@ test('brew gracefully handles corrupted cache files and falls back to bundled da
     fs.writeFileSync(corruptFile, '{ invalid json truncated...', 'utf8');
 
     // getApps should NOT crash and should recover with valid array from bundled data
-    const apps = brew.getApps(true);
+    const apps = await brew.getApps(true);
     assert.ok(Array.isArray(apps));
     assert.ok(apps.length > 0);
   } finally {
@@ -43,7 +42,7 @@ test('brew gracefully handles corrupted cache files and falls back to bundled da
     } else {
       try {
         fs.unlinkSync(corruptFile);
-      } catch (_) { }
+      } catch (_) {}
     }
   }
 });
@@ -58,39 +57,47 @@ test('fetcher.processAppsData transforms raw casks and metadata correctly', () =
       desc: 'A test application',
       homepage: 'https://testapp.com',
       version: '1.2.3',
-      artifacts: [{ app: ['Test App.app'] }]
+      artifacts: [{ app: ['Test App.app'] }],
     },
     {
       token: 'font-test',
       name: ['Test Font'],
       homepage: 'https://font.com',
-      version: '2.0.0'
-    }
+      version: '2.0.0',
+    },
   ];
 
   const mockCategories = {
     tokenToCategory: {
-      'test-app': { primary: 'developerTools', secondary: ['utilities', 'productivity'] }
+      'test-app': {
+        primary: 'developerTools',
+        secondary: ['utilities', 'productivity'],
+      },
     },
-    iconTokens: ['test-app']
+    iconTokens: ['test-app'],
   };
 
   const mockDownloads = {
     formulae: {
-      'test-app': [{ count: '1,234' }]
-    }
+      'test-app': [{ count: '1,234' }],
+    },
   };
 
   const mockAdded = {
     tokenAddedDates: {
-      'test-app': '2025-01-01'
-    }
+      'test-app': '2025-01-01',
+    },
   };
 
-  const result = processAppsData(mockCasks, mockCategories, mockDownloads, mockAdded);
+  const result = processAppsData(
+    mockCasks,
+    mockCategories,
+    mockDownloads,
+    mockAdded,
+  );
   assert.equal(result.length, 2);
 
-  const app1 = result.find(c => c.token === 'test-app');
+  const app1 = result.find((c) => c.token === 'test-app');
   assert.equal(app1.name, 'Test Application');
   assert.equal(app1.category, 'developerTools');
   assert.equal(app1.secondCategory, 'utilities');
@@ -101,7 +108,7 @@ test('fetcher.processAppsData transforms raw casks and metadata correctly', () =
   assert.equal(app1.url, undefined);
   assert.equal(app1.icon, undefined);
 
-  const font = result.find(c => c.token === 'font-test');
+  const font = result.find((c) => c.token === 'font-test');
   assert.equal(font.category, 'font');
   assert.equal(font.desc, 'Font');
 });

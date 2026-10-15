@@ -1,10 +1,10 @@
 import React from 'react';
+import { formatVersion, getAppName } from '@/hooks/utils';
+import { useAppStore, useShellStore } from '@/stores';
 import type { CaskItem } from '@/types';
-import { useShellStore, useAppStore } from '@/stores';
-import { AppIcon } from './AppIcon';
 import { AppButtons } from './AppButtons';
+import { AppIcon } from './AppIcon';
 import { Card } from './Card';
-import { getAppName, formatVersion } from '@/hooks/utils';
 
 export interface AppCardProps {
   item: CaskItem;
@@ -20,9 +20,10 @@ export function AppCard({ item, className }: AppCardProps) {
   const isSelected = selectedApp?.token === item.token;
   const isOutdated = Boolean(outdatedMap[item.token]);
   const name = getAppName(item);
-  const desc = currentTab === 'updates' && isOutdated
-    ? `${formatVersion(outdatedMap[item.token]?.installedVersion)} → ${formatVersion(outdatedMap[item.token]?.currentVersion)}`
-    : (item.desc || '');
+  const desc =
+    currentTab === 'updates' && isOutdated
+      ? `${formatVersion(outdatedMap[item.token]?.installedVersion)} → ${formatVersion(outdatedMap[item.token]?.currentVersion)}`
+      : item.desc || '';
 
   return (
     <Card
@@ -42,7 +43,11 @@ export function AppCard({ item, className }: AppCardProps) {
       className={`app-card relative flex items-center justify-between ${className || ''}`}
     >
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        <AppIcon item={item} size="grid" className="size-14 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
+        <AppIcon
+          item={item}
+          size="grid"
+          className="size-14 rounded-[var(--radius-card)] shadow-2xs shrink-0"
+        />
         <div className="min-w-0 flex-1 flex flex-col justify-center">
           <h3 className="font-semibold text-[13px] text-foreground truncate leading-snug">
             {name}

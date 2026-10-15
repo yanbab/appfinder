@@ -1,9 +1,9 @@
 import React from 'react';
+import { formatVersion, getAppName } from '@/hooks/utils';
+import { useAppStore, useShellStore } from '@/stores';
 import type { CaskItem } from '@/types';
-import { useShellStore, useAppStore } from '@/stores';
-import { AppIcon } from './AppIcon';
 import { AppButtons } from './AppButtons';
-import { getAppName, formatVersion } from '@/hooks/utils';
+import { AppIcon } from './AppIcon';
 
 export interface AppRowProps {
   item: CaskItem;
@@ -19,9 +19,10 @@ export function AppRow({ item, className }: AppRowProps) {
   const isSelected = selectedApp?.token === item.token;
   const isOutdated = Boolean(outdatedMap[item.token]);
   const name = getAppName(item);
-  const desc = currentTab === 'updates' && isOutdated
-    ? `${formatVersion(outdatedMap[item.token]?.installedVersion)} → ${formatVersion(outdatedMap[item.token]?.currentVersion)}`
-    : (item.desc || '');
+  const desc =
+    currentTab === 'updates' && isOutdated
+      ? `${formatVersion(outdatedMap[item.token]?.installedVersion)} → ${formatVersion(outdatedMap[item.token]?.currentVersion)}`
+      : item.desc || '';
 
   return (
     <div
@@ -41,7 +42,11 @@ export function AppRow({ item, className }: AppRowProps) {
     >
       {/* Icon & Details */}
       <div className="flex items-center gap-3.5 min-w-0 flex-1 mr-3">
-        <AppIcon item={item} size="row" className="size-12 rounded-[var(--radius-card)] shadow-2xs shrink-0" />
+        <AppIcon
+          item={item}
+          size="row"
+          className="size-12 rounded-[var(--radius-card)] shadow-2xs shrink-0"
+        />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-[13px] text-foreground truncate leading-snug">

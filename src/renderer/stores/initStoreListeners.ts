@@ -1,6 +1,6 @@
 import { useAppStore } from './useAppStore';
+import { syncTabMenu, useShellStore } from './useShellStore';
 import { useTermStore } from './useTermStore';
-import { useShellStore, syncTabMenu } from './useShellStore';
 
 let isInitialized = false;
 

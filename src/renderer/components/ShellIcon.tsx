@@ -1,13 +1,19 @@
 import * as React from 'react';
 import { getSymbol } from '@/assets/sf-symbols';
 
-export interface ShellIconProps extends React.HTMLAttributes<HTMLSpanElement | HTMLDivElement> {
+export interface ShellIconProps
+  extends React.HTMLAttributes<HTMLSpanElement | HTMLDivElement> {
   name?: string;
   html?: string;
   className?: string;
 }
 
-export function ShellIcon({ name, html, className = 'size-[18px]', ...props }: ShellIconProps) {
+export function ShellIcon({
+  name,
+  html,
+  className = 'size-[18px]',
+  ...props
+}: ShellIconProps) {
   if (html) {
     return (
       <span
@@ -31,7 +37,9 @@ export function ShellIcon({ name, html, className = 'size-[18px]', ...props }: S
     }
   }
 
-  return <div className={`rounded-sm bg-muted shrink-0 ${className}`} {...props} />;
+  return (
+    <div className={`rounded-sm bg-muted shrink-0 ${className}`} {...props} />
+  );
 }
 
 export default ShellIcon;

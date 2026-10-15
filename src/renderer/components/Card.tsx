@@ -1,4 +1,4 @@
-import React, { type HTMLAttributes, forwardRef } from 'react';
+import React, { forwardRef, type HTMLAttributes } from 'react';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'interactive' | 'hub' | 'warning' | 'error' | 'hero';
@@ -8,7 +8,8 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles: Record<NonNullable<CardProps['variant']>, string> = {
-  default: 'rounded-[var(--radius-card)] bg-card text-card-foreground shadow-2xs',
+  default:
+    'rounded-[var(--radius-card)] bg-card text-card-foreground shadow-2xs',
   interactive:
     'rounded-[var(--radius-card)] bg-card text-card-foreground shadow-2xs select-none cursor-default active:bg-[var(--card-active-bg)] focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/50 transition-colors',
   hub: 'rounded-[var(--radius-card)] bg-gradient-to-b from-card via-card/95 to-card/85 text-card-foreground shadow-2xs select-none cursor-default',
@@ -39,7 +40,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const baseVariant = variantStyles[variant] || variantStyles.default;
     const basePadding = paddingStyles[padding] || paddingStyles.default;
@@ -54,29 +55,64 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         {children}
       </Component>
     );
-  }
+  },
 );
 
 Card.displayName = 'Card';
 
-export function CardHeader({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={`flex items-center justify-between gap-2 select-none ${className}`} {...props} />;
+export function CardHeader({
+  className = '',
+  ...props
+}: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={`flex items-center justify-between gap-2 select-none ${className}`}
+      {...props}
+    />
+  );
 }
 
-export function CardTitle({ className = '', ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={`font-semibold text-[13px] text-foreground leading-snug truncate ${className}`} {...props} />;
+export function CardTitle({
+  className = '',
+  ...props
+}: HTMLAttributes<HTMLHeadingElement>) {
+  return (
+    <h3
+      className={`font-semibold text-[13px] text-foreground leading-snug truncate ${className}`}
+      {...props}
+    />
+  );
 }
 
-export function CardDescription({ className = '', ...props }: HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={`text-xs text-muted-foreground line-clamp-2 leading-snug ${className}`} {...props} />;
+export function CardDescription({
+  className = '',
+  ...props
+}: HTMLAttributes<HTMLParagraphElement>) {
+  return (
+    <p
+      className={`text-xs text-muted-foreground line-clamp-2 leading-snug ${className}`}
+      {...props}
+    />
+  );
 }
 
-export function CardContent({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
+export function CardContent({
+  className = '',
+  ...props
+}: HTMLAttributes<HTMLDivElement>) {
   return <div className={`min-w-0 flex-1 ${className}`} {...props} />;
 }
 
-export function CardFooter({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={`flex items-center gap-2 pt-2 select-none ${className}`} {...props} />;
+export function CardFooter({
+  className = '',
+  ...props
+}: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={`flex items-center gap-2 pt-2 select-none ${className}`}
+      {...props}
+    />
+  );
 }
 
 export default Card;

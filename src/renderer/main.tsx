@@ -1,14 +1,14 @@
-import React, { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import "./styles/index.css";
-import { ShellWindow } from "./components/ShellWindow";
-import { ErrorWindow } from "./components/ErrorWindow";
-import { ThemeProvider } from "@/hooks";
-import { initStoreListeners } from "@/stores";
+import React, { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './styles/index.css';
+import { ThemeProvider } from '@/hooks';
+import { initStoreListeners } from '@/stores';
+import { ErrorWindow } from './components/ErrorWindow';
+import { ShellWindow } from './components/ShellWindow';
 
 initStoreListeners();
 
-const rootElement = document.getElementById("root");
+const rootElement = document.getElementById('root');
 if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
@@ -17,6 +17,6 @@ if (rootElement) {
           <ShellWindow />
         </ThemeProvider>
       </ErrorWindow>
-    </StrictMode>
+    </StrictMode>,
   );
 }

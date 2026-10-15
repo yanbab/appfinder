@@ -1,7 +1,7 @@
-import React, { Component, type ReactNode, type ErrorInfo } from 'react';
+import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Button } from './Button';
-import { ShellIcon } from './ShellIcon';
 import { Card } from './Card';
+import { ShellIcon } from './ShellIcon';
 
 export interface ErrorWindowProps {
   children?: ReactNode;
@@ -34,7 +34,10 @@ export class ErrorWindow extends Component<ErrorWindowProps, ErrorWindowState> {
     if (this.state.hasError) {
       return (
         <div className="flex h-screen w-screen flex-col items-center justify-center p-6 bg-background text-foreground select-none">
-          <Card padding="lg" className="max-w-md w-full shadow-lg text-center space-y-3 border border-border">
+          <Card
+            padding="lg"
+            className="max-w-md w-full shadow-lg text-center space-y-3 border border-border"
+          >
             <div className="flex justify-center text-amber-500">
               <ShellIcon name="exclamationmark.triangle" className="size-10" />
             </div>
@@ -42,7 +45,8 @@ export class ErrorWindow extends Component<ErrorWindowProps, ErrorWindowState> {
               Something went wrong
             </h2>
             <p className="text-xs text-muted-foreground font-mono leading-relaxed max-h-32 overflow-y-auto p-2 bg-muted/40 rounded">
-              {this.state.error?.message || 'An unexpected rendering error occurred.'}
+              {this.state.error?.message ||
+                'An unexpected rendering error occurred.'}
             </p>
             <div className="pt-2 flex justify-center gap-2">
               <Button variant="default" onClick={this.handleReload}>

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useAppStore, useTermStore } from '@/stores';
 import { getAppName } from '@/hooks/utils';
+import { useAppStore, useTermStore } from '@/stores';
 import type { CaskItem } from '@/types';
 
 export function useNativeContextMenu() {
@@ -20,9 +20,14 @@ export function useNativeContextMenu() {
       const selection = window.getSelection();
       const selectedText = selection ? selection.toString().trim() : '';
 
-      const searchInput = (target.closest('#search-input') || (target.tagName === 'INPUT' ? target : null)) as HTMLElement | null;
-      const link = target.closest('a[href]:not([href="#"]):not([href^="javascript:"])') as HTMLAnchorElement | null;
-      const selectableEl = target.closest('.selectable-text, .info-app-title, .info-app-desc, .info-app-version, .info-caveats-text');
+      const searchInput = (target.closest('#search-input') ||
+        (target.tagName === 'INPUT' ? target : null)) as HTMLElement | null;
+      const link = target.closest(
+        'a[href]:not([href="#"]):not([href^="javascript:"])',
+      ) as HTMLAnchorElement | null;
+      const selectableEl = target.closest(
+        '.selectable-text, .info-app-title, .info-app-desc, .info-app-version, .info-caveats-text',
+      );
       const card = target.closest('[data-token]') as HTMLElement | null;
       const inInfoDrawer = target.closest('[data-drawer-content]');
 
@@ -85,7 +90,10 @@ export function useNativeContextMenu() {
   useEffect(() => {
     if (window.ipc?.on) {
       const unsub = window.ipc.on('context-menu:action', async (data: any) => {
-        const { action, token } = typeof data === 'object' && data ? data : { action: data, token: undefined };
+        const { action, token } =
+          typeof data === 'object' && data
+            ? data
+            : { action: data, token: undefined };
         if (action && token && startAction) {
           await startAction(action, token);
         }

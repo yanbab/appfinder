@@ -1,11 +1,19 @@
 import React, { useMemo } from 'react';
-import { useAppStore, useTermStore, useShellStore, selectFilteredItems } from '@/stores';
+import {
+  selectFilteredItems,
+  useAppStore,
+  useShellStore,
+  useTermStore,
+} from '@/stores';
 import { AppList } from './AppList';
-import { EmptyState } from './EmptyState';
 import { Button } from './Button';
+import { EmptyState } from './EmptyState';
 import { ShellIcon } from './ShellIcon';
 
-function formatLastChecked(date: Date | string | null | undefined, __: (key: string) => string): string {
+function formatLastChecked(
+  date: Date | string | null | undefined,
+  __: (key: string) => string,
+): string {
   if (!date) return __('Never');
   const d = date instanceof Date ? date : new Date(date);
   if (isNaN(d.getTime())) return __('Never');
@@ -17,7 +25,10 @@ function formatLastChecked(date: Date | string | null | undefined, __: (key: str
   yesterday.setDate(now.getDate() - 1);
   const isYesterday = d.toDateString() === yesterday.toDateString();
 
-  const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const timeStr = d.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   if (isToday) {
     return `${__('Today')}, ${timeStr}`;
@@ -47,8 +58,12 @@ export function AppListUpdates(): React.JSX.Element {
   const __ = useShellStore((s) => s.__);
 
   const filteredItems = useMemo(
-    () => selectFilteredItems({ items, search, order, installed, outdatedMap, categories }, 'updates'),
-    [items, search, order, installed, outdatedMap, categories]
+    () =>
+      selectFilteredItems(
+        { items, search, order, installed, outdatedMap, categories },
+        'updates',
+      ),
+    [items, search, order, installed, outdatedMap, categories],
   );
   const filteredCount = filteredItems.length;
 
@@ -66,18 +81,28 @@ export function AppListUpdates(): React.JSX.Element {
       <EmptyState
         icon="checkmark"
         title={__('Up to date')}
-        subtitle={__('All installed casks are updated to their latest versions.')}
+        subtitle={__(
+          'All installed casks are updated to their latest versions.',
+        )}
       >
         <div className="flex flex-col items-center gap-2">
           <Button
             disabled={isRefreshRunning}
             onClick={() => startAction('refresh', 'refresh')}
-            icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className={`size-3.5 ${isRefreshRunning ? 'animate-spin' : ''}`} />}
+            icon={
+              <ShellIcon
+                name="arrow.trianglehead.2.clockwise.rotate.90"
+                className={`size-3.5 ${isRefreshRunning ? 'animate-spin' : ''}`}
+              />
+            }
           >
             {__('Refresh')}
           </Button>
           <div className="text-xs text-muted-foreground mt-1">
-            {__('Last check :')} <span className="font-medium text-muted-foreground">{formattedLastChecked}</span>
+            {__('Last check :')}{' '}
+            <span className="font-medium text-muted-foreground">
+              {formattedLastChecked}
+            </span>
           </div>
         </div>
       </EmptyState>
@@ -89,23 +114,28 @@ export function AppListUpdates(): React.JSX.Element {
       <h3 className="text-xs font-semibold text-muted-foreground">
         {filteredCount === 1
           ? __('1 update available')
-          : (__('%d updates available') || '%d updates available').replace('%d', String(filteredCount))}
+          : (__('%d updates available') || '%d updates available').replace(
+              '%d',
+              String(filteredCount),
+            )}
       </h3>
 
       <div className="flex items-center gap-2">
         <Button
           disabled={isRefreshRunning}
           onClick={() => startAction('refresh', 'refresh')}
-          icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className={`size-3.5 ${isRefreshRunning ? 'animate-spin' : ''}`} />}
+          icon={
+            <ShellIcon
+              name="arrow.trianglehead.2.clockwise.rotate.90"
+              className={`size-3.5 ${isRefreshRunning ? 'animate-spin' : ''}`}
+            />
+          }
         >
           {__('Refresh')}
         </Button>
 
         {filteredCount >= 1 && (
-          <Button
-            variant="default"
-            onClick={() => startAction('upgrade-all')}
-          >
+          <Button variant="default" onClick={() => startAction('upgrade-all')}>
             {__('Update All')}
           </Button>
         )}

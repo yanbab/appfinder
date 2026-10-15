@@ -1,5 +1,5 @@
 import { create } from './createStore';
-import { useAppStore, selectFeaturedItems } from './useAppStore';
+import { selectFeaturedItems, useAppStore } from './useAppStore';
 
 const infoCache = new Map<string, any>();
 
@@ -42,7 +42,10 @@ export function syncTabMenu(tab: string): void {
 export const useShellStore = create<ShellStoreState>((set, get) => ({
   // State
   currentTab: 'discover',
-  viewMode: typeof localStorage !== 'undefined' ? localStorage.getItem('appfinder-view-mode') || 'list' : 'list',
+  viewMode:
+    typeof localStorage !== 'undefined'
+      ? localStorage.getItem('appfinder-view-mode') || 'list'
+      : 'list',
   showSidebar: typeof window !== 'undefined' ? window.innerWidth > 560 : true,
   showTerminal: false,
   alwaysShowStatusBar: false,
@@ -57,7 +60,7 @@ export const useShellStore = create<ShellStoreState>((set, get) => ({
     set({
       currentTab: tab,
       selectedApp: null,
-      appDetails: null
+      appDetails: null,
     });
     syncTabMenu(tab);
     useAppStore.getState().setDisplayedCount(50);
@@ -86,16 +89,19 @@ export const useShellStore = create<ShellStoreState>((set, get) => ({
 
   setShowTerminal: (showTerminal: boolean) => set({ showTerminal }),
   toggleTerminal: () => set((state) => ({ showTerminal: !state.showTerminal })),
-  setAlwaysShowStatusBar: (alwaysShowStatusBar: boolean) => set({ alwaysShowStatusBar }),
+  setAlwaysShowStatusBar: (alwaysShowStatusBar: boolean) =>
+    set({ alwaysShowStatusBar }),
 
   // App Inspector Drawer Actions
   openAppInfo: async (appOrToken: any) => {
-    const token = typeof appOrToken === 'string' ? appOrToken : appOrToken?.token;
+    const token =
+      typeof appOrToken === 'string' ? appOrToken : appOrToken?.token;
     const items = useAppStore.getState().items;
     const catalogItem = items.find((c) => c.token === token);
-    const resolvedApp = typeof appOrToken === 'object' && appOrToken !== null
-      ? { ...(catalogItem || {}), ...appOrToken }
-      : (catalogItem || { token });
+    const resolvedApp =
+      typeof appOrToken === 'object' && appOrToken !== null
+        ? { ...(catalogItem || {}), ...appOrToken }
+        : catalogItem || { token };
 
     set({ selectedApp: resolvedApp });
     if (!token) return;
@@ -130,7 +136,9 @@ export const useShellStore = create<ShellStoreState>((set, get) => ({
   prevSlide: () => {
     const featured = selectFeaturedItems(useAppStore.getState().items);
     if (featured.length <= 1) return;
-    set((state) => ({ slideIndex: (state.slideIndex - 1 + featured.length) % featured.length }));
+    set((state) => ({
+      slideIndex: (state.slideIndex - 1 + featured.length) % featured.length,
+    }));
   },
 
   // Localization
@@ -159,5 +167,5 @@ export const useShellStore = create<ShellStoreState>((set, get) => ({
     if (currentTab === 'updates') return __('Updates');
     const cat = categories.find((c) => c.name === currentTab);
     return cat ? __(cat.displayName) : __('Explore');
-  }
+  },
 }));

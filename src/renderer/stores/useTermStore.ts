@@ -1,8 +1,17 @@
+import type {
+  TaskCompleteEvent,
+  TaskLogEvent,
+  TaskPromptEvent,
+} from '../../types/ipc';
+import {
+  extractTaskError,
+  formatStatusBarMessage,
+  getAppName,
+  getIconDataUrl,
+} from '../hooks/utils';
 import { create } from './createStore';
 import { useAppStore } from './useAppStore';
 import { useShellStore } from './useShellStore';
-import { getAppName, getIconDataUrl, extractTaskError, formatStatusBarMessage } from '../hooks/utils';
-import type { TaskLogEvent, TaskPromptEvent, TaskCompleteEvent } from '../../types/ipc';
 
 export type TerminalSubscriber = (text: string, clear?: boolean) => void;
 
@@ -22,9 +31,18 @@ export interface TermStoreState {
 
   registerTerminalSubscriber: (cb: TerminalSubscriber) => () => void;
   clearTerminal: () => void;
-  executeTask: (action: string, token?: string, zap?: boolean, remainingCount?: number | null) => void;
+  executeTask: (
+    action: string,
+    token?: string,
+    zap?: boolean,
+    remainingCount?: number | null,
+  ) => void;
   processNextQueuedUpdate: () => void;
-  startAction: (action: string, token?: string, appName?: string) => Promise<void>;
+  startAction: (
+    action: string,
+    token?: string,
+    appName?: string,
+  ) => Promise<void>;
   cancelAction: () => void;
   submitPassword: (pass: string) => void;
   cancelPassword: () => void;
@@ -57,11 +75,18 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
 
   clearTerminal: () => {
     set({ terminalHistory: '' });
-    terminalSubscribers.forEach((cb) => cb('', true));
+    terminalSubscribers.forEach((cb) => {
+      cb('', true);
+    });
   },
 
   // Task execution
-  executeTask: (action: string, token: string = '', zap: boolean = false, remainingCount: number | null = null) => {
+  executeTask: (
+    action: string,
+    token: string = '',
+    zap: boolean = false,
+    remainingCount: number | null = null,
+  ) => {
     get().clearTerminal();
     const taskId = `cask-${action}-${token || Date.now()}`;
 
@@ -70,16 +95,22 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
       activeTaskToken: token,
       activeTaskAction: action,
       errorLog: '',
-      runningTasks: token ? { ...state.runningTasks, [token]: action } : state.runningTasks
+      runningTasks: token
+        ? { ...state.runningTasks, [token]: action }
+        : state.runningTasks,
     }));
 
     const items = useAppStore.getState().items;
     const cask = items.find((c) => c.token === token);
     const name = cask ? getAppName(cask) : token;
-    let title = action === 'install' ? `Installing ${name}...`
-      : action === 'uninstall' ? `Deleting ${name}...`
-        : action === 'upgrade' ? `Updating ${name}...`
-          : `${action}...`;
+    let title =
+      action === 'install'
+        ? `Installing ${name}...`
+        : action === 'uninstall'
+          ? `Deleting ${name}...`
+          : action === 'upgrade'
+            ? `Updating ${name}...`
+            : `${action}...`;
 
     if (remainingCount !== null && remainingCount > 0) {
       title = `${action === 'upgrade' ? 'Updating' : 'Installing'} ${name}... (${remainingCount} remaining)`;
@@ -109,7 +140,7 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
 
     if (action === 'open') {
       const cask = items.find((c) => c.token === token);
-      const app = appName || (cask ? (cask.app || cask.name) : null);
+      const app = appName || (cask ? cask.app || cask.name : null);
       window.ipc?.openApp?.(token, app ?? undefined);
       return;
     }
@@ -137,9 +168,11 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
         errorLog: '',
         runningTasks: { ...state.runningTasks, [action]: action },
         drawerTitle:
-          action === 'refresh' ? __('Checking for updates...')
-            : action === 'fetch' ? __('Checking for new applications...')
-              : __('Cleaning up Homebrew cache...')
+          action === 'refresh'
+            ? __('Checking for updates...')
+            : action === 'fetch'
+              ? __('Checking for new applications...')
+              : __('Cleaning up Homebrew cache...'),
       }));
       if (action === 'cleanup') {
         useShellStore.getState().setShowTerminal(true);
@@ -155,8 +188,12 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
       if (window.ipc?.showMessage) {
         const config = (await window.ipc?.getConfig?.()) || { zap: false };
         const title = __('Confirm Delete');
-        const rawMsg = __('Are you sure you want to delete %s?') || 'Are you sure you want to delete %s?';
-        const message = rawMsg.includes('%s') ? rawMsg.replace('%s', name) : `Are you sure you want to delete ${name}?`;
+        const rawMsg =
+          __('Are you sure you want to delete %s?') ||
+          'Are you sure you want to delete %s?';
+        const message = rawMsg.includes('%s')
+          ? rawMsg.replace('%s', name)
+          : `Are you sure you want to delete ${name}?`;
         const icon = cask?.iconUrl ? await getIconDataUrl(cask.iconUrl) : null;
 
         const response = await window.ipc.showMessage({
@@ -197,7 +234,7 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
       drawerTitle: '',
       isUpdatingAll: false,
       updateQueue: [],
-      errorLog: ''
+      errorLog: '',
     });
   },
 
@@ -217,7 +254,9 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
   handleTaskLog: (data: TaskLogEvent) => {
     const text = data.text || '';
     set({ terminalHistory: text, errorLog: text });
-    terminalSubscribers.forEach((cb) => cb(text));
+    terminalSubscribers.forEach((cb) => {
+      cb(text);
+    });
     if (data.line) {
       const statusMsg = formatStatusBarMessage(data.line);
       if (statusMsg) set({ drawerTitle: statusMsg });
@@ -227,8 +266,12 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
   handleStatusLog: (text: string) => {
     if (!text) return;
     set((state) => {
-      const updated = state.terminalHistory ? `${state.terminalHistory}\n${text}` : text;
-      terminalSubscribers.forEach((cb) => cb(updated));
+      const updated = state.terminalHistory
+        ? `${state.terminalHistory}\n${text}`
+        : text;
+      terminalSubscribers.forEach((cb) => {
+        cb(updated);
+      });
       return { terminalHistory: updated };
     });
   },
@@ -240,7 +283,8 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
   },
 
   handleTaskComplete: (data: TaskCompleteEvent) => {
-    const { activeTaskToken, activeTaskAction, isUpdatingAll, errorLog } = get();
+    const { activeTaskToken, activeTaskAction, isUpdatingAll, errorLog } =
+      get();
     const __ = useShellStore.getState().__;
 
     set((state) => {
@@ -257,7 +301,7 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
         activeTaskToken: null,
         activeTaskAction: null,
         runningTasks: copy,
-        showPasswordModal: false
+        showPasswordModal: false,
       };
     });
 
@@ -272,14 +316,20 @@ export const useTermStore = create<TermStoreState>((set, get) => ({
     } else {
       set({ isUpdatingAll: false, updateQueue: [] });
       if (!data.cancelled && data.code !== 130) {
-        const rawErr: any = data.error || (errorLog ? extractTaskError(errorLog, activeTaskToken || '') : null);
-        const errDetail: string = typeof rawErr === 'object' && rawErr !== null
-          ? (rawErr.details || rawErr.title || JSON.stringify(rawErr))
-          : String(rawErr || __('No error details recorded.'));
-        const alertTitle = __(`%s ${activeTaskAction === 'install' ? 'installation' : activeTaskAction === 'uninstall' ? 'removal' : activeTaskAction === 'upgrade' ? 'update' : 'cleanup'} failed`, activeTaskToken || 'Task');
+        const rawErr: any =
+          data.error ||
+          (errorLog ? extractTaskError(errorLog, activeTaskToken || '') : null);
+        const errDetail: string =
+          typeof rawErr === 'object' && rawErr !== null
+            ? rawErr.details || rawErr.title || JSON.stringify(rawErr)
+            : String(rawErr || __('No error details recorded.'));
+        const alertTitle = __(
+          `%s ${activeTaskAction === 'install' ? 'installation' : activeTaskAction === 'uninstall' ? 'removal' : activeTaskAction === 'upgrade' ? 'update' : 'cleanup'} failed`,
+          activeTaskToken || 'Task',
+        );
         window.ipc?.showErrorDialog?.(alertTitle, errDetail);
       }
       set({ drawerTitle: '' });
     }
-  }
+  },
 }));

@@ -1,4 +1,4 @@
-import type { CaskItem, CategoryItem, AppConfig, LocaleInfo } from './cask';
+import type { AppConfig, CaskItem, CategoryItem, LocaleInfo } from './cask';
 
 export interface TaskLogEvent {
   taskId: string;
@@ -71,15 +71,27 @@ export interface IpcBridge {
   getAccentColor: () => Promise<string | null>;
 
   // Actions (Send to Main)
-  runAction: (taskId: string, action: string, token: string, zap?: boolean, appName?: string) => void;
+  runAction: (
+    taskId: string,
+    action: string,
+    token: string,
+    zap?: boolean,
+    appName?: string,
+  ) => void;
   cancelAction: (taskId: string) => void;
   writePtyInput: (taskId: string, text: string) => void;
   setContentSize: (width: number, height: number) => void;
   showContextMenu: (data: any) => void;
   sidebarChanged: (visible: boolean) => void;
-  updateMenu?: (id: string, status: { checked?: boolean; enabled?: boolean }) => void;
+  updateMenu?: (
+    id: string,
+    status: { checked?: boolean; enabled?: boolean },
+  ) => void;
 
   // Unified Event Bus (Main -> Renderer)
-  on<K extends keyof IpcEventMap>(channel: K, callback: (data: IpcEventMap[K]) => void): Unsubscribe;
+  on<K extends keyof IpcEventMap>(
+    channel: K,
+    callback: (data: IpcEventMap[K]) => void,
+  ): Unsubscribe;
   on(channel: string, callback: (...args: any[]) => void): Unsubscribe;
 }

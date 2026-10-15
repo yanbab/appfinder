@@ -1,12 +1,13 @@
 import { BrowserWindow } from 'electron';
-import path from 'path';
-import { setupWindowSecurity } from './window';
-import { PRELOAD_PATH, DATA_DIR } from './path';
 import { __ } from './i18n';
+import { PRELOAD_PATH, SETTINGS_RENDERER_PATH } from './path';
+import { setupWindowSecurity } from './window';
 
 let settingsWindow: BrowserWindow | null = null;
 
-export function createSettingsWindow(parentWindow?: BrowserWindow): BrowserWindow {
+export function createSettingsWindow(
+  parentWindow?: BrowserWindow,
+): BrowserWindow {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
     settingsWindow.focus();
     return settingsWindow;
@@ -34,7 +35,12 @@ export function createSettingsWindow(parentWindow?: BrowserWindow): BrowserWindo
   });
 
   setupWindowSecurity(settingsWindow);
-  settingsWindow.loadFile(path.join(DATA_DIR, 'settings.html'));
+
+  if (process.env.VITE_DEV_SERVER_URL) {
+    settingsWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}/settings.html`);
+  } else {
+    settingsWindow.loadFile(SETTINGS_RENDERER_PATH);
+  }
 
   settingsWindow.once('ready-to-show', () => {
     settingsWindow?.show();

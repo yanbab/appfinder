@@ -5,13 +5,18 @@ const svgModules = import.meta.glob('./*.svg', {
   eager: true,
 }) as Record<string, string>;
 
-export const symbols: Record<string, string> = Object.entries(svgModules).reduce((acc, [path, content]) => {
-  const match = path.match(/\/([^/]+)\.svg$/);
-  if (match) {
-    acc[match[1].toLowerCase()] = content;
-  }
-  return acc;
-}, {} as Record<string, string>);
+export const symbols: Record<string, string> = Object.entries(
+  svgModules,
+).reduce(
+  (acc, [path, content]) => {
+    const match = path.match(/\/([^/]+)\.svg$/);
+    if (match) {
+      acc[match[1].toLowerCase()] = content;
+    }
+    return acc;
+  },
+  {} as Record<string, string>,
+);
 
 export const aliases: Record<string, string> = {
   search: 'magnifyingglass',
@@ -44,7 +49,8 @@ export const aliases: Record<string, string> = {
   refresh: 'arrow.trianglehead.2.clockwise.rotate.90',
   spinner: 'arrow.trianglehead.2.clockwise.rotate.90',
   loader: 'arrow.trianglehead.2.clockwise.rotate.90',
-  'arrow.trianglehead.2.clockwise.rotate.90': 'arrow.trianglehead.2.clockwise.rotate.90',
+  'arrow.trianglehead.2.clockwise.rotate.90':
+    'arrow.trianglehead.2.clockwise.rotate.90',
   'arrow.triangle.2.circlepath': 'arrow.trianglehead.2.clockwise.rotate.90',
   install: 'arrow.down.to.line',
   installed: 'arrow.down.to.line',

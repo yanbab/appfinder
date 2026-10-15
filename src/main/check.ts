@@ -1,6 +1,6 @@
-import fs from 'fs';
 import { execFileSync } from 'child_process';
 import { dialog } from 'electron';
+import fs from 'fs';
 import i18n from './i18n';
 
 export function checkCommand(cmd: string): boolean {
@@ -8,12 +8,12 @@ export function checkCommand(cmd: string): boolean {
     `/opt/homebrew/bin/${cmd}`,
     `/usr/local/bin/${cmd}`,
     `/usr/bin/${cmd}`,
-    `/bin/${cmd}`
+    `/bin/${cmd}`,
   ];
   for (const p of paths) {
     try {
       if (fs.existsSync(p)) return true;
-    } catch (_) { }
+    } catch (_) {}
   }
   try {
     execFileSync('which', [cmd], { stdio: 'ignore' });
@@ -26,8 +26,6 @@ export function checkCommand(cmd: string): boolean {
 export function checkCommandDialog(cmd: string): void {
   dialog.showErrorBox(
     i18n.__('Command "%s" not found', cmd),
-    i18n.__('Please install "%s" and try again.', cmd)
+    i18n.__('Please install "%s" and try again.', cmd),
   );
 }
-
-

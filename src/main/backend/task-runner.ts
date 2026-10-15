@@ -1,5 +1,5 @@
 import * as pty from './pseudo-pty';
-import { TerminalBuffer, stripAnsi } from './terminal-buffer';
+import { stripAnsi, TerminalBuffer } from './terminal-buffer';
 
 export interface PromptDetectionResult {
   isPrompt: boolean;
@@ -65,48 +65,91 @@ interface ActiveTask {
 const activeTasks = new Map<string, ActiveTask>();
 
 const PROMPTS = {
-  PASSWORD: /(?:password\s*[:?]|passphrase\s*[:?]|mot de passe\s*[:?]|(?:sudo|admin).*(?:password|passphrase))/i,
+  PASSWORD:
+    /(?:password\s*[:?]|passphrase\s*[:?]|mot de passe\s*[:?]|(?:sudo|admin).*(?:password|passphrase))/i,
   RETRY: /(?:sorry, try again|incorrect password|authentication failure)/i,
   CONFIRM: /(?:\[y\/n\]|\(y\/n\)|press (?:return|enter) to continue)/i,
 };
 
 export function detectPrompt(text: string): PromptDetectionResult {
   if (!text) {
-    return { isPrompt: false, type: null, isRetry: false, isDependency: false, targetApp: '', dependencies: '', prompt: '', details: '' };
+    return {
+      isPrompt: false,
+      type: null,
+      isRetry: false,
+      isDependency: false,
+      targetApp: '',
+      dependencies: '',
+      prompt: '',
+      details: '',
+    };
   }
 
   const clean = stripAnsi(text);
-  const lines = clean.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+  const lines = clean
+    .split(/[\r\n]+/)
+    .map((l) => l.trim())
+    .filter(Boolean);
   if (lines.length === 0) {
-    return { isPrompt: false, type: null, isRetry: false, isDependency: false, targetApp: '', dependencies: '', prompt: '', details: '' };
+    return {
+      isPrompt: false,
+      type: null,
+      isRetry: false,
+      isDependency: false,
+      targetApp: '',
+      dependencies: '',
+      prompt: '',
+      details: '',
+    };
   }
 
   const tailLines = lines.slice(-2);
-  const promptLine = tailLines.slice().reverse().find(l =>
-    PROMPTS.CONFIRM.test(l) || PROMPTS.PASSWORD.test(l)
-  );
+  const promptLine = tailLines
+    .slice()
+    .reverse()
+    .find((l) => PROMPTS.CONFIRM.test(l) || PROMPTS.PASSWORD.test(l));
 
-  const isRetry = tailLines.some(l => PROMPTS.RETRY.test(l));
-  const isPasswordPrompt = promptLine ? PROMPTS.PASSWORD.test(promptLine) : false;
-  const isConfirmPrompt = !isPasswordPrompt && promptLine ? PROMPTS.CONFIRM.test(promptLine) : false;
+  const isRetry = tailLines.some((l) => PROMPTS.RETRY.test(l));
+  const isPasswordPrompt = promptLine
+    ? PROMPTS.PASSWORD.test(promptLine)
+    : false;
+  const isConfirmPrompt =
+    !isPasswordPrompt && promptLine ? PROMPTS.CONFIRM.test(promptLine) : false;
 
   if (!isPasswordPrompt && !isConfirmPrompt && !isRetry) {
-    return { isPrompt: false, type: null, isRetry: false, isDependency: false, targetApp: '', dependencies: '', prompt: '', details: '' };
+    return {
+      isPrompt: false,
+      type: null,
+      isRetry: false,
+      isDependency: false,
+      targetApp: '',
+      dependencies: '',
+      prompt: '',
+      details: '',
+    };
   }
 
   let isDependency = false;
   let targetApp = '';
   const depList: string[] = [];
 
-  const depHeaderIdx = lines.findIndex(l => /Would install \d+ dependenc/i.test(l));
+  const depHeaderIdx = lines.findIndex((l) =>
+    /Would install \d+ dependenc/i.test(l),
+  );
   if (depHeaderIdx !== -1) {
     isDependency = true;
     const match = lines[depHeaderIdx].match(/for ([^:]+):/i);
     if (match) {
       targetApp = match[1].trim();
     } else {
-      const caskHeaderIdx = lines.findIndex(l => /Would install \d+ cask/i.test(l));
-      if (caskHeaderIdx !== -1 && lines[caskHeaderIdx + 1] && !lines[caskHeaderIdx + 1].startsWith('==>')) {
+      const caskHeaderIdx = lines.findIndex((l) =>
+        /Would install \d+ cask/i.test(l),
+      );
+      if (
+        caskHeaderIdx !== -1 &&
+        lines[caskHeaderIdx + 1] &&
+        !lines[caskHeaderIdx + 1].startsWith('==>')
+      ) {
         targetApp = lines[caskHeaderIdx + 1].trim();
       }
     }
@@ -120,17 +163,24 @@ export function detectPrompt(text: string): PromptDetectionResult {
 
   const dependencies = depList.join(', ');
 
-  const detailLines = isDependency && dependencies
-    ? dependencies
-    : lines
-        .filter(l => !PROMPTS.CONFIRM.test(l) && !/password|passphrase/i.test(l) && (l.startsWith('==>') || /dependenc|install|require|package/i.test(l)))
-        .slice(-5)
-        .map(l => l.replace(/^==>\s*/, '• '))
-        .join('\n');
+  const detailLines =
+    isDependency && dependencies
+      ? dependencies
+      : lines
+          .filter(
+            (l) =>
+              !PROMPTS.CONFIRM.test(l) &&
+              !/password|passphrase/i.test(l) &&
+              (l.startsWith('==>') ||
+                /dependenc|install|require|package/i.test(l)),
+          )
+          .slice(-5)
+          .map((l) => l.replace(/^==>\s*/, '• '))
+          .join('\n');
 
   return {
     isPrompt: true,
-    type: isPasswordPrompt ? 'password' : (isConfirmPrompt ? 'confirm' : null),
+    type: isPasswordPrompt ? 'password' : isConfirmPrompt ? 'confirm' : null,
     isRetry,
     isDependency,
     targetApp,
@@ -142,7 +192,7 @@ export function detectPrompt(text: string): PromptDetectionResult {
 
 export function runTask(
   { taskId, command, args, shell, shellArgs, cwd, env }: RunTaskOptions,
-  callbacks: RunTaskCallbacks = {}
+  callbacks: RunTaskCallbacks = {},
 ): void {
   const { onLog, onComplete, onPrompt } = callbacks;
 
@@ -207,12 +257,18 @@ export function runTask(
   });
 
   let finished = false;
-  const finish = (code: number, error: string | null = null, cancelled: boolean = false) => {
+  const finish = (
+    code: number,
+    error: string | null = null,
+    cancelled: boolean = false,
+  ) => {
     if (finished) return;
     finished = true;
     waitingForPrompt = false;
     const finalCancelled = cancelled || isCancelledByUser;
-    console.log(`[TASK-RUNNER EXIT (${taskId})]: code=${code}, error=${error}, cancelled=${finalCancelled}`);
+    console.log(
+      `[TASK-RUNNER EXIT (${taskId})]: code=${code}, error=${error}, cancelled=${finalCancelled}`,
+    );
     activeTasks.delete(taskId);
     onComplete?.({ taskId, code: code ?? 0, error, cancelled: finalCancelled });
   };
@@ -238,7 +294,11 @@ export function runTask(
 
 export function cancelTask(
   taskId: string,
-  onComplete?: (payload: { taskId: string; code: number; cancelled: boolean }) => void
+  onComplete?: (payload: {
+    taskId: string;
+    code: number;
+    cancelled: boolean;
+  }) => void,
 ): void {
   const task = activeTasks.get(taskId);
   if (task) {
@@ -246,7 +306,9 @@ export function cancelTask(
       task.kill('SIGTERM');
       setTimeout(() => {
         if (activeTasks.has(taskId)) {
-          try { task.kill('SIGKILL'); } catch (_) {}
+          try {
+            task.kill('SIGKILL');
+          } catch (_) {}
           activeTasks.delete(taskId);
         }
       }, 1500);
@@ -264,5 +326,3 @@ export function writeTaskInput(taskId: string, text: string): void {
 export function isTaskActive(taskId: string): boolean {
   return activeTasks.has(taskId);
 }
-
-

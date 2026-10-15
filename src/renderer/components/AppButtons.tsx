@@ -1,16 +1,21 @@
 import React from 'react';
-import type { CaskItem } from '@/types';
-import { useShellStore } from '@/stores';
 import { useAppItemState } from '@/hooks/useAppItemState';
+import { formatReason } from '@/hooks/utils';
+import { useShellStore } from '@/stores';
+import type { CaskItem } from '@/types';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
-import { formatReason } from '@/hooks/utils';
 
 export interface AppButtonsProps {
   item: CaskItem;
   variant?: 'icon' | 'row' | 'hero' | 'panel';
   className?: string;
-  caskStatus?: { isDisabled?: boolean; isDeprecated?: boolean; disableReason?: string; deprecationReason?: string };
+  caskStatus?: {
+    isDisabled?: boolean;
+    isDeprecated?: boolean;
+    disableReason?: string;
+    deprecationReason?: string;
+  };
 }
 
 export function AppButtons({
@@ -20,7 +25,16 @@ export function AppButtons({
   caskStatus,
 }: AppButtonsProps) {
   const __ = useShellStore((s) => s.__);
-  const { isRunning, isInstalled, isOutdated, canOpen, install, upgrade, uninstall, open } = useAppItemState(item);
+  const {
+    isRunning,
+    isInstalled,
+    isOutdated,
+    canOpen,
+    install,
+    upgrade,
+    uninstall,
+    open,
+  } = useAppItemState(item);
 
   // Stop propagation helper for cards / rows
   const stopProp = (fn: () => void) => (e: React.MouseEvent) => {
@@ -41,14 +55,24 @@ export function AppButtons({
           <Button
             variant="ghost"
             disabled
-            icon={<ShellIcon name="spinner" className="size-4 animate-spin text-muted-foreground" />}
+            icon={
+              <ShellIcon
+                name="spinner"
+                className="size-4 animate-spin text-muted-foreground"
+              />
+            }
             title={__('Working...')}
           />
         ) : isOutdated ? (
           <Button
             variant="ghost"
             onClick={stopProp(upgrade)}
-            icon={<ShellIcon name="arrow.trianglehead.2.clockwise.rotate.90" className="size-4" />}
+            icon={
+              <ShellIcon
+                name="arrow.trianglehead.2.clockwise.rotate.90"
+                className="size-4"
+              />
+            }
             title={__('Upgrade')}
           />
         ) : isInstalled ? (
@@ -83,10 +107,21 @@ export function AppButtons({
   // 2. HERO MODE (Used in Featured Carousel / Banner)
   if (variant === 'hero') {
     return (
-      <div className={`pt-0.5 flex items-center gap-2 ${className || ''}`} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`pt-0.5 flex items-center gap-2 ${className || ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {isRunning ? (
-          <Button size="sm" variant="secondary" disabled className="bg-white/20 text-white border-0">
-            <ShellIcon name="spinner" className="size-3.5 animate-spin mr-1.5" />
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled
+            className="bg-white/20 text-white border-0"
+          >
+            <ShellIcon
+              name="spinner"
+              className="size-3.5 animate-spin mr-1.5"
+            />
             <span>{__('Working...')}</span>
           </Button>
         ) : isOutdated ? (
@@ -133,27 +168,26 @@ export function AppButtons({
     return (
       <div className={`flex items-center gap-2 pt-0.5 ${className || ''}`}>
         {isRunning ? (
-          <Button className="w-full gap-2" variant="secondary" disabled icon={<ShellIcon name="spinner" className="size-3.5 animate-spin" />}>
+          <Button
+            className="w-full gap-2"
+            variant="secondary"
+            disabled
+            icon={
+              <ShellIcon name="spinner" className="size-3.5 animate-spin" />
+            }
+          >
             {__('Working...')}
           </Button>
         ) : (
           <>
             {isOutdated && (
-              <Button
-                className="flex-1"
-                variant="default"
-                onClick={upgrade}
-              >
+              <Button className="flex-1" variant="default" onClick={upgrade}>
                 {__('Upgrade')}
               </Button>
             )}
 
             {isInstalled && item.app && !isOutdated && (
-              <Button
-                className="flex-1"
-                variant="default"
-                onClick={open}
-              >
+              <Button className="flex-1" variant="default" onClick={open}>
                 {__('Open')}
               </Button>
             )}
@@ -173,16 +207,15 @@ export function AppButtons({
                 className="w-full opacity-60 cursor-not-allowed"
                 variant="secondary"
                 disabled
-                title={formatReason(caskStatus.disableReason || '', __) || __('Cask Disabled')}
+                title={
+                  formatReason(caskStatus.disableReason || '', __) ||
+                  __('Cask Disabled')
+                }
               >
                 {__('Disabled')}
               </Button>
             ) : !isInstalled ? (
-              <Button
-                className="w-full"
-                variant="default"
-                onClick={install}
-              >
+              <Button className="w-full" variant="default" onClick={install}>
                 {__('Install')}
               </Button>
             ) : null}
@@ -201,7 +234,16 @@ export function AppButtons({
       onPointerDown={(e) => e.stopPropagation()}
     >
       {isRunning ? (
-        <Button variant="secondary" disabled icon={<ShellIcon name="spinner" className="size-3.5 animate-spin mr-1.5" />}>
+        <Button
+          variant="secondary"
+          disabled
+          icon={
+            <ShellIcon
+              name="spinner"
+              className="size-3.5 animate-spin mr-1.5"
+            />
+          }
+        >
           {__('Working...')}
         </Button>
       ) : isOutdated ? (
@@ -221,7 +263,11 @@ export function AppButtons({
               {__('Open')}
             </Button>
           ) : (
-            <Button variant="secondary" disabled className="opacity-40 cursor-not-allowed">
+            <Button
+              variant="secondary"
+              disabled
+              className="opacity-40 cursor-not-allowed"
+            >
               {__('Open')}
             </Button>
           )}

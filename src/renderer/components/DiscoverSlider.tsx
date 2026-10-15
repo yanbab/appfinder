@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
-import { useShellStore, useAppStore, selectFeaturedItems } from '@/stores';
-import { AppIcon } from './AppIcon';
-import { AppButtons } from './AppButtons';
 import { getAppName, name2color } from '@/hooks/utils';
+import { selectFeaturedItems, useAppStore, useShellStore } from '@/stores';
+import { AppButtons } from './AppButtons';
+import { AppIcon } from './AppIcon';
 
 export function DiscoverSlider() {
   const items = useAppStore((s) => s.items);
@@ -37,7 +37,9 @@ export function DiscoverSlider() {
             key={item.token}
             onClick={() => openAppInfo(item)}
             className={`absolute inset-0 p-4 sm:p-5 flex items-center transition-opacity duration-500 ease-in-out cursor-default ${
-              isActive ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
+              isActive
+                ? 'opacity-100 z-10 pointer-events-auto'
+                : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
             {/* Ambient Zoomed-in Icon Background */}
@@ -61,7 +63,11 @@ export function DiscoverSlider() {
             <div className="relative z-1 flex items-center gap-5 w-full min-w-0">
               {/* App Icon */}
               <div className="size-24 sm:size-28 shrink-0 flex items-center justify-center">
-                <AppIcon item={item} size="hero" className="size-full rounded-[var(--radius-card)]" />
+                <AppIcon
+                  item={item}
+                  size="hero"
+                  className="size-full rounded-[var(--radius-card)]"
+                />
               </div>
 
               {/* Details */}

@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import React, {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 export interface ThemeContextValue {
   theme?: string;
@@ -17,7 +24,7 @@ const ThemeContext = createContext<ThemeContextValue>({
   isLightAccent: false,
   isWindowBlurred: false,
   isResizing: false,
-  setTheme: () => { },
+  setTheme: () => {},
 });
 
 // Relative luminance following WCAG 2.1 specifications:
@@ -29,14 +36,16 @@ function getLuminance(hex: string): number {
   const g = parseInt(clean.substring(2, 4), 16) / 255;
   const b = parseInt(clean.substring(4, 6), 16) / 255;
 
-  const toLinear = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const toLinear = (c: number) =>
+    c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
   return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
 }
 
 export function ThemeProvider({ children }: { children?: ReactNode }) {
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    const match = window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false;
+    const match =
+      window.matchMedia?.('(prefers-color-scheme: dark)')?.matches || false;
     if (match) {
       document.documentElement.classList.add('dark');
     }
@@ -116,12 +125,15 @@ export function ThemeProvider({ children }: { children?: ReactNode }) {
   // Apply macOS native accent color directly to primary & ring variables
   const applyAccentColor = useCallback((color: string) => {
     if (!color) return;
-    const clean = typeof color === 'string' ? color.trim().replace(/^#/, '') : '';
-    const hex = color.startsWith?.('rgb') ? color : `#${clean.length === 8 ? clean.slice(0, 6) : clean}`;
+    const clean =
+      typeof color === 'string' ? color.trim().replace(/^#/, '') : '';
+    const hex = color.startsWith?.('rgb')
+      ? color
+      : `#${clean.length === 8 ? clean.slice(0, 6) : clean}`;
     if (!hex || hex === '#') return;
 
     const lum = getLuminance(hex);
-    const mutePercent = lum > 0.60 ? 65 : (lum > 0.40 ? 75 : 85);
+    const mutePercent = lum > 0.6 ? 65 : lum > 0.4 ? 75 : 85;
 
     const root = document.documentElement;
     root.style.setProperty('--accent-color-raw', hex);
@@ -129,7 +141,10 @@ export function ThemeProvider({ children }: { children?: ReactNode }) {
     root.style.setProperty('--primary', hex);
     root.style.setProperty('--ring', hex);
     root.style.setProperty('--sidebar-ring', hex);
-    root.style.setProperty('--accent-color-muted', `color-mix(in srgb, ${hex} ${mutePercent}%, black)`);
+    root.style.setProperty(
+      '--accent-color-muted',
+      `color-mix(in srgb, ${hex} ${mutePercent}%, black)`,
+    );
     root.style.setProperty('--sidebar-primary', 'var(--accent-color-muted)');
     root.style.setProperty('--primary-foreground', '#ffffff');
     root.style.setProperty('--sidebar-primary-foreground', '#ffffff');
@@ -139,9 +154,12 @@ export function ThemeProvider({ children }: { children?: ReactNode }) {
 
   useEffect(() => {
     if (window.ipc?.getAccentColor) {
-      window.ipc.getAccentColor().then((color) => {
-        if (color) applyAccentColor(color);
-      }).catch(console.error);
+      window.ipc
+        .getAccentColor()
+        .then((color) => {
+          if (color) applyAccentColor(color);
+        })
+        .catch(console.error);
     }
 
     if (window.ipc?.on) {
@@ -152,10 +170,18 @@ export function ThemeProvider({ children }: { children?: ReactNode }) {
     }
   }, [applyAccentColor]);
 
-  const isLightAccent = accentColor ? getLuminance(accentColor) > 0.40 : false;
+  const isLightAccent = accentColor ? getLuminance(accentColor) > 0.4 : false;
 
   return (
-    <ThemeContext.Provider value={{ isDark, accentColor, isLightAccent, isWindowBlurred, isResizing }}>
+    <ThemeContext.Provider
+      value={{
+        isDark,
+        accentColor,
+        isLightAccent,
+        isWindowBlurred,
+        isResizing,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppStore, useShellStore } from '@/stores';
-import { ShellIcon } from './ShellIcon';
 import { Input } from './Input';
+import { ShellIcon } from './ShellIcon';
 
 export interface SearchInputProps {
   className?: string;
@@ -24,7 +24,10 @@ export function SearchInput({ className = '' }: SearchInputProps) {
 
   return (
     <div className={`relative flex items-center ${className}`}>
-      <ShellIcon name="magnifyingglass" className="absolute left-2.5 size-3.5 text-muted-foreground pointer-events-none" />
+      <ShellIcon
+        name="magnifyingglass"
+        className="absolute left-2.5 size-3.5 text-muted-foreground pointer-events-none"
+      />
       <Input
         id="search-input"
         type="text"

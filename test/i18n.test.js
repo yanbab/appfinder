@@ -5,7 +5,7 @@ const i18n = require('../src/main/i18n');
 test('i18n exports getMessages and getCatalog as alias', () => {
   assert.equal(typeof i18n.getMessages, 'function');
   assert.equal(typeof i18n.getCatalog, 'function');
-  
+
   const msgs = i18n.getMessages('en');
   const cat = i18n.getCatalog('en');
 
@@ -18,8 +18,8 @@ test('i18n exports getMessages and getCatalog as alias', () => {
 test('i18n getLocales returns available languages', () => {
   const locales = i18n.getLocales();
   assert.ok(Array.isArray(locales));
-  assert.ok(locales.some(l => l.code === 'en'));
-  assert.ok(locales.some(l => l.code === 'fr'));
+  assert.ok(locales.some((l) => l.code === 'en'));
+  assert.ok(locales.some((l) => l.code === 'fr'));
 });
 
 test('i18n translation helper __ replaces placeholders', () => {

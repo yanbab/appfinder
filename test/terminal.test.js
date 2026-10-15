@@ -1,6 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { TerminalBuffer, stripAnsi } = require('../src/main/backend/terminal-buffer');
+const {
+  TerminalBuffer,
+  stripAnsi,
+} = require('../src/main/backend/terminal-buffer');
 const { detectPrompt } = require('../src/main/backend/task-runner');
 const brew = require('../src/main/backend/brew');
 
@@ -48,16 +51,21 @@ test('detectPrompt identifies [y/n] confirmation prompts and extracts details', 
   const output = [
     '==> Satisfying dependencies',
     '==> Downloading https://example.com/app.dmg',
-    'Do you want to proceed with uninstallation? [y/N]'
+    'Do you want to proceed with uninstallation? [y/N]',
   ].join('\n');
 
   const result = detectPrompt(output);
   assert.equal(result.isPrompt, true);
   assert.equal(result.type, 'confirm');
   assert.equal(result.isRetry, false);
-  assert.equal(result.prompt, 'Do you want to proceed with uninstallation? [y/N]');
+  assert.equal(
+    result.prompt,
+    'Do you want to proceed with uninstallation? [y/N]',
+  );
   assert.ok(result.details.includes('• Satisfying dependencies'));
-  assert.ok(result.details.includes('• Downloading https://example.com/app.dmg'));
+  assert.ok(
+    result.details.includes('• Downloading https://example.com/app.dmg'),
+  );
 });
 
 test('detectPrompt correctly parses dependency confirmation with target app and dependencies', () => {
@@ -66,7 +74,7 @@ test('detectPrompt correctly parses dependency confirmation with target app and 
     'ace-link',
     '==> Would install 1 dependency for ace-link:',
     'docker-desktop',
-    '==> Do you want to proceed with the installation? [y/n]'
+    '==> Do you want to proceed with the installation? [y/n]',
   ].join('\n');
 
   const result = detectPrompt(output);
@@ -76,7 +84,10 @@ test('detectPrompt correctly parses dependency confirmation with target app and 
   assert.equal(result.targetApp, 'ace-link');
   assert.equal(result.dependencies, 'docker-desktop');
   assert.equal(result.details, 'docker-desktop');
-  assert.equal(result.prompt, '==> Do you want to proceed with the installation? [y/n]');
+  assert.equal(
+    result.prompt,
+    '==> Do you want to proceed with the installation? [y/n]',
+  );
 });
 
 test('detectPrompt correctly parses multiple dependencies', () => {
@@ -84,7 +95,7 @@ test('detectPrompt correctly parses multiple dependencies', () => {
     '==> Would install 2 dependencies for my-tool:',
     'pkg-a',
     'pkg-b',
-    '==> Do you want to proceed with the installation? [y/n]'
+    '==> Do you want to proceed with the installation? [y/n]',
   ].join('\n');
 
   const result = detectPrompt(output);
@@ -118,49 +129,72 @@ test('detectPrompt identifies password prompts and retry messages', () => {
 });
 
 test('detectPrompt returns non-prompt for regular logs', () => {
-  const normalLog = '==> Downloading https://example.com/pkg.tar.gz\nAlready downloaded: /tmp/pkg.tar.gz';
+  const normalLog =
+    '==> Downloading https://example.com/pkg.tar.gz\nAlready downloaded: /tmp/pkg.tar.gz';
   const result = detectPrompt(normalLog);
   assert.equal(result.isPrompt, false);
   assert.equal(result.type, null);
 });
 
 test('brew.runAction rejects invalid action', (t, done) => {
-  brew.runAction({ action: 'unknown', taskId: 'test-invalid-1' }, {
-    onComplete: ({ code, error }) => {
-      assert.equal(code, 1);
-      assert.equal(error, 'Invalid action');
-      done();
-    }
-  });
+  brew.runAction(
+    { action: 'unknown', taskId: 'test-invalid-1' },
+    {
+      onComplete: ({ code, error }) => {
+        assert.equal(code, 1);
+        assert.equal(error, 'Invalid action');
+        done();
+      },
+    },
+  );
 });
 
 test('brew.runAction rejects invalid cask token format', (t, done) => {
-  brew.runAction({ action: 'install', token: '--invalid-flag', taskId: 'test-invalid-token' }, {
-    onComplete: ({ code, error }) => {
-      assert.equal(code, 1);
-      assert.equal(error, 'Invalid cask token format');
-      done();
-    }
-  });
+  brew.runAction(
+    {
+      action: 'install',
+      token: '--invalid-flag',
+      taskId: 'test-invalid-token',
+    },
+    {
+      onComplete: ({ code, error }) => {
+        assert.equal(code, 1);
+        assert.equal(error, 'Invalid cask token format');
+        done();
+      },
+    },
+  );
 });
 
-test('brew.getApps and brew.getCategories return catalog datasets', () => {
-  const apps = brew.getApps();
-  assert.ok(Array.isArray(apps) && apps.length > 0, 'apps should be a non-empty array');
-  const categories = brew.getCategories();
-  assert.ok(Array.isArray(categories) && categories.length > 0, 'categories should be a non-empty array');
+test('brew.getApps and brew.getCategories return catalog datasets', async () => {
+  const apps = await brew.getApps();
+  assert.ok(
+    Array.isArray(apps) && apps.length > 0,
+    'apps should be a non-empty array',
+  );
+  const categories = await brew.getCategories();
+  assert.ok(
+    Array.isArray(categories) && categories.length > 0,
+    'categories should be a non-empty array',
+  );
 });
 
 test('pseudo-pty spawns with declared terminal size (cols/rows) and authentic TTY environment', async () => {
   const pty = require('../src/main/backend/pseudo-pty');
-  const term = pty.spawn(process.execPath, [
-    '-e',
-    'console.log(JSON.stringify({ isTTY: Boolean(process.stdout.isTTY), cols: process.stdout.columns || 0, rows: process.stdout.rows || 0, envCols: process.env.COLUMNS, envLines: process.env.LINES, term: process.env.TERM }))'
-  ], { cols: 80, rows: 24 });
+  const term = pty.spawn(
+    process.execPath,
+    [
+      '-e',
+      'console.log(JSON.stringify({ isTTY: Boolean(process.stdout.isTTY), cols: process.stdout.columns || 0, rows: process.stdout.rows || 0, envCols: process.env.COLUMNS, envLines: process.env.LINES, term: process.env.TERM }))',
+    ],
+    { cols: 80, rows: 24 },
+  );
 
   let output = '';
   await new Promise((resolve) => {
-    term.onData((data) => { output += data; });
+    term.onData((data) => {
+      output += data;
+    });
     term.onExit(resolve);
   });
 
@@ -173,7 +207,11 @@ test('pseudo-pty spawns with declared terminal size (cols/rows) and authentic TT
   assert.equal(info.envLines, '24', 'LINES env must be 24');
   assert.equal(info.term, 'xterm-256color', 'TERM env must be xterm-256color');
   if (process.platform === 'darwin' || process.platform === 'linux') {
-    assert.equal(info.isTTY, true, 'Process spawned via pseudo-terminal must report isTTY=true for authentic progress rendering');
+    assert.equal(
+      info.isTTY,
+      true,
+      'Process spawned via pseudo-terminal must report isTTY=true for authentic progress rendering',
+    );
   }
 });
 
@@ -181,7 +219,8 @@ test('TerminalBuffer resolves complex terminal progress streams with cursor rese
   const buffer = new TerminalBuffer();
 
   // 1. Initial output with synchronized output markers (DEC 2026) and ANSI color
-  const chunk1 = '==> \x1b[34mDownloading https://example.com/cask.dmg\x1b[0m\n\x1b[?2026h';
+  const chunk1 =
+    '==> \x1b[34mDownloading https://example.com/cask.dmg\x1b[0m\n\x1b[?2026h';
   const res1 = buffer.write(chunk1);
   assert.equal(res1.line, '==> Downloading https://example.com/cask.dmg');
 
@@ -210,7 +249,10 @@ test('TerminalBuffer resolves complex terminal progress streams with cursor rese
   assert.ok(plainText.includes('==> Downloading https://example.com/cask.dmg'));
   assert.ok(plainText.includes('########## 100.0% 100M/100M'));
   assert.ok(plainText.includes('==> Installing App.pkg'));
-  assert.ok(!plainText.includes('25.0%'), 'Overwritten progress ticks should not clutter committed lines');
+  assert.ok(
+    !plainText.includes('25.0%'),
+    'Overwritten progress ticks should not clutter committed lines',
+  );
 });
 
 test('TerminalBuffer cursor-up (\\x1b[A) replaces previous line for multi-line progress updates', () => {
@@ -226,7 +268,11 @@ test('TerminalBuffer cursor-up (\\x1b[A) replaces previous line for multi-line p
   assert.ok(text.includes('Component A: Downloading...'));
   assert.ok(text.includes('Component B: Done (100%)'));
   const occurrences = text.split('Component B').length - 1;
-  assert.equal(occurrences, 1, 'Cursor-up should replace the previous line rather than appending a duplicate');
+  assert.equal(
+    occurrences,
+    1,
+    'Cursor-up should replace the previous line rather than appending a duplicate',
+  );
 });
 
 test('taskRunner streams live carriage-return progress events through onLog', async () => {
@@ -242,75 +288,106 @@ test('taskRunner streams live carriage-return progress events through onLog', as
         args: [
           '-e',
           'process.stdout.write("Step 1: Init\\n"); ' +
-          'setTimeout(() => process.stdout.write("Downloading 10%\\r"), 20); ' +
-          'setTimeout(() => process.stdout.write("Downloading 50%\\r"), 40); ' +
-          'setTimeout(() => process.stdout.write("Downloading 100%\\nStep 2: Complete\\n"), 60);'
-        ]
+            'setTimeout(() => process.stdout.write("Downloading 10%\\r"), 20); ' +
+            'setTimeout(() => process.stdout.write("Downloading 50%\\r"), 40); ' +
+            'setTimeout(() => process.stdout.write("Downloading 100%\\nStep 2: Complete\\n"), 60);',
+        ],
       },
       {
         onLog: ({ line }) => {
-          if (line && (!capturedLines.length || capturedLines[capturedLines.length - 1] !== line)) {
+          if (
+            line &&
+            (!capturedLines.length ||
+              capturedLines[capturedLines.length - 1] !== line)
+          ) {
             capturedLines.push(line);
           }
         },
         onComplete: ({ code, error }) => {
-          if (error || code !== 0) reject(error || new Error(`Exit code ${code}`));
+          if (error || code !== 0)
+            reject(error || new Error(`Exit code ${code}`));
           else resolve();
-        }
-      }
+        },
+      },
     );
   });
 
-  assert.ok(capturedLines.some(l => l.includes('Step 1: Init')), 'Must capture Step 1');
-  assert.ok(capturedLines.some(l => l.includes('Downloading')), 'Must capture live download progress line');
-  assert.ok(capturedLines.some(l => l.includes('Step 2: Complete')), 'Must capture Step 2');
+  assert.ok(
+    capturedLines.some((l) => l.includes('Step 1: Init')),
+    'Must capture Step 1',
+  );
+  assert.ok(
+    capturedLines.some((l) => l.includes('Downloading')),
+    'Must capture live download progress line',
+  );
+  assert.ok(
+    capturedLines.some((l) => l.includes('Step 2: Complete')),
+    'Must capture Step 2',
+  );
 });
 
 test('formatStatusBarMessage extracts lines starting with ==> and strips prefix', () => {
   assert.equal(
     formatStatusBarMessage('==> Fetching downloads for: codex'),
-    'Fetching downloads for: codex'
+    'Fetching downloads for: codex',
   );
   assert.equal(
     formatStatusBarMessage('==> \x1b[1mInstalling Cask google-chrome\x1b[0m'),
-    'Installing Cask google-chrome'
+    'Installing Cask google-chrome',
   );
-  assert.equal(
-    formatStatusBarMessage('==> Caveats'),
-    'Caveats'
-  );
+  assert.equal(formatStatusBarMessage('==> Caveats'), 'Caveats');
 });
 
 test('formatStatusBarMessage extracts download, verify, and extract progress keyword and rest of line', () => {
   assert.equal(
-    formatStatusBarMessage('\x1b[34m⠙\x1b[0m Cask codex (0.160.0)                                                              Downloading  28.7KB/141.3MB'),
-    'Downloading 28.7KB/141.3MB'
+    formatStatusBarMessage(
+      '\x1b[34m⠙\x1b[0m Cask codex (0.160.0)                                                              Downloading  28.7KB/141.3MB',
+    ),
+    'Downloading 28.7KB/141.3MB',
   );
   assert.equal(
-    formatStatusBarMessage('⠦ Cask codex (0.160.0)                                                              Downloaded  141.3MB/141.3MB'),
-    'Downloaded 141.3MB/141.3MB'
+    formatStatusBarMessage(
+      '⠦ Cask codex (0.160.0)                                                              Downloaded  141.3MB/141.3MB',
+    ),
+    'Downloaded 141.3MB/141.3MB',
   );
   assert.equal(
-    formatStatusBarMessage('⠴ Cask codex (0.160.0)                                                              Verifying   141.3MB/141.3MB'),
-    'Verifying 141.3MB/141.3MB'
+    formatStatusBarMessage(
+      '⠴ Cask codex (0.160.0)                                                              Verifying   141.3MB/141.3MB',
+    ),
+    'Verifying 141.3MB/141.3MB',
   );
   assert.equal(
-    formatStatusBarMessage('⠙ Cask codex (0.160.0)                                                              Verified    141.3MB/141.3MB'),
-    'Verified 141.3MB/141.3MB'
+    formatStatusBarMessage(
+      '⠙ Cask codex (0.160.0)                                                              Verified    141.3MB/141.3MB',
+    ),
+    'Verified 141.3MB/141.3MB',
   );
   assert.equal(
-    formatStatusBarMessage('⠙ Cask codex (0.160.0)                                                              Extracting  141.3MB/141.3MB'),
-    'Extracting 141.3MB/141.3MB'
+    formatStatusBarMessage(
+      '⠙ Cask codex (0.160.0)                                                              Extracting  141.3MB/141.3MB',
+    ),
+    'Extracting 141.3MB/141.3MB',
   );
   assert.equal(
-    formatStatusBarMessage('==> Downloading https://ghcr.io/v2/homebrew/cask/codex'),
-    'Downloading https://ghcr.io/v2/homebrew/cask/codex'
+    formatStatusBarMessage(
+      '==> Downloading https://ghcr.io/v2/homebrew/cask/codex',
+    ),
+    'Downloading https://ghcr.io/v2/homebrew/cask/codex',
   );
 });
 
 test('formatStatusBarMessage ignores arbitrary and non-progress output', () => {
-  assert.equal(formatStatusBarMessage('Warning: You are using macOS 13.'), null);
-  assert.equal(formatStatusBarMessage('We (and Apple) do not provide support for this old version.'), null);
+  assert.equal(
+    formatStatusBarMessage('Warning: You are using macOS 13.'),
+    null,
+  );
+  assert.equal(
+    formatStatusBarMessage(
+      'We (and Apple) do not provide support for this old version.',
+    ),
+    null,
+  );
   assert.equal(formatStatusBarMessage(''), null);
   assert.equal(formatStatusBarMessage('   \n  '), null);
   assert.equal(formatStatusBarMessage(null), null);
@@ -329,11 +406,11 @@ test('taskRunner marks completion as cancelled: true when user declines confirma
         args: [
           '-e',
           'process.stdout.write("==> Would install 1 dependency for ace-link:\\ndocker-desktop\\n==> Do you want to proceed with the installation? [y/n]\\n");' +
-          'process.stdin.setEncoding("utf8");' +
-          'process.stdin.on("data", (chunk) => {' +
-          '  if (chunk.trim() === "n") { process.exit(1); } else { process.exit(0); }' +
-          '});'
-        ]
+            'process.stdin.setEncoding("utf8");' +
+            'process.stdin.on("data", (chunk) => {' +
+            '  if (chunk.trim() === "n") { process.exit(1); } else { process.exit(0); }' +
+            '});',
+        ],
       },
       {
         onPrompt: ({ respond, isDependency, targetApp, dependencies }) => {
@@ -345,12 +422,16 @@ test('taskRunner marks completion as cancelled: true when user declines confirma
         },
         onComplete: (res) => {
           resolve(res);
-        }
-      }
+        },
+      },
     );
   });
 
-  assert.equal(result.cancelled, true, 'Result must have cancelled: true when user declines confirmation');
+  assert.equal(
+    result.cancelled,
+    true,
+    'Result must have cancelled: true when user declines confirmation',
+  );
 });
 
 test('taskRunner triggers onPrompt exactly once per prompt and ignores subsequent output chunks', async () => {
@@ -366,13 +447,13 @@ test('taskRunner triggers onPrompt exactly once per prompt and ignores subsequen
         args: [
           '-e',
           'process.stdout.write("==> Would install 1 dependency for ace-link:\\ndocker-desktop\\n==> Do you want to proceed with the installation? [y/n]\\n");' +
-          'process.stdin.setEncoding("utf8");' +
-          'process.stdin.on("data", () => {' +
-          '  process.stdout.write("==> Downloading https://example.com/docker.dmg\\n");' +
-          '  process.stdout.write("==> Installing Docker Desktop\\n");' +
-          '  process.exit(0);' +
-          '});'
-        ]
+            'process.stdin.setEncoding("utf8");' +
+            'process.stdin.on("data", () => {' +
+            '  process.stdout.write("==> Downloading https://example.com/docker.dmg\\n");' +
+            '  process.stdout.write("==> Installing Docker Desktop\\n");' +
+            '  process.exit(0);' +
+            '});',
+        ],
       },
       {
         onPrompt: ({ respond }) => {
@@ -381,8 +462,8 @@ test('taskRunner triggers onPrompt exactly once per prompt and ignores subsequen
         },
         onComplete: () => {
           resolve();
-        }
-      }
+        },
+      },
     );
   });
 
@@ -393,12 +474,21 @@ test('extractTaskError cleans duplicated token prefixes and deduplicates repeate
   const duplicateErrorLog = [
     '==> Installing Cask baseline',
     'Error: baseline: baseline: This cask does not run on macOS versions older than Sequoia.',
-    'Error: baseline: baseline: This cask does not run on macOS versions older than Sequoia.'
+    'Error: baseline: baseline: This cask does not run on macOS versions older than Sequoia.',
   ].join('\n');
 
-  const err = extractTaskError(duplicateErrorLog, 'install', 'Baseline', {}, s => s);
+  const err = extractTaskError(
+    duplicateErrorLog,
+    'install',
+    'Baseline',
+    {},
+    (s) => s,
+  );
   assert.equal(err.title, 'Baseline installation failed');
-  assert.equal(err.details, 'Error: baseline: This cask does not run on macOS versions older than Sequoia.');
+  assert.equal(
+    err.details,
+    'Error: baseline: This cask does not run on macOS versions older than Sequoia.',
+  );
 });
 
 test('brew.getInfo extracts architecture compatibility', async () => {
@@ -439,11 +529,11 @@ test('brew.getInfo extracts dependencies, disabled and deprecated info', async (
   const details = {
     depends_on: {
       cask: ['docker-desktop', 'swiftdialog'],
-      formula: ['node']
+      formula: ['node'],
     },
     disabled: true,
     disable_reason: 'fails_gatekeeper_check',
-    disable_replacement_cask: 'alternative-app'
+    disable_replacement_cask: 'alternative-app',
   };
   const info = await brew.getInfo(details);
   assert.deepEqual(info.dependencies.casks, ['docker-desktop', 'swiftdialog']);
@@ -451,11 +541,14 @@ test('brew.getInfo extracts dependencies, disabled and deprecated info', async (
   assert.equal(info.status.isDisabled, true);
   assert.equal(info.status.disableReason, 'fails_gatekeeper_check');
   assert.equal(info.status.disableReplacement, 'alternative-app');
-  assert.equal(formatReason(info.status.disableReason), 'Fails Gatekeeper check');
+  assert.equal(
+    formatReason(info.status.disableReason),
+    'Fails Gatekeeper check',
+  );
 
   const deprecatedDetails = {
     deprecated: true,
-    deprecation_reason: 'discontinued'
+    deprecation_reason: 'discontinued',
   };
   const depInfo = await brew.getInfo(deprecatedDetails);
   assert.equal(depInfo.status.isDeprecated, true);
@@ -470,10 +563,10 @@ test('brew.getInfo enriches raw cask with requirements, arch, dependencies, and 
     depends_on: {
       macos: { '>=': '14' },
       arch: 'arm64',
-      cask: ['docker-desktop']
+      cask: ['docker-desktop'],
     },
     disabled: true,
-    disable_reason: 'fails_gatekeeper_check'
+    disable_reason: 'fails_gatekeeper_check',
   };
 
   const sysInfo = { platform: 'darwin', arch: 'arm64', systemVersion: '14.5' };
@@ -489,11 +582,11 @@ test('brew.getInfo enriches raw cask with requirements, arch, dependencies, and 
   assert.equal(normalized.status.disableReason, 'fails_gatekeeper_check');
 
   // Verify incompatible system version
-  const oldSysInfo = { platform: 'darwin', arch: 'arm64', systemVersion: '13.0' };
+  const oldSysInfo = {
+    platform: 'darwin',
+    arch: 'arm64',
+    systemVersion: '13.0',
+  };
   const oldNormalized = await brew.getInfo(rawCask, oldSysInfo);
   assert.equal(oldNormalized.reqMet, false);
 });
-
-
-
-

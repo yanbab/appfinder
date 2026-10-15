@@ -1,4 +1,8 @@
-import { BrowserWindow, type BrowserWindowConstructorOptions, shell } from 'electron';
+import {
+  BrowserWindow,
+  type BrowserWindowConstructorOptions,
+  shell,
+} from 'electron';
 import { PRELOAD_PATH, RENDERER_PATH } from './path';
 
 export interface AppWindowOptions extends BrowserWindowConstructorOptions {
@@ -8,7 +12,10 @@ export interface AppWindowOptions extends BrowserWindowConstructorOptions {
 /**
  * Loads renderer content for a BrowserWindow, handling dev server URL and file bundles.
  */
-export function loadWindowContent(win: BrowserWindow, viewQuery?: string): void {
+export function loadWindowContent(
+  win: BrowserWindow,
+  viewQuery?: string,
+): void {
   if (process.env.VITE_DEV_SERVER_URL) {
     const url = viewQuery
       ? `${process.env.VITE_DEV_SERVER_URL}?${viewQuery}`
@@ -18,7 +25,9 @@ export function loadWindowContent(win: BrowserWindow, viewQuery?: string): void 
     if (viewQuery) {
       const params = new URLSearchParams(viewQuery);
       const query: Record<string, string> = {};
-      params.forEach((val, key) => { query[key] = val; });
+      params.forEach((val, key) => {
+        query[key] = val;
+      });
       win.loadFile(RENDERER_PATH, { query });
     } else {
       win.loadFile(RENDERER_PATH);
@@ -38,7 +47,7 @@ export function setupWindowSecurity(win: BrowserWindow): void {
       if (['https:', 'http:'].includes(parsed.protocol)) {
         shell.openExternal(url);
       }
-    } catch (_) { }
+    } catch (_) {}
     return { action: 'deny' };
   });
 
@@ -56,7 +65,7 @@ export function setupWindowSecurity(win: BrowserWindow): void {
       if (['https:', 'http:'].includes(parsed.protocol)) {
         shell.openExternal(navigationUrl);
       }
-    } catch (_) { }
+    } catch (_) {}
   });
 }
 

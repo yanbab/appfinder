@@ -1,6 +1,13 @@
-import { app, Menu, MenuItem, MenuItemConstructorOptions, shell, BrowserWindow } from 'electron';
-import { __ } from './i18n';
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  MenuItem,
+  MenuItemConstructorOptions,
+  shell,
+} from 'electron';
 import { getConfig, updateConfig } from './config';
+import { __ } from './i18n';
 import { createSettingsWindow } from './window-settings';
 import { getShellWindow } from './window-shell';
 
@@ -46,7 +53,10 @@ export function updateStatusbarChecked(visible: boolean): void {
   }
 }
 
-export function updateMenuItem(id: string, status: { checked?: boolean; enabled?: boolean }): void {
+export function updateMenuItem(
+  id: string,
+  status: { checked?: boolean; enabled?: boolean },
+): void {
   const menu = Menu.getApplicationMenu();
   if (menu) {
     const item = menu.getMenuItemById(id);
@@ -74,7 +84,7 @@ export function setupApplicationMenu(): void {
         {
           label: __('Settings...'),
           accelerator: 'CmdOrCtrl+,',
-          click: () => createSettingsWindow()
+          click: () => createSettingsWindow(),
         },
         { type: 'separator' },
         { role: 'services', label: __('Services') },
@@ -83,8 +93,8 @@ export function setupApplicationMenu(): void {
         { role: 'hideOthers', label: __('Hide Others') },
         { role: 'unhide', label: __('Show All') },
         { type: 'separator' },
-        { role: 'quit', label: __('Quit %s', app.name) }
-      ]
+        { role: 'quit', label: __('Quit %s', app.name) },
+      ],
     },
     {
       role: 'fileMenu',
@@ -93,21 +103,21 @@ export function setupApplicationMenu(): void {
         {
           label: __('Check for New Applications...'),
           accelerator: 'Option+Cmd+N',
-          click: () => sendToShell('menu:click', { command: 'fetch-apps' })
+          click: () => sendToShell('menu:click', { command: 'fetch-apps' }),
         },
         {
           label: __('Check for Updates...'),
           accelerator: 'Option+Cmd+U',
-          click: () => sendToShell('menu:click', { command: 'check-updates' })
+          click: () => sendToShell('menu:click', { command: 'check-updates' }),
         },
         { type: 'separator' },
         {
           label: __('Clear Downloaded Files...'),
-          click: () => sendToShell('menu:click', { command: 'clear-cache' })
+          click: () => sendToShell('menu:click', { command: 'clear-cache' }),
         },
         { type: 'separator' },
-        { role: 'close', label: __('Close Window') }
-      ]
+        { role: 'close', label: __('Close Window') },
+      ],
     },
     {
       role: 'editMenu',
@@ -121,8 +131,8 @@ export function setupApplicationMenu(): void {
         { role: 'paste', label: __('Paste') },
         { role: 'pasteAndMatchStyle', label: __('Paste and Match Style') },
         { role: 'delete', label: __('Delete') },
-        { role: 'selectAll', label: __('Select All') }
-      ]
+        { role: 'selectAll', label: __('Select All') },
+      ],
     },
     {
       role: 'viewMenu',
@@ -133,41 +143,65 @@ export function setupApplicationMenu(): void {
           label: __('as Icons'),
           enabled: false,
           accelerator: 'CmdOrCtrl+1',
-          click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'grid' })
+          click: () =>
+            sendToShell('menu:click', {
+              command: 'set-view-mode',
+              value: 'grid',
+            }),
         },
         {
           id: 'view-as-list',
           label: __('as List'),
           enabled: false,
           accelerator: 'CmdOrCtrl+2',
-          click: () => sendToShell('menu:click', { command: 'set-view-mode', value: 'list' })
+          click: () =>
+            sendToShell('menu:click', {
+              command: 'set-view-mode',
+              value: 'list',
+            }),
         },
         { type: 'separator' },
         {
           label: __('Search'),
           accelerator: 'CmdOrCtrl+F',
-          click: () => sendToShell('menu:click', { command: 'focus-search' })
+          click: () => sendToShell('menu:click', { command: 'focus-search' }),
         },
         { type: 'separator' },
         {
           label: __('Explore'),
           accelerator: 'Option+Cmd+1',
-          click: () => sendToShell('menu:click', { command: 'select-tab', value: 'discover' })
+          click: () =>
+            sendToShell('menu:click', {
+              command: 'select-tab',
+              value: 'discover',
+            }),
         },
         {
           label: __('All Apps'),
           accelerator: 'Option+Cmd+2',
-          click: () => sendToShell('menu:click', { command: 'select-tab', value: 'all-apps' })
+          click: () =>
+            sendToShell('menu:click', {
+              command: 'select-tab',
+              value: 'all-apps',
+            }),
         },
         {
           label: __('Installed'),
           accelerator: 'Option+Cmd+3',
-          click: () => sendToShell('menu:click', { command: 'select-tab', value: 'installed' })
+          click: () =>
+            sendToShell('menu:click', {
+              command: 'select-tab',
+              value: 'installed',
+            }),
         },
         {
           label: __('Updates'),
           accelerator: 'Option+Cmd+4',
-          click: () => sendToShell('menu:click', { command: 'select-tab', value: 'updates' })
+          click: () =>
+            sendToShell('menu:click', {
+              command: 'select-tab',
+              value: 'updates',
+            }),
         },
         { type: 'separator' },
         {
@@ -177,20 +211,32 @@ export function setupApplicationMenu(): void {
           submenu: [
             {
               label: __('Popular'),
-              click: () => sendToShell('menu:click', { command: 'set-order', value: 'popularity' }),
-              accelerator: 'Control+Option+1'
+              click: () =>
+                sendToShell('menu:click', {
+                  command: 'set-order',
+                  value: 'popularity',
+                }),
+              accelerator: 'Control+Option+1',
             },
             {
               label: __('Recent'),
-              click: () => sendToShell('menu:click', { command: 'set-order', value: 'date' }),
-              accelerator: 'Control+Option+2'
+              click: () =>
+                sendToShell('menu:click', {
+                  command: 'set-order',
+                  value: 'date',
+                }),
+              accelerator: 'Control+Option+2',
             },
             {
               label: __('A-Z'),
-              click: () => sendToShell('menu:click', { command: 'set-order', value: 'name' }),
-              accelerator: 'Control+Option+3'
-            }
-          ]
+              click: () =>
+                sendToShell('menu:click', {
+                  command: 'set-order',
+                  value: 'name',
+                }),
+              accelerator: 'Control+Option+3',
+            },
+          ],
         },
         { type: 'separator' },
         {
@@ -201,8 +247,11 @@ export function setupApplicationMenu(): void {
           accelerator: 'Option+Cmd+S',
           click: (menuItem) => {
             isSidebarVisible = menuItem.checked;
-            sendToShell('menu:click', { command: 'toggle-sidebar', value: menuItem.checked });
-          }
+            sendToShell('menu:click', {
+              command: 'toggle-sidebar',
+              value: menuItem.checked,
+            });
+          },
         },
         {
           id: 'show-statusbar',
@@ -212,36 +261,39 @@ export function setupApplicationMenu(): void {
           accelerator: 'CmdOrCtrl+/',
           click: (menuItem) => {
             isStatusbarVisible = menuItem.checked;
-            const updated = updateConfig({ alwaysShowStatusBar: menuItem.checked });
+            const updated = updateConfig({
+              alwaysShowStatusBar: menuItem.checked,
+            });
             BrowserWindow.getAllWindows().forEach((win) => {
               if (!win.isDestroyed()) {
                 win.webContents.send('config:updated', updated);
               }
             });
-          }
+          },
         },
         { type: 'separator' },
         { role: 'reload', label: __('Reload') },
         { role: 'forceReload', label: __('Force Reload') },
-        { role: 'toggleDevTools', label: __('Toggle Developer Tools') }
-      ]
+        { role: 'toggleDevTools', label: __('Toggle Developer Tools') },
+      ],
     },
     { role: 'windowMenu', label: __('Window') },
     {
       role: 'help',
       label: __('Help'),
-      submenu: [{
-        label: __('Website'),
-        click: async () => shell.openExternal(websiteUrl)
-      }, {
-        label: __('GitHub Repository'),
-        click: async () => shell.openExternal(githubUrl)
-      }]
-    }
+      submenu: [
+        {
+          label: __('Website'),
+          click: async () => shell.openExternal(websiteUrl),
+        },
+        {
+          label: __('GitHub Repository'),
+          click: async () => shell.openExternal(githubUrl),
+        },
+      ],
+    },
   ];
 
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 }
-
-

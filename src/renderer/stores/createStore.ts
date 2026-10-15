@@ -1,36 +1,52 @@
 import { useSyncExternalStore } from 'react';
 
 export type StateCreator<T> = (
-  set: (partial: Partial<T> | ((state: T) => Partial<T>), replace?: boolean) => void,
+  set: (
+    partial: Partial<T> | ((state: T) => Partial<T>),
+    replace?: boolean,
+  ) => void,
   get: () => T,
-  api: StoreApi<T>
+  api: StoreApi<T>,
 ) => T;
 
 export interface StoreApi<T> {
-  setState: (partial: Partial<T> | ((state: T) => Partial<T>), replace?: boolean) => void;
+  setState: (
+    partial: Partial<T> | ((state: T) => Partial<T>),
+    replace?: boolean,
+  ) => void;
   getState: () => T;
   subscribe: (listener: () => void) => () => void;
 }
 
-export type UseStore<T> = {
-  <U = T>(selector?: (state: T) => U): U;
-} & StoreApi<T>;
+export type UseStore<T> = (<U = T>(selector?: (state: T) => U) => U) &
+  StoreApi<T>;
 
 /**
  * Creates a lightweight, reactive external store with selector support.
  * Compatible with Zustand syntax: create((set, get) => ({ ... }))
  */
-export function create<T extends object>(createState: StateCreator<T>): UseStore<T> {
+export function create<T extends object>(
+  createState: StateCreator<T>,
+): UseStore<T> {
   let state: T;
   const listeners = new Set<() => void>();
 
-  const setState = (partial: Partial<T> | ((state: T) => Partial<T>), replace: boolean = false) => {
-    const nextState = typeof partial === 'function' ? (partial as (state: T) => Partial<T>)(state) : partial;
+  const setState = (
+    partial: Partial<T> | ((state: T) => Partial<T>),
+    replace: boolean = false,
+  ) => {
+    const nextState =
+      typeof partial === 'function'
+        ? (partial as (state: T) => Partial<T>)(state)
+        : partial;
     if (!Object.is(nextState, state)) {
-      state = replace || (typeof nextState !== 'object' || nextState === null)
-        ? (nextState as T)
-        : Object.assign({}, state, nextState);
-      listeners.forEach(listener => listener());
+      state =
+        replace || typeof nextState !== 'object' || nextState === null
+          ? (nextState as T)
+          : Object.assign({}, state, nextState);
+      listeners.forEach((listener) => {
+        listener();
+      });
     }
   };
 
@@ -44,11 +60,13 @@ export function create<T extends object>(createState: StateCreator<T>): UseStore
   const api: StoreApi<T> = { setState, getState, subscribe };
   state = createState(setState, getState, api);
 
-  const useStore = (<U = T>(selector: (state: T) => U = (s: T) => s as unknown as U): U => {
+  const useStore = (<U = T>(
+    selector: (state: T) => U = (s: T) => s as unknown as U,
+  ): U => {
     return useSyncExternalStore(
       subscribe,
       () => selector(state),
-      () => selector(state)
+      () => selector(state),
     );
   }) as UseStore<T>;
 

@@ -1,39 +1,62 @@
 import React, { useState } from 'react';
-import { cn, name2initials, name2color } from '@/hooks/utils';
+import { cn, name2color, name2initials } from '@/hooks/utils';
 import type { CaskItem } from '@/types';
 
 export interface AppIconProps {
-  item?: CaskItem | { name?: string; token?: string; iconUrl?: string | null } | null;
-  size?: 'xs' | 'sm' | 'md' | 'row' | 'tile' | '48' | 'lg' | 'grid' | '64' | 'xl' | '2xl' | 'hero' | '128' | string;
+  item?:
+    | CaskItem
+    | { name?: string; token?: string; iconUrl?: string | null }
+    | null;
+  size?:
+    | 'xs'
+    | 'sm'
+    | 'md'
+    | 'row'
+    | 'tile'
+    | '48'
+    | 'lg'
+    | 'grid'
+    | '64'
+    | 'xl'
+    | '2xl'
+    | 'hero'
+    | '128'
+    | string;
   className?: string;
 }
 
-export function AppIcon({ item, size = "md", className }: AppIconProps) {
+export function AppIcon({ item, size = 'md', className }: AppIconProps) {
   const [loaded, setLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   const sizeClasses: Record<string, string> = {
-    xs: "size-5 rounded-sm",
-    sm: "size-7 rounded-md",
-    md: "size-12 rounded-xl",
-    row: "size-12 rounded-xl",
-    tile: "size-12 rounded-xl",
-    "48": "size-12 rounded-xl",
-    lg: "size-16 rounded-2xl",
-    grid: "size-16 rounded-2xl",
-    "64": "size-16 rounded-2xl",
-    xl: "size-32 rounded-[28px]",
-    "2xl": "size-32 rounded-[28px]",
-    hero: "size-32 rounded-[28px]",
-    "128": "size-32 rounded-[28px]",
+    xs: 'size-5 rounded-sm',
+    sm: 'size-7 rounded-md',
+    md: 'size-12 rounded-xl',
+    row: 'size-12 rounded-xl',
+    tile: 'size-12 rounded-xl',
+    '48': 'size-12 rounded-xl',
+    lg: 'size-16 rounded-2xl',
+    grid: 'size-16 rounded-2xl',
+    '64': 'size-16 rounded-2xl',
+    xl: 'size-32 rounded-[28px]',
+    '2xl': 'size-32 rounded-[28px]',
+    hero: 'size-32 rounded-[28px]',
+    '128': 'size-32 rounded-[28px]',
   };
 
   const currentSizeClass = sizeClasses[size] || sizeClasses.md;
-  const name = item?.name || item?.token || "";
+  const name = item?.name || item?.token || '';
   const hasIcon = Boolean(item?.iconUrl && !hasError);
 
   return (
-    <div className={cn("relative shrink-0 select-none overflow-hidden flex items-center justify-center [container-type:inline-size]", currentSizeClass, className)}>
+    <div
+      className={cn(
+        'relative shrink-0 select-none overflow-hidden flex items-center justify-center [container-type:inline-size]',
+        currentSizeClass,
+        className,
+      )}
+    >
       {hasIcon && item?.iconUrl && (
         <>
           {!loaded && (
@@ -46,8 +69,8 @@ export function AppIcon({ item, size = "md", className }: AppIconProps) {
             decoding="async"
             fetchPriority="low"
             className={cn(
-              "w-full h-full object-contain rounded-[inherit]",
-              loaded ? "block" : "invisible"
+              'w-full h-full object-contain rounded-[inherit]',
+              loaded ? 'block' : 'invisible',
             )}
             onLoad={() => setLoaded(true)}
             onError={() => setHasError(true)}

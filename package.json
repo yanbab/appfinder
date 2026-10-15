@@ -22,6 +22,8 @@
     "build:main": "vite build --config vite.main.config.mjs",
     "build:react": "vite build --config vite.renderer.config.mjs",
     "type-check": "tsc --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
     "test": "node --import tsx --test 'test/**/*.test.js'",
     "release": "node scripts/release-github.js"
   },
@@ -33,6 +35,7 @@
     "applications"
   ],
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.2",
     "@types/react": "^19.3.0",

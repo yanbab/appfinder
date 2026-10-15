@@ -1,7 +1,8 @@
-import React, { type ReactNode, type HTMLAttributes } from 'react';
+import React, { type HTMLAttributes, type ReactNode } from 'react';
 import { ShellIcon } from './ShellIcon';
 
-export interface EmptyStateProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
+export interface EmptyStateProps
+  extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   icon?: string | ReactNode;
   title?: ReactNode;
   subtitle?: ReactNode;
@@ -19,7 +20,8 @@ export function EmptyState({
   loading = false,
   ...props
 }: EmptyStateProps) {
-  const isSpinner = loading || icon === 'loader-2' || icon === 'loader' || icon === 'loading';
+  const isSpinner =
+    loading || icon === 'loader-2' || icon === 'loader' || icon === 'loading';
 
   return (
     <div
@@ -27,7 +29,10 @@ export function EmptyState({
       {...props}
     >
       {isSpinner ? (
-        <ShellIcon name="spinner" className="size-8 text-primary animate-spin mb-3" />
+        <ShellIcon
+          name="spinner"
+          className="size-8 text-primary animate-spin mb-3"
+        />
       ) : typeof icon === 'string' ? (
         <ShellIcon
           name={icon}

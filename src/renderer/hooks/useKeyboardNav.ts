@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useShellStore, useAppStore, useTermStore } from '@/stores';
+import { useAppStore, useShellStore, useTermStore } from '@/stores';
 
 export function useKeyboardNav() {
   const currentTab = useShellStore((s) => s.currentTab);
@@ -24,7 +24,9 @@ export function useKeyboardNav() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (showPasswordModal) return;
 
-      const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
+      const searchInput = document.getElementById(
+        'search-input',
+      ) as HTMLInputElement | null;
       const activeEl = document.activeElement as HTMLElement | null;
       const isInput =
         activeEl?.tagName === 'INPUT' ||
@@ -95,8 +97,16 @@ export function useKeyboardNav() {
       }
 
       // 4. From Search input: ArrowDown jumps into first app card
-      if (isSearch && e.key === 'ArrowDown' && !e.metaKey && !e.altKey && !e.ctrlKey) {
-        const firstCard = document.querySelector('.app-card') as HTMLElement | null;
+      if (
+        isSearch &&
+        e.key === 'ArrowDown' &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.ctrlKey
+      ) {
+        const firstCard = document.querySelector(
+          '.app-card',
+        ) as HTMLElement | null;
         if (firstCard) {
           e.preventDefault();
           firstCard.focus();
@@ -106,9 +116,13 @@ export function useKeyboardNav() {
       }
 
       // 4. App cards/rows keyboard navigation
-      const activeCard = activeEl ? activeEl.closest('.app-card') as HTMLElement | null : null;
+      const activeCard = activeEl
+        ? (activeEl.closest('.app-card') as HTMLElement | null)
+        : null;
       if (activeCard && currentTab !== 'discover') {
-        const cards = Array.from(document.querySelectorAll('.app-card')) as HTMLElement[];
+        const cards = Array.from(
+          document.querySelectorAll('.app-card'),
+        ) as HTMLElement[];
         const currentIndex = cards.indexOf(activeCard);
         if (currentIndex === -1) return;
 
@@ -119,20 +133,30 @@ export function useKeyboardNav() {
             // Meta+ArrowDown -> Jump to last
             loadMore?.();
             setTimeout(() => {
-              const updated = Array.from(document.querySelectorAll('.app-card')) as HTMLElement[];
+              const updated = Array.from(
+                document.querySelectorAll('.app-card'),
+              ) as HTMLElement[];
               const last = updated[updated.length - 1];
               last?.focus();
               last?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
             }, 50);
           } else if (currentIndex < cards.length - 1) {
             cards[currentIndex + 1].focus();
-            cards[currentIndex + 1].scrollIntoView({ block: 'nearest', behavior: 'auto' });
+            cards[currentIndex + 1].scrollIntoView({
+              block: 'nearest',
+              behavior: 'auto',
+            });
           } else {
             loadMore?.();
             setTimeout(() => {
-              const updated = Array.from(document.querySelectorAll('.app-card')) as HTMLElement[];
+              const updated = Array.from(
+                document.querySelectorAll('.app-card'),
+              ) as HTMLElement[];
               updated[currentIndex + 1]?.focus();
-              updated[currentIndex + 1]?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+              updated[currentIndex + 1]?.scrollIntoView({
+                block: 'nearest',
+                behavior: 'auto',
+              });
             }, 50);
           }
           return;
@@ -146,7 +170,10 @@ export function useKeyboardNav() {
             cards[0]?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
           } else if (currentIndex > 0) {
             cards[currentIndex - 1].focus();
-            cards[currentIndex - 1].scrollIntoView({ block: 'nearest', behavior: 'auto' });
+            cards[currentIndex - 1].scrollIntoView({
+              block: 'nearest',
+              behavior: 'auto',
+            });
           } else if (searchInput) {
             searchInput.focus();
           }
@@ -164,7 +191,9 @@ export function useKeyboardNav() {
         // ArrowLeft -> Focus active sidebar item
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
-          const sidebarBtn = (document.querySelector(`[data-nav-id="${currentTab}"]`) || document.querySelector('aside button')) as HTMLElement | null;
+          const sidebarBtn = (document.querySelector(
+            `[data-nav-id="${currentTab}"]`,
+          ) || document.querySelector('aside button')) as HTMLElement | null;
           sidebarBtn?.focus();
           return;
         }
@@ -203,7 +232,9 @@ export function useKeyboardNav() {
           e.preventDefault();
           loadMore?.();
           setTimeout(() => {
-            const updated = Array.from(document.querySelectorAll('.app-card')) as HTMLElement[];
+            const updated = Array.from(
+              document.querySelectorAll('.app-card'),
+            ) as HTMLElement[];
             const last = updated[updated.length - 1];
             last?.focus();
             last?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
@@ -217,7 +248,13 @@ export function useKeyboardNav() {
       if (isSidebar && !isInput) {
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
           e.preventDefault();
-          const tabs = ['discover', 'all-apps', 'installed', 'updates', ...(categories || []).map((c) => c.name)];
+          const tabs = [
+            'discover',
+            'all-apps',
+            'installed',
+            'updates',
+            ...(categories || []).map((c) => c.name),
+          ];
           const currentIndex = tabs.indexOf(currentTab);
           const nextIndex =
             e.key === 'ArrowDown'
@@ -225,13 +262,15 @@ export function useKeyboardNav() {
                 ? Math.min(tabs.length - 1, currentIndex + 1)
                 : 0
               : currentIndex >= 0
-              ? Math.max(0, currentIndex - 1)
-              : 0;
+                ? Math.max(0, currentIndex - 1)
+                : 0;
 
           if (nextIndex !== currentIndex && tabs[nextIndex]) {
             selectTab(tabs[nextIndex]);
             setTimeout(() => {
-              const itemEl = document.querySelector(`[data-nav-id="${tabs[nextIndex]}"]`) as HTMLElement | null;
+              const itemEl = document.querySelector(
+                `[data-nav-id="${tabs[nextIndex]}"]`,
+              ) as HTMLElement | null;
               itemEl?.focus();
               itemEl?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
             }, 20);
@@ -241,7 +280,9 @@ export function useKeyboardNav() {
 
         // ArrowRight from sidebar -> move focus into first app card
         if (e.key === 'ArrowRight') {
-          const firstCard = document.querySelector('.app-card') as HTMLElement | null;
+          const firstCard = document.querySelector(
+            '.app-card',
+          ) as HTMLElement | null;
           if (firstCard) {
             e.preventDefault();
             firstCard.focus();
@@ -252,7 +293,12 @@ export function useKeyboardNav() {
       }
 
       // 6. Direct type-to-search when focused outside inputs
-      const isKey = !e.metaKey && !e.ctrlKey && !e.altKey && e.key.length === 1 && e.key !== ' ';
+      const isKey =
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        e.key.length === 1 &&
+        e.key !== ' ';
       if (!isInput && isKey) {
         e.preventDefault();
         if (selectedApp) closeAppInfo?.();
@@ -263,7 +309,9 @@ export function useKeyboardNav() {
         }
         setShowSidebar?.(true);
         setTimeout(() => {
-          const searchEl = document.getElementById('search-input') as HTMLInputElement | null;
+          const searchEl = document.getElementById(
+            'search-input',
+          ) as HTMLInputElement | null;
           if (searchEl) {
             searchEl.focus();
             const len = searchEl.value.length;

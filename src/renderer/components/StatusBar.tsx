@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTermStore, useShellStore } from '@/stores';
+import { useShellStore, useTermStore } from '@/stores';
 import { Button } from './Button';
 import { ShellIcon } from './ShellIcon';
 
@@ -14,7 +14,8 @@ export function StatusBar() {
   const __ = useShellStore((s) => s.__);
 
   // If there's no active task and alwaysShowStatusBar is false, and drawer is hidden
-  const isVisible = Boolean(activeTaskId) || alwaysShowStatusBar || showTerminal;
+  const isVisible =
+    Boolean(activeTaskId) || alwaysShowStatusBar || showTerminal;
   if (!isVisible) return null;
 
   return (
@@ -23,9 +24,14 @@ export function StatusBar() {
       <div className="h-full flex items-center gap-2 min-w-0 mr-2 select-none">
         {activeTaskId && (
           <>
-            <ShellIcon name="spinner" className="size-3.5 text-primary animate-spin shrink-0" />
+            <ShellIcon
+              name="spinner"
+              className="size-3.5 text-primary animate-spin shrink-0"
+            />
             {drawerTitle && (
-              <span className="overflow-hidden text-ellipsis whitespace-pre text-[11px] font-mono text-foreground/80">{drawerTitle}</span>
+              <span className="overflow-hidden text-ellipsis whitespace-pre text-[11px] font-mono text-foreground/80">
+                {drawerTitle}
+              </span>
             )}
           </>
         )}
@@ -37,11 +43,16 @@ export function StatusBar() {
           <Button
             variant="ghost"
             className="h-full !rounded-none px-2.5 gap-1.5 text-xs text-destructive hover:text-destructive active:text-destructive dark:hover:text-destructive hover:bg-destructive/10 active:bg-destructive/20"
-            icon={<ShellIcon name="stop.fill" className="size-3.5 shrink-0 text-destructive" />}
-            title={__("Stop")}
+            icon={
+              <ShellIcon
+                name="stop.fill"
+                className="size-3.5 shrink-0 text-destructive"
+              />
+            }
+            title={__('Stop')}
             onClick={cancelAction}
           >
-            {__("Stop")}
+            {__('Stop')}
           </Button>
         )}
 
@@ -49,7 +60,7 @@ export function StatusBar() {
           variant="ghost"
           className="h-full !rounded-none px-2.5 text-muted-foreground hover:text-foreground active:text-foreground dark:hover:text-white"
           icon={<ShellIcon name="apple.terminal" className="size-4 shrink-0" />}
-          title={showTerminal ? __("Hide Terminal") : __("Show Terminal")}
+          title={showTerminal ? __('Hide Terminal') : __('Show Terminal')}
           active={showTerminal}
           onClick={toggleTerminal}
         />

@@ -3,23 +3,33 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { generateCask, validateCaskRuby, computeSha256 } = require('../scripts/generate-cask');
+const {
+  generateCask,
+  validateCaskRuby,
+  computeSha256,
+} = require('../scripts/generate-cask');
 
-const MOCK_ARM_SHA = 'a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0';
-const MOCK_INTEL_SHA = '0fedcba9876543210fedcba9876543210fedcba9876543210fedcba987654321';
+const MOCK_ARM_SHA =
+  'a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0';
+const MOCK_INTEL_SHA =
+  '0fedcba9876543210fedcba9876543210fedcba9876543210fedcba987654321';
 
 test('generateCask generates valid Homebrew Cask Ruby definition with expected fields', () => {
   const code = generateCask({
     version: '0.9.6',
     armSha: MOCK_ARM_SHA,
-    intelSha: MOCK_INTEL_SHA
+    intelSha: MOCK_INTEL_SHA,
   });
 
   assert.ok(code.includes('cask "appfinder" do'));
   assert.ok(code.includes('version "0.9.6"'));
   assert.ok(code.includes(`sha256 arm:   "${MOCK_ARM_SHA}",`));
   assert.ok(code.includes(`       intel: "${MOCK_INTEL_SHA}"`));
-  assert.ok(code.includes('url "https://github.com/yanbab/appfinder/releases/download/v#{version}/AppFinder-#{version}#{arch.empty? ? "" : "-#{arch}"}.dmg"'));
+  assert.ok(
+    code.includes(
+      'url "https://github.com/yanbab/appfinder/releases/download/v#{version}/AppFinder-#{version}#{arch.empty? ? "" : "-#{arch}"}.dmg"',
+    ),
+  );
   assert.ok(code.includes('name "AppFinder"'));
   assert.ok(code.includes('desc "App store for the Homebrew package manager"'));
   assert.ok(code.includes('homepage "https://github.com/yanbab/appfinder"'));
@@ -36,7 +46,7 @@ test('validateCaskRuby validates syntax and confirms no syntax errors', () => {
   const code = generateCask({
     version: '0.9.6',
     armSha: MOCK_ARM_SHA,
-    intelSha: MOCK_INTEL_SHA
+    intelSha: MOCK_INTEL_SHA,
   });
 
   const result = validateCaskRuby(code);
@@ -61,7 +71,7 @@ test('generateCask rejects invalid or empty SHA256 checksums', () => {
     generateCask({
       version: '0.9.6',
       armSha: '',
-      intelSha: MOCK_INTEL_SHA
+      intelSha: MOCK_INTEL_SHA,
     });
   }, /Invalid ARM64 SHA256/);
 
@@ -69,7 +79,7 @@ test('generateCask rejects invalid or empty SHA256 checksums', () => {
     generateCask({
       version: '0.9.6',
       armSha: 'not-a-sha',
-      intelSha: MOCK_INTEL_SHA
+      intelSha: MOCK_INTEL_SHA,
     });
   }, /Invalid ARM64 SHA256/);
 
@@ -77,7 +87,7 @@ test('generateCask rejects invalid or empty SHA256 checksums', () => {
     generateCask({
       version: '0.9.6',
       armSha: MOCK_ARM_SHA,
-      intelSha: ''
+      intelSha: '',
     });
   }, /Invalid Intel SHA256/);
 });
@@ -87,7 +97,7 @@ test('generateCask rejects invalid semantic version format', () => {
     generateCask({
       version: 'invalid-version',
       armSha: MOCK_ARM_SHA,
-      intelSha: MOCK_INTEL_SHA
+      intelSha: MOCK_INTEL_SHA,
     });
   }, /Invalid version format/);
 });

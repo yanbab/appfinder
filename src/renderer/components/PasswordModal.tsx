@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useTermStore, useShellStore, useAppStore } from '@/stores';
-import { Button } from './Button';
-import { ShellIcon } from './ShellIcon';
-import { Input } from './Input';
+import React, { useEffect, useRef, useState } from 'react';
 import { getAppName } from '@/hooks/utils';
+import { useAppStore, useShellStore, useTermStore } from '@/stores';
 import type { CaskItem } from '@/types';
+import { Button } from './Button';
+import { Input } from './Input';
+import { ShellIcon } from './ShellIcon';
 
 export function PasswordModal() {
   const showPasswordModal = useTermStore((s) => s.showPasswordModal);
@@ -27,7 +27,8 @@ export function PasswordModal() {
     if (!dialog) return;
 
     if (showPasswordModal) {
-      previousActiveElementRef.current = document.activeElement as HTMLElement | null;
+      previousActiveElementRef.current =
+        document.activeElement as HTMLElement | null;
       setPassword('');
       if (!dialog.open) {
         try {
@@ -41,7 +42,10 @@ export function PasswordModal() {
       if (dialog.open) {
         dialog.close();
       }
-      if (previousActiveElementRef.current && typeof previousActiveElementRef.current.focus === 'function') {
+      if (
+        previousActiveElementRef.current &&
+        typeof previousActiveElementRef.current.focus === 'function'
+      ) {
         previousActiveElementRef.current.focus();
         previousActiveElementRef.current = null;
       }
@@ -53,9 +57,10 @@ export function PasswordModal() {
   const cask = items.find((c: CaskItem) => c.token === activeTaskToken);
   const name = cask ? getAppName(cask) : activeTaskToken || 'Homebrew';
 
-  const title = activeTaskAction === 'uninstall'
-    ? __('%s removal requires your password').replace('%s', name)
-    : __('%s installation requires your password').replace('%s', name);
+  const title =
+    activeTaskAction === 'uninstall'
+      ? __('%s removal requires your password').replace('%s', name)
+      : __('%s installation requires your password').replace('%s', name);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +76,9 @@ export function PasswordModal() {
 
     // Strict Tab & Shift+Tab focus trap inside modal
     if (e.key === 'Tab') {
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>('input, button:not([disabled])');
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'input, button:not([disabled])',
+      );
       if (!focusable || focusable.length === 0) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -110,10 +117,16 @@ export function PasswordModal() {
             </div>
           </div>
 
-          <h3 id="password-modal-title" className="font-semibold text-xs text-foreground mb-1 leading-snug">
+          <h3
+            id="password-modal-title"
+            className="font-semibold text-xs text-foreground mb-1 leading-snug"
+          >
             {title}
           </h3>
-          <p id="password-modal-desc" className="text-[11px] text-muted-foreground mb-3.5">
+          <p
+            id="password-modal-desc"
+            className="text-[11px] text-muted-foreground mb-3.5"
+          >
             {__('Type your password to allow this action.')}
           </p>
         </div>
