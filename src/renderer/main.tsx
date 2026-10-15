@@ -2,17 +2,11 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/index.css";
 import { ShellWindow } from "./components/ShellWindow";
-import { SettingsWindow } from "./components/SettingsWindow";
 import { ErrorWindow } from "./components/ErrorWindow";
 import { ThemeProvider } from "@/hooks";
 import { initStoreListeners } from "@/stores";
 
-const params = new URLSearchParams(window.location.search);
-const isSettings = params.get("view") === "settings" || window.location.hash === "#settings";
-
-if (!isSettings) {
-  initStoreListeners();
-}
+initStoreListeners();
 
 const rootElement = document.getElementById("root");
 if (rootElement) {
@@ -20,7 +14,7 @@ if (rootElement) {
     <StrictMode>
       <ErrorWindow>
         <ThemeProvider>
-          {isSettings ? <SettingsWindow /> : <ShellWindow />}
+          <ShellWindow />
         </ThemeProvider>
       </ErrorWindow>
     </StrictMode>

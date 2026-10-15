@@ -20,7 +20,6 @@ export default defineConfig({
     rollupOptions: {
       external: [
         'electron',
-        'electron-devtools-installer',
         'node:events',
         'node:child_process',
         'node:fs',

@@ -18,7 +18,6 @@ export * from './Discover';
 export * from './AppList';
 export * from './AppListUpdates';
 export * from './EmptyState';
-export * from './SettingsWindow';
 export * from './ShellWindow';
 export * from './ErrorWindow';
 export * from './DiscoverHub';
