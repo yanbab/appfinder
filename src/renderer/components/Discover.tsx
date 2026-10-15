@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useLayoutEffect } from 'react';
 import {
   useAppStore,
   useShellStore,
@@ -24,6 +24,14 @@ export function Discover(): React.JSX.Element {
   const loading = useAppStore((s) => s.loading);
   const setOrder = useAppStore((s) => s.setOrder);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+  }, []);
+
   const featuredItems = useMemo(() => selectFeaturedItems(items), [items]);
   const topInstalledItems = useMemo(() => selectTopInstalledItems(items), [items]);
   const recentItems = useMemo(() => selectRecentItems(items), [items]);
@@ -41,7 +49,7 @@ export function Discover(): React.JSX.Element {
   // Full skeleton during initial load to completely prevent layout jumping
   if (loading || !featuredItems || featuredItems.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto p-4 select-none">
+      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 select-none">
         <div className="max-w-[var(--content-max-width)] mx-auto w-full space-y-4">
           {/* Featured Hero Skeleton */}
           <div className="relative overflow-hidden rounded-[calc(var(--radius-card)*2)] p-4 sm:p-5 h-[160px] bg-card shadow-2xs flex items-center">
@@ -126,7 +134,7 @@ export function Discover(): React.JSX.Element {
 }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 select-none">
+    <div ref={containerRef} className="flex-1 overflow-y-auto p-4 select-none">
       <div className="max-w-[var(--content-max-width)] mx-auto w-full space-y-4">
         {/* Featured Carousel Banner */}
         <DiscoverSlider />

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect, useMemo, useLayoutEffect } from 'react';
 import { useShellStore, useAppStore } from '@/stores';
 import { AppIcon } from './AppIcon';
 import { Button } from './Button';
@@ -29,8 +29,15 @@ export function InfoPanel() {
   const categories = useAppStore((s) => s.categories);
 
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
   const isOpen = Boolean(selectedApp);
+
+  useLayoutEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [selectedApp?.token]);
 
   // Steal focus on open & restore previous focus on close
   useEffect(() => {
@@ -222,7 +229,7 @@ export function InfoPanel() {
       </div>
 
       {/* Body content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+      <div ref={contentRef} className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
         {/* App Hero: Centered Icon, Name, Description before Version */}
         <div className="flex flex-col items-center text-center pt-1 pb-0.5 space-y-2">
           <AppIcon item={selectedApp} size="hero" className="size-32 rounded-[28px] shrink-0" />

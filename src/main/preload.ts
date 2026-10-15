@@ -81,6 +81,7 @@ const ipcApi: IpcBridge = {
   setContentSize: (width: number, height: number) => ipcRenderer.send('window:set-content-size', width, height),
   showContextMenu: (data: any) => ipcRenderer.send('context-menu:show', data),
   sidebarChanged: (visible: boolean) => ipcRenderer.send('shell:sidebar-changed', visible),
+  updateMenu: (id: string, status: { checked?: boolean; enabled?: boolean }) => ipcRenderer.send('menu:update', id, status),
 
   // Unified Event Bus
   on: (signal: any, callback: any) => on(signal, callback),

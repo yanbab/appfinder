@@ -35,6 +35,12 @@ export function AppList({ header, footer }: AppListProps): React.JSX.Element {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  React.useLayoutEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+  }, [currentTab, viewMode, search, order]);
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     if (!el) return;

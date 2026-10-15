@@ -7,10 +7,12 @@ import { ErrorWindow } from "./components/ErrorWindow";
 import { ThemeProvider } from "@/hooks";
 import { initStoreListeners } from "@/stores";
 
-initStoreListeners();
-
 const params = new URLSearchParams(window.location.search);
 const isSettings = params.get("view") === "settings" || window.location.hash === "#settings";
+
+if (!isSettings) {
+  initStoreListeners();
+}
 
 const rootElement = document.getElementById("root");
 if (rootElement) {
