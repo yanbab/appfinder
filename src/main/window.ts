@@ -17,9 +17,8 @@ export function loadWindowContent(
   viewQuery?: string,
 ): void {
   if (process.env.VITE_DEV_SERVER_URL) {
-    const url = viewQuery
-      ? `${process.env.VITE_DEV_SERVER_URL}?${viewQuery}`
-      : process.env.VITE_DEV_SERVER_URL;
+    const baseUrl = `${process.env.VITE_DEV_SERVER_URL}/shell.html`;
+    const url = viewQuery ? `${baseUrl}?${viewQuery}` : baseUrl;
     win.loadURL(url);
   } else {
     if (viewQuery) {

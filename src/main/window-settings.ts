@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, nativeTheme } from 'electron';
 import { __ } from './i18n';
 import { PRELOAD_PATH, SETTINGS_RENDERER_PATH } from './path';
 import { setupWindowSecurity } from './window';
@@ -31,6 +31,7 @@ export function createSettingsWindow(
     modal: false,
     show: false,
     useContentSize: true,
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#202022' : '#f5f5f7',
     webPreferences: defaultWebPreferences,
   });
 

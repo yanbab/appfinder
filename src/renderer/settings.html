@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Settings</title>
     <script>
-      (function() {
+      (() => {
         try {
           if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.classList.add('dark');
@@ -13,6 +13,12 @@
         } catch (_) {}
       })();
     </script>
+    <style>
+      html, body, #root {
+        background-color: var(--background) !important;
+        color: var(--foreground) !important;
+      }
+    </style>
   </head>
   <body class="bg-background text-foreground select-none overflow-hidden">
     <div id="root"></div>

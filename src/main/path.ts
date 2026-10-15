@@ -24,7 +24,7 @@ export const DATA_DIR: string = path.join(ROOT_DIR, 'data');
 export const LOCALES_DIR: string = path.join(ROOT_DIR, 'locales');
 export const RENDERER_PATH: string = path.join(
   ROOT_DIR,
-  'dist/vite-renderer/index.html',
+  'dist/vite-renderer/shell.html',
 );
 export const SETTINGS_RENDERER_PATH: string = path.join(
   ROOT_DIR,

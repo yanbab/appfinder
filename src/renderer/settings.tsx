@@ -79,7 +79,7 @@ export function SettingsApp() {
   };
 
   return (
-    <div className="flex flex-col gap-4 select-none p-4 text-xs font-normal">
+    <div className="w-full h-full min-h-screen bg-background text-foreground flex flex-col gap-4 select-none p-4 text-xs font-normal">
       {/* Language setting */}
       <div className="flex items-center justify-between gap-4">
         <label htmlFor="setting-lang" className="font-medium text-foreground">
