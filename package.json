@@ -1,7 +1,7 @@
 {
   "name": "appfinder",
   "productName": "AppFinder",
-  "version": "0.9.12",
+  "version": "0.9.13",
   "description": "App store for the Homebrew package manager",
   "author": "yanbab",
   "license": "MIT",

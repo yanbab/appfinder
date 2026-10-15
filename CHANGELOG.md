@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.13] - 2026-10-15
+
+### Changes
+- feat(process-monitor): add full-width total CPU and Memory history graphs
+- feat: Settings window
+- feat: add information paanel card components for services, caveats, apps and fonts
+
+---
+
 ## [0.9.12] - 2026-10-13
 
 ### Changes
